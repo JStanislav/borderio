@@ -129,13 +129,18 @@ func (g *Graph) IsLegalMove(source, target, opponentPosition GridPosition) bool 
 	if target == opponentPosition {
 		return false
 	}
-	edge, err := g.Graph.Edge(CellHash(Cell{Column: source.Column, Row: source.Row}), CellHash(Cell{Column: target.Column, Row: target.Row}))
-	if errors.Is(err, graph.ErrEdgeNotFound) {
-		fmt.Println(edge)
-		return false
+
+	// el jugador intenta saltear al otro jugador
+	if g.IsAdjacent(source, opponentPosition) && g.IsAdjacent(opponentPosition, target) {
+		return true
 	}
 
-	return true
+	return g.IsAdjacent(source, target)
+}
+
+func (g *Graph) IsAdjacent(source, target GridPosition) bool {
+	_, err := g.Graph.Edge(CellHash(Cell{Column: source.Column, Row: source.Row}), CellHash(Cell{Column: target.Column, Row: target.Row}))
+	return !errors.Is(err, graph.ErrEdgeNotFound)
 }
 
 func (g *Graph) PrintGrid(columns, rows int) {
