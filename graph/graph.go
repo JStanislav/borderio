@@ -11,9 +11,9 @@ import (
 
 // TODO: add walls length (default should be 2, in this implementation is 1)
 type Board interface {
-	GenerateBoard(columns, rows int) error
+	GenerateBoard(columns, rows int, playerOneStart, playerTwoStart utils.GridPosition) error
 	AddWall(column1, row1, column2, row2 int) error
-	IsOccupied(column, row int) bool
+	IsOccupied(column, row int) (bool, error)
 	IsLegalMove(source, target, opponentPosition utils.GridPosition) bool
 }
 
