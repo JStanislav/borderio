@@ -1,6 +1,7 @@
 package game
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/JStanislav/quoridor-clone/graph"
@@ -14,24 +15,47 @@ type GameState struct {
 	CurrentTurn player.PlayerID
 }
 
-func StartMatch() {
-	board := graph.New()
+/*
+We receive player moves from the channels and send them to the movements channel
+If a player makes an illegal move, we send a nil to the movements channel
+*/
+func (g *GameState) StartMatch(playerOne, playerTwo *player.Player, p1Moves chan utils.GridPosition, p2Moves chan utils.GridPosition, movements chan<- PlayerMovement) {
+	g.Board = graph.New()
 	p1StartPosition := utils.GridPosition{Column: 4, Row: 0}
 	p2StartPosition := utils.GridPosition{Column: 4, Row: 8}
 
-	board.GenerateBoard(9, 9, p1StartPosition, p2StartPosition)
+	g.Board.GenerateBoard(9, 9, p1StartPosition, p2StartPosition)
 
-	playerOne := player.New("quoro", p1StartPosition)
-	playerTwo := player.New("wally", p2StartPosition)
+	g.StartTime = new(time.Time)
+	*g.StartTime = time.Now()
+	g.CurrentTurn = playerOne.ID
 
-	p1Move := utils.GridPosition{Column: 4, Row: 1}
-	p2Move := utils.GridPosition{Column: 4, Row: 7}
+	for {
+		select {
+		case move := <-p1Moves:
+			fmt.Printf("Moving p1 [R%d-C%d]->[R%d-C%d]\n", playerOne.Position.Row, playerOne.Position.Column, move.Row, move.Column)
+			if g.Board.IsLegalMove(playerOne.Position, move, playerTwo.Position) && g.CurrentTurn == playerOne.ID {
+				playerOne.Position = move
+				g.CurrentTurn = playerTwo.ID
+				movements <- PlayerMovement{PlayerID: playerOne.ID, Move: &playerOne.Position}
+			} else {
+				movements <- PlayerMovement{PlayerID: playerOne.ID, Move: nil}
+			}
 
-	if board.IsLegalMove(playerOne.Position, p1Move, playerTwo.Position) {
-		playerOne.Position = p1Move
+		case move := <-p2Moves:
+			fmt.Printf("Moving p2 [R%d-C%d]->[R%d-C%d]\n", playerTwo.Position.Row, playerTwo.Position.Column, move.Row, move.Column)
+			if g.Board.IsLegalMove(playerTwo.Position, move, playerOne.Position) && g.CurrentTurn == playerTwo.ID {
+				playerTwo.Position = move
+				g.CurrentTurn = playerOne.ID
+				movements <- PlayerMovement{PlayerID: playerTwo.ID, Move: &playerTwo.Position}
+			} else {
+				movements <- PlayerMovement{PlayerID: playerTwo.ID, Move: nil}
+			}
+		}
 	}
+}
 
-	if board.IsLegalMove(playerTwo.Position, p2Move, playerOne.Position) {
-		playerTwo.Position = p1Move
-	}
+type PlayerMovement struct {
+	PlayerID player.PlayerID
+	Move     *utils.GridPosition
 }
