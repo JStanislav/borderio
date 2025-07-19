@@ -2,6 +2,8 @@ package graph
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 	"testing"
 )
 
@@ -94,34 +96,46 @@ func TestLegalMoves(t *testing.T) {
 		░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░█████░░░░░░░░░░░░░░░░░░░
 		|R6-C0░R6-C1░R6-C2░|R6-C3░R6-C4░R6-C5░R6-C6░R6-C7█R6-C8|
 		░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-		|R7-C0░R7-C1░R7-C2░|R7-C3░R7-C4░R7-C5░R7-C6░R7-C7░R7-C8|
-		░░░░░░░░░░░░█░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+		|R7-C0░R7-C1█R7-C2░|R7-C3░R7-C4░R7-C5░R7-C6░R7-C7░R7-C8|
+		░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 		|R8-C0░R8-C1░R8-C2░|R8-C3░R8-C4░R8-C5░R8-C6░R8-C7░R8-C8|
 		█
 	*/
+
+	// a little helper so its more readable the test cases
+	// converts hashes to grid positions
+	// i.e. "R3-C6" -> GridPosition{Column: 6, Row: 3}
+	p := func(hash string) GridPosition {
+		strs := strings.Split(hash, "-")
+		strs[0], _ = strings.CutPrefix(strs[0], "R")
+		strs[1], _ = strings.CutPrefix(strs[1], "C")
+		c, _ := strconv.Atoi(strs[1])
+		r, _ := strconv.Atoi(strs[0])
+		return GridPosition{Column: c, Row: r}
+	}
 
 	tests := []struct {
 		name                             string
 		source, target, opponentPosition GridPosition
 		want                             bool
 	}{
-		{"Illegal", GridPosition{Column: 6, Row: 3}, GridPosition{Column: 6, Row: 2}, graph.PlayerTwoPosition, false},
-		{"Illegal", GridPosition{Column: 6, Row: 2}, GridPosition{Column: 7, Row: 2}, graph.PlayerTwoPosition, false},
-		{"Illegal", GridPosition{Column: 8, Row: 6}, GridPosition{Column: 7, Row: 6}, graph.PlayerTwoPosition, false},
-		{"Illegal", GridPosition{Column: 1, Row: 7}, GridPosition{Column: 2, Row: 7}, graph.PlayerTwoPosition, false},
-		{"Illegal", GridPosition{Column: 5, Row: 5}, GridPosition{Column: 5, Row: 6}, graph.PlayerTwoPosition, false},
-		{"Illegal", GridPosition{Column: 0, Row: 0}, GridPosition{Column: 1, Row: 0}, graph.PlayerTwoPosition, false},
-		{"Legal", GridPosition{Column: 0, Row: 0}, GridPosition{Column: 0, Row: 1}, graph.PlayerTwoPosition, true},
-		{"Position occupied", GridPosition{Column: 6, Row: 4}, GridPosition{Column: 5, Row: 4}, GridPosition{Column: 5, Row: 4}, false},
-		{"No relation at all", GridPosition{Column: 0, Row: 0}, GridPosition{Column: 5, Row: 4}, GridPosition{Column: 5, Row: 4}, false},
-		{"Simple skip", GridPosition{Column: 2, Row: 2}, GridPosition{Column: 4, Row: 2}, GridPosition{Column: 3, Row: 2}, true},
-		{"Skip with wall", GridPosition{Column: 5, Row: 3}, GridPosition{Column: 4, Row: 4}, GridPosition{Column: 5, Row: 4}, true},
-		{"Illegal skip through wall", GridPosition{Column: 5, Row: 7}, GridPosition{Column: 5, Row: 5}, GridPosition{Column: 5, Row: 6}, false},
+		{"Illegal", p("R3-C6"), p("R2-C6"), graph.PlayerTwoPosition, false},
+		{"Illegal", p("R2-C6"), p("R2-C7"), graph.PlayerTwoPosition, false},
+		{"Illegal", p("R6-C8"), p("R6-C7"), graph.PlayerTwoPosition, false},
+		{"Illegal", p("R7-C1"), p("R7-C2"), graph.PlayerTwoPosition, false},
+		{"Illegal", p("R5-C5"), p("R6-C5"), graph.PlayerTwoPosition, false},
+		{"Illegal", p("R0-C0"), p("R0-C1"), graph.PlayerTwoPosition, false},
+		{"Legal", p("R0-C0"), p("R1-C0"), graph.PlayerTwoPosition, true},
+		{"Position occupied", p("R4-C6"), p("R4-C5"), p("R4-C5"), false},
+		{"No relation at all", p("R0-C0"), p("R4-C5"), p("R4-C5"), false},
+		{"Simple skip", p("R2-C2"), p("R2-C4"), p("R2-C3"), true},
+		{"Skip with wall", p("R3-C5"), p("R4-C4"), p("R4-C5"), true},
+		{"Illegal skip through wall", p("R5-C7"), p("R5-C5"), p("R6-C5"), false},
 	}
 
 	for _, tt := range tests {
 
-		testname := fmt.Sprintf("%s-[%d,%d]->[%d,%d]", tt.name, tt.source.Column, tt.source.Row, tt.target.Column, tt.target.Row)
+		testname := fmt.Sprintf("%s-[R%d,C%d]->[R%d,C%d]", tt.name, tt.source.Row, tt.source.Column, tt.target.Row, tt.target.Column)
 		t.Run(testname, func(t *testing.T) {
 			isValid := graph.IsLegalMove(tt.source, tt.target, tt.opponentPosition)
 			if isValid != tt.want {
