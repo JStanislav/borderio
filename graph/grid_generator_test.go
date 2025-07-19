@@ -5,11 +5,14 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/JStanislav/quoridor-clone/player"
+	"github.com/JStanislav/quoridor-clone/utils"
 )
 
 func TestGenerateGrid(t *testing.T) {
 	graph := New()
-	err := graph.GenerateBoard(4, 4, GridPosition{Column: 1, Row: 0}, GridPosition{Column: 2, Row: 3})
+	err := graph.GenerateBoard(4, 4, utils.GridPosition{Column: 1, Row: 0}, utils.GridPosition{Column: 2, Row: 3})
 	if err != nil {
 		t.Error(err)
 	}
@@ -29,7 +32,8 @@ func TestGenerateGrid(t *testing.T) {
 		{3, 3, 2},
 	}
 
-	graph.PrintGrid(4, 4)
+	p1, p2 := player.Player{}, player.Player{}
+	graph.PrintGrid(4, 4, &p1, &p2)
 
 	for _, tt := range tests {
 
@@ -46,11 +50,13 @@ func TestGenerateGrid(t *testing.T) {
 
 func TestAddWall(t *testing.T) {
 	graph := New()
-	err := graph.GenerateBoard(4, 4, GridPosition{Column: 0, Row: 0}, GridPosition{Column: 3, Row: 3})
+	err := graph.GenerateBoard(4, 4, utils.GridPosition{Column: 0, Row: 0}, utils.GridPosition{Column: 3, Row: 3})
 	if err != nil {
 		t.Error(err)
 	}
-	graph.PrintGrid(4, 4)
+	p1 := player.Player{}
+	p2 := player.Player{}
+	graph.PrintGrid(4, 4, &p1, &p2)
 	err = graph.AddWall(0, 0, 0, 1)
 	if err != nil {
 		t.Error(err)
@@ -66,11 +72,13 @@ func TestAddWall(t *testing.T) {
 
 func TestPrintGrid(t *testing.T) {
 	graph := New()
-	err := graph.GenerateBoard(9, 9, GridPosition{Column: 4, Row: 0}, GridPosition{Column: 4, Row: 8})
+	err := graph.GenerateBoard(9, 9, utils.GridPosition{Column: 4, Row: 0}, utils.GridPosition{Column: 4, Row: 8})
 	if err != nil {
 		panic(err)
 	}
-	graph.PrintGrid(9, 9)
+	p1 := player.Player{}
+	p2 := player.Player{}
+	graph.PrintGrid(9, 9, &p1, &p2)
 }
 
 func TestLegalMoves(t *testing.T) {
@@ -104,19 +112,19 @@ func TestLegalMoves(t *testing.T) {
 
 	// a little helper so its more readable the test cases
 	// converts hashes to grid positions
-	// i.e. "R3-C6" -> GridPosition{Column: 6, Row: 3}
-	p := func(hash string) GridPosition {
+	// i.e. "R3-C6" -> utils.GridPosition{Column: 6, Row: 3}
+	p := func(hash string) utils.GridPosition {
 		strs := strings.Split(hash, "-")
 		strs[0], _ = strings.CutPrefix(strs[0], "R")
 		strs[1], _ = strings.CutPrefix(strs[1], "C")
 		c, _ := strconv.Atoi(strs[1])
 		r, _ := strconv.Atoi(strs[0])
-		return GridPosition{Column: c, Row: r}
+		return utils.GridPosition{Column: c, Row: r}
 	}
 
 	tests := []struct {
 		name                             string
-		source, target, opponentPosition GridPosition
+		source, target, opponentPosition utils.GridPosition
 		want                             bool
 	}{
 		{"Illegal", p("R3-C6"), p("R2-C6"), graph.PlayerTwoPosition, false},
@@ -147,7 +155,7 @@ func TestLegalMoves(t *testing.T) {
 
 func generateBasicBoard() *Graph {
 	graph := New()
-	err := graph.GenerateBoard(9, 9, GridPosition{Column: 4, Row: 0}, GridPosition{Column: 4, Row: 8})
+	err := graph.GenerateBoard(9, 9, utils.GridPosition{Column: 4, Row: 0}, utils.GridPosition{Column: 4, Row: 8})
 	if err != nil {
 		panic(err)
 	}

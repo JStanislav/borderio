@@ -4,25 +4,23 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/JStanislav/quoridor-clone/player"
+	"github.com/JStanislav/quoridor-clone/utils"
 	"github.com/dominikbraun/graph"
 )
 
+// TODO: add walls length (default should be 2, in this implementation is 1)
 type Board interface {
 	GenerateBoard(columns, rows int) error
 	AddWall(column1, row1, column2, row2 int) error
 	IsOccupied(column, row int) bool
-	IsLegalMove(source, target, opponentPosition GridPosition) bool
-}
-
-type GridPosition struct {
-	Column int
-	Row    int
+	IsLegalMove(source, target, opponentPosition utils.GridPosition) bool
 }
 
 type Graph struct {
 	Graph             graph.Graph[string, Cell]
-	PlayerOnePosition GridPosition
-	PlayerTwoPosition GridPosition
+	PlayerOnePosition utils.GridPosition
+	PlayerTwoPosition utils.GridPosition
 }
 
 func New() *Graph {
@@ -42,7 +40,7 @@ func CellHash(c Cell) string {
 	return fmt.Sprintf("C%d-R%d", c.Column, c.Row)
 }
 
-func (g *Graph) GenerateBoard(columns, rows int, playerOneStart, playerTwoStart GridPosition) error {
+func (g *Graph) GenerateBoard(columns, rows int, playerOneStart, playerTwoStart utils.GridPosition) error {
 	g.Graph = graph.New(CellHash)
 
 	for i := range rows {
@@ -124,7 +122,7 @@ func (g *Graph) IsOccupied(column, row int) (bool, error) {
 	return cell.IsOccupied, nil
 }
 
-func (g *Graph) IsLegalMove(source, target, opponentPosition GridPosition) bool {
+func (g *Graph) IsLegalMove(source, target, opponentPosition utils.GridPosition) bool {
 	// jugador intenta mover hacia una casilla ocupada
 	if target == opponentPosition {
 		return false
@@ -138,12 +136,12 @@ func (g *Graph) IsLegalMove(source, target, opponentPosition GridPosition) bool 
 	return g.IsAdjacent(source, target)
 }
 
-func (g *Graph) IsAdjacent(source, target GridPosition) bool {
+func (g *Graph) IsAdjacent(source, target utils.GridPosition) bool {
 	_, err := g.Graph.Edge(CellHash(Cell{Column: source.Column, Row: source.Row}), CellHash(Cell{Column: target.Column, Row: target.Row}))
 	return !errors.Is(err, graph.ErrEdgeNotFound)
 }
 
-func (g *Graph) PrintGrid(columns, rows int) {
+func (g *Graph) PrintGrid(columns, rows int, playerOne, playerTwo *player.Player) {
 	for i := range rows {
 		for j := range columns {
 			vertex, err := g.Graph.Vertex(CellHash(Cell{Row: i, Column: j}))
@@ -152,9 +150,9 @@ func (g *Graph) PrintGrid(columns, rows int) {
 				fmt.Printf("Vertex not found: %+v\n", err)
 			}
 			line := fmt.Sprintf("|%+v|", vertex.Id)
-			if g.PlayerOnePosition.Row == i && g.PlayerOnePosition.Column == j {
+			if playerOne.Position.Row == i && playerOne.Position.Column == j {
 				fmt.Printf("\x1b[37;40;%dm%-0s\x1b[37;9;m", 96, line)
-			} else if g.PlayerTwoPosition.Row == i && g.PlayerTwoPosition.Column == j {
+			} else if playerTwo.Position.Row == i && playerTwo.Position.Column == j {
 				fmt.Printf("\x1b[37;40;%dm%-0s\x1b[37;9;m", 91, line)
 			} else {
 				fmt.Printf("\x1b[37;40;%dm%-0s\x1b[37;9;m", 97, line)
