@@ -3,12 +3,28 @@ package player
 import "github.com/JStanislav/quoridor-clone/utils"
 
 type PlayerID int
+type PlayType int
+
+const (
+	InvalidPlayID PlayType = -1
+	PlayerMove             = iota + 1
+	WallPlacement
+)
+
+type Play struct {
+	PlayType   PlayType
+	Position   *utils.GridPosition
+	WallPlaced *utils.WallPosition
+}
+
+type OnPlayerPlay func(playerID PlayerID, play Play) error
 
 type Player struct {
 	ID       PlayerID
 	Name     string
 	Position utils.GridPosition
 
+	OnPlayerPlay OnPlayerPlay
 	// TODO: Add other player properties
 }
 

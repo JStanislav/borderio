@@ -102,9 +102,7 @@ func TestMain(t *testing.T) {
 }
 
 func TestMatch(t *testing.T) {
-	p1Channel := make(chan utils.GridPosition)
-	p2Channel := make(chan utils.GridPosition)
-	movesChannel := make(chan PlayerMovement)
+	movesChannel := make(chan player.Play)
 
 	p1StartPosition := utils.GridPosition{Column: 4, Row: 0}
 	p2StartPosition := utils.GridPosition{Column: 4, Row: 8}
@@ -115,7 +113,7 @@ func TestMatch(t *testing.T) {
 
 	gs := GameState{}
 
-	go gs.StartMatch(playerOne, playerTwo, p1Channel, p2Channel, movesChannel)
+	go gs.StartMatch(playerOne, playerTwo, movesChannel)
 	go receiveSelected(movesChannel)
 
 	time.Sleep(1 * time.Second)
@@ -123,14 +121,34 @@ func TestMatch(t *testing.T) {
 	g := gs.Board.(*graph.Graph)
 	g.PrintGrid(9, 9, playerOne, playerTwo)
 
-	p1Channel <- utils.GridPosition{Column: 4, Row: 1}
-	p2Channel <- utils.GridPosition{Column: 4, Row: 7}
+	plays := []struct {
+		player player.Player
+		play   player.Play
+	}{
+		{*playerOne, player.Play{PlayType: player.PlayerMove, Position: &utils.GridPosition{Column: 4, Row: 1}}},
+		{*playerTwo, player.Play{PlayType: player.PlayerMove, Position: &utils.GridPosition{Column: 4, Row: 7}}},
+		{*playerTwo, player.Play{PlayType: player.PlayerMove, Position: &utils.GridPosition{Column: 4, Row: 6}}},
+		{*playerTwo, player.Play{PlayType: player.PlayerMove, Position: &utils.GridPosition{Column: 4, Row: 6}}},
+		{*playerTwo, player.Play{PlayType: player.PlayerMove, Position: &utils.GridPosition{Column: 4, Row: 6}}},
+		{*playerTwo, player.Play{PlayType: player.PlayerMove, Position: &utils.GridPosition{Column: 4, Row: 6}}},
+		{*playerOne, player.Play{PlayType: player.PlayerMove, Position: &utils.GridPosition{Column: 4, Row: 2}}},
+		{*playerTwo, player.Play{PlayType: player.PlayerMove, Position: &utils.GridPosition{Column: 4, Row: 6}}},
+		{*playerOne, player.Play{PlayType: player.PlayerMove, Position: &utils.GridPosition{Column: 4, Row: 3}}},
+		{*playerTwo, player.Play{PlayType: player.PlayerMove, Position: &utils.GridPosition{Column: 4, Row: 5}}},
+		{*playerOne, player.Play{PlayType: player.PlayerMove, Position: &utils.GridPosition{Column: 4, Row: 4}}},
+		{*playerTwo, player.Play{PlayType: player.PlayerMove, Position: &utils.GridPosition{Column: 4, Row: 3}}},
+	}
 
-	time.Sleep(1 * time.Second)
-	g.PrintGrid(9, 9, playerOne, playerTwo)
+	for _, play := range plays {
+		if err := play.player.OnPlayerPlay(play.player.ID, play.play); err != nil {
+			fmt.Println("err", err)
+		}
+		time.Sleep(1500 * time.Millisecond)
+		g.PrintGrid(9, 9, playerOne, playerTwo)
+	}
 }
 
-func receiveSelected(ch <-chan PlayerMovement) {
+func receiveSelected(ch <-chan player.Play) {
 	for move := range ch {
 		fmt.Println("received", move)
 	}
