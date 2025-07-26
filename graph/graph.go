@@ -73,29 +73,27 @@ func (g *Graph) GenerateBoard(columns, rows int, playerOneStart, playerTwoStart 
 	}
 
 	// Creates edges
-	for i := range rows {
-		for j := range columns {
+	for i := range rows - 1 {
+		for j := range columns - 1 {
 			cell := Cell{
 				Column: j,
 				Row:    i,
 			}
-			// g.AddEdge(CellHash(cell), CellHash(Cell{Column: i + 1, Row: j}))
-			// g.AddEdge(CellHash(cell), CellHash(Cell{Column: i, Row: j + 1}))
-
-			// poor implementation both in permormance and readability i think, it should be reworked some time :=
-			if i <= rows-1 {
-				if err := g.Graph.AddEdge(CellHash(cell), CellHash(Cell{Row: i + 1, Column: j})); err != nil {
-					fmt.Println(err) //
-				}
+			if err := g.Graph.AddEdge(CellHash(cell), CellHash(Cell{Row: i + 1, Column: j})); err != nil {
+				fmt.Println(err)
 			}
-			if i == columns-2 && j < rows-1 {
-				// edge case, connecting the last column cells with the above cell
+			if err := g.Graph.AddEdge(CellHash(cell), CellHash(Cell{Row: i, Column: j + 1})); err != nil {
+				fmt.Println(err)
+			}
+
+			// Literally the border cases
+			if i == rows-2 {
 				if err := g.Graph.AddEdge(CellHash(Cell{Row: i + 1, Column: j}), CellHash(Cell{Row: i + 1, Column: j + 1})); err != nil {
 					fmt.Println(err)
 				}
 			}
-			if j <= columns-1 {
-				if err := g.Graph.AddEdge(CellHash(cell), CellHash(Cell{Row: i, Column: j + 1})); err != nil {
+			if j == columns-2 {
+				if err := g.Graph.AddEdge(CellHash(Cell{Row: i, Column: j + 1}), CellHash(Cell{Row: i + 1, Column: j + 1})); err != nil {
 					fmt.Println(err)
 				}
 			}
