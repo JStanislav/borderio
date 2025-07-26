@@ -153,6 +153,22 @@ func TestLegalMoves(t *testing.T) {
 	}
 }
 
+func BenchmarkLegalMoves(b *testing.B) {
+	g := generateBasicBoard()
+
+	for b.Loop() {
+		g.IsLegalMove(g.PlayerOnePosition, g.PlayerTwoPosition, g.PlayerTwoPosition)
+	}
+}
+
+func BenchmarkLegalMoves2(b *testing.B) {
+	g := generateBasicBoard()
+
+	for b.Loop() {
+		g.IsLegalMove2(g.PlayerOnePosition, g.PlayerTwoPosition)
+	}
+}
+
 func generateBasicBoard() *Graph {
 	graph := New()
 	err := graph.GenerateBoard(9, 9, utils.GridPosition{Column: 4, Row: 0}, utils.GridPosition{Column: 4, Row: 8})

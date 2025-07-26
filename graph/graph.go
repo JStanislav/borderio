@@ -15,6 +15,7 @@ type Board interface {
 	AddWall(column1, row1, column2, row2 int) error
 	IsOccupied(column, row int) (bool, error)
 	IsLegalMove(source, target, opponentPosition utils.GridPosition) bool
+	IsLegalMove2(source, target utils.GridPosition) bool
 }
 
 type Graph struct {
@@ -132,6 +133,19 @@ func (g *Graph) IsLegalMove(source, target, opponentPosition utils.GridPosition)
 	}
 
 	return g.IsAdjacent(source, target)
+}
+
+func (g *Graph) IsLegalMove2(source, target utils.GridPosition) bool {
+	occupied, err := g.IsOccupied(target.Column, target.Row)
+	if err != nil {
+		return false
+	}
+
+	if !occupied {
+		return g.IsAdjacent(source, target)
+	}
+
+	return false
 }
 
 func (g *Graph) IsAdjacent(source, target utils.GridPosition) bool {
