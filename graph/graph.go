@@ -9,10 +9,18 @@ import (
 	"github.com/dominikbraun/graph"
 )
 
+type WallType string
+
+const (
+	Horizontal WallType = "horizontal"
+	Vertical   WallType = "vertical"
+	Undefined  WallType = "undefined"
+)
+
 // TODO: add walls length (default should be 2, in this implementation is 1)
 type Board interface {
 	GenerateBoard(columns, rows int, playerOneStart, playerTwoStart utils.GridPosition) error
-	AddWall(column1, row1, column2, row2 int) error
+	AddWall(wallType WallType, start utils.WallPosition) error
 	IsOccupied(column, row int) (bool, error)
 	IsLegalMove(source, target, opponentPosition utils.GridPosition) bool
 	IsLegalMove2(source, target utils.GridPosition) bool
@@ -22,10 +30,11 @@ type Graph struct {
 	Graph             graph.Graph[string, Cell]
 	PlayerOnePosition utils.GridPosition
 	PlayerTwoPosition utils.GridPosition
+	wallLength        int
 }
 
-func New() *Graph {
-	return &Graph{}
+func New(wallLength int) *Graph {
+	return &Graph{wallLength: wallLength}
 }
 
 type Cell struct {
@@ -109,8 +118,101 @@ func (g *Graph) AdjacencyMap() (map[string]map[string]graph.Edge[string], error)
 	return g.Graph.AdjacencyMap()
 }
 
-func (g *Graph) AddWall(column1, row1, column2, row2 int) error {
-	return g.Graph.RemoveEdge(CellHash(Cell{Column: column1, Row: row1}), CellHash(Cell{Column: column2, Row: row2}))
+func (g *Graph) IsWallOccupied(position utils.WallPosition) bool {
+	hashA := CellHash(Cell{Column: position.CellA.Column, Row: position.CellA.Row})
+	hashB := CellHash(Cell{Column: position.CellB.Column, Row: position.CellB.Row})
+	_, err := g.Graph.Edge(hashA, hashB)
+	return errors.Is(err, graph.ErrEdgeNotFound)
+}
+
+func (g *Graph) AddWall(wallType WallType, start utils.WallPosition) error {
+	_g, err := g.Graph.Clone()
+	if err != nil {
+		return err
+	}
+	var errCreatingWall error
+
+	if wallType == Undefined {
+		// TODO: remove this crap
+		if start.CellA.Row == start.CellB.Row || start.CellA.Column != start.CellB.Column {
+			wallType = Vertical
+		}
+		if start.CellA.Column == start.CellB.Column || start.CellA.Row != start.CellB.Row {
+			wallType = Horizontal
+		}
+	}
+
+	if wallType == Horizontal {
+		if start.CellA.Row == start.CellB.Row || start.CellA.Column != start.CellB.Column {
+			return errors.New("wall is not horizontal")
+		}
+		end := start.CellA.Column + g.wallLength
+		for j := start.CellA.Column; j < end; j++ {
+
+			if j != end-1 {
+				// check if a wall is cut through
+				if g.IsWallOccupied(utils.WallPosition{CellA: utils.GridPosition{Column: j, Row: start.CellA.Row}, CellB: utils.GridPosition{Column: j + 1, Row: start.CellA.Row}}) &&
+					g.IsWallOccupied(utils.WallPosition{CellA: utils.GridPosition{Column: j, Row: start.CellB.Row}, CellB: utils.GridPosition{Column: j + 1, Row: start.CellB.Row}}) {
+
+					errCreatingWall = errors.New("wall is cut through")
+					str := fmt.Sprintf("j: %d, wallOccupied top: %t", j, g.IsWallOccupied(utils.WallPosition{CellA: utils.GridPosition{Column: j, Row: start.CellA.Row}, CellB: utils.GridPosition{Column: j + 1, Row: start.CellA.Row}}))
+					str2 := fmt.Sprintf("j: %d, wallOccupied bottom: %t", j, g.IsWallOccupied(utils.WallPosition{CellA: utils.GridPosition{Column: j, Row: start.CellB.Row}, CellB: utils.GridPosition{Column: j + 1, Row: start.CellB.Row}}))
+					fmt.Println(str)
+					fmt.Println(str2)
+
+				}
+			}
+
+			err := _g.RemoveEdge(CellHash(Cell{Column: j, Row: start.CellA.Row}), CellHash(Cell{Column: j, Row: start.CellB.Row}))
+			if err != nil {
+				errCreatingWall = err
+			}
+		}
+
+		if errCreatingWall != nil {
+			return fmt.Errorf("error creating wall: %s", errCreatingWall)
+		}
+
+		g.Graph = _g
+		return nil
+	}
+
+	if wallType == Vertical {
+		if start.CellA.Column == start.CellB.Column || start.CellA.Row != start.CellB.Row {
+			return errors.New("wall is not vertical")
+		}
+		end := start.CellA.Row + g.wallLength
+		for i := start.CellA.Row; i < end; i++ {
+
+			if i != end-1 {
+				// check if a wall is cut through
+				if g.IsWallOccupied(utils.WallPosition{CellA: utils.GridPosition{Row: i, Column: start.CellA.Column}, CellB: utils.GridPosition{Row: i + 1, Column: start.CellA.Column}}) &&
+					g.IsWallOccupied(utils.WallPosition{CellA: utils.GridPosition{Row: i, Column: start.CellB.Column}, CellB: utils.GridPosition{Row: i + 1, Column: start.CellB.Column}}) {
+
+					errCreatingWall = errors.New("wall is cut through")
+					str := fmt.Sprintf("i: %d, wallOccupied top: %t", i, g.IsWallOccupied(utils.WallPosition{CellA: utils.GridPosition{Row: i, Column: start.CellA.Column}, CellB: utils.GridPosition{Row: i + 1, Column: start.CellA.Column}}))
+					str2 := fmt.Sprintf("i: %d, wallOccupied bottom: %t", i, g.IsWallOccupied(utils.WallPosition{CellA: utils.GridPosition{Row: i, Column: start.CellB.Column}, CellB: utils.GridPosition{Row: i + 1, Column: start.CellB.Column}}))
+					fmt.Println(str)
+					fmt.Println(str2)
+
+				}
+			}
+
+			err := _g.RemoveEdge(CellHash(Cell{Row: i, Column: start.CellA.Column}), CellHash(Cell{Row: i, Column: start.CellB.Column}))
+			if err != nil {
+				errCreatingWall = err
+			}
+		}
+
+		if errCreatingWall != nil {
+			return fmt.Errorf("error creating wall: %s", errCreatingWall)
+		}
+
+		g.Graph = _g
+		return nil
+	}
+
+	return errors.New("unexpected")
 }
 
 func (g *Graph) IsOccupied(column, row int) (bool, error) {

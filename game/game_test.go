@@ -5,13 +5,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/JStanislav/quoridor-clone/graph"
+	g "github.com/JStanislav/quoridor-clone/graph"
 	"github.com/JStanislav/quoridor-clone/player"
 	"github.com/JStanislav/quoridor-clone/utils"
 )
 
 func TestMain(t *testing.T) {
-	graph := graph.New()
+	graph := g.New(2)
 	err := graph.GenerateBoard(9, 9, utils.GridPosition{Column: 4, Row: 0}, utils.GridPosition{Column: 4, Row: 8})
 	if err != nil {
 		panic(err)
@@ -31,7 +31,7 @@ func TestMain(t *testing.T) {
 		playerTwo.Position = p2Move
 	}
 
-	graph.AddWall(4, 1, 4, 2)
+	graph.AddWall(g.Horizontal, utils.WallPosition{CellA: utils.GridPosition{Column: 4, Row: 1}, CellB: utils.GridPosition{Column: 4, Row: 2}}) //4, 1, 4, 2
 	if graph.IsLegalMove(playerOne.Position, utils.GridPosition{Row: 2, Column: 4}, playerTwo.Position) {
 		playerOne.Position = p1Move
 	}
@@ -118,7 +118,7 @@ func TestMatch(t *testing.T) {
 
 	time.Sleep(1 * time.Second)
 
-	g := gs.Board.(*graph.Graph)
+	g := gs.Board.(*g.Graph)
 	g.PrintGrid(9, 9, playerOne, playerTwo)
 
 	plays := []struct {

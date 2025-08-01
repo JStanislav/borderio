@@ -11,7 +11,7 @@ import (
 )
 
 func TestGenerateGrid(t *testing.T) {
-	graph := New()
+	graph := New(1)
 	err := graph.GenerateBoard(4, 4, utils.GridPosition{Column: 1, Row: 0}, utils.GridPosition{Column: 2, Row: 3})
 	if err != nil {
 		t.Error(err)
@@ -48,8 +48,8 @@ func TestGenerateGrid(t *testing.T) {
 	}
 }
 
-func TestAddWall(t *testing.T) {
-	graph := New()
+func TestAddWallHorizontal(t *testing.T) {
+	graph := New(2)
 	err := graph.GenerateBoard(4, 4, utils.GridPosition{Column: 0, Row: 0}, utils.GridPosition{Column: 3, Row: 3})
 	if err != nil {
 		t.Error(err)
@@ -57,11 +57,11 @@ func TestAddWall(t *testing.T) {
 	p1 := player.Player{}
 	p2 := player.Player{}
 	graph.PrintGrid(4, 4, &p1, &p2)
-	err = graph.AddWall(0, 0, 0, 1)
+	err = graph.AddWall(Horizontal, utils.WallPosition{CellA: utils.GridPosition{Column: 0, Row: 0}, CellB: utils.GridPosition{Column: 0, Row: 1}}) // (0, 0, 0, 1)
 	if err != nil {
 		t.Error(err)
 	}
-	err = graph.AddWall(0, 0, 1, 0)
+	err = graph.AddWall(Horizontal, utils.WallPosition{CellA: utils.GridPosition{Column: 2, Row: 0}, CellB: utils.GridPosition{Column: 2, Row: 1}})
 	if err != nil {
 		t.Error(err)
 	}
@@ -70,8 +70,20 @@ func TestAddWall(t *testing.T) {
 	fmt.Println("Added wall", adjacencyMap[CellHash(Cell{Column: 0, Row: 0})])
 }
 
+func TestAddWallVertical(t *testing.T) {
+	g := New(2)
+	g.GenerateBoard(9, 9, utils.GridPosition{Column: 4, Row: 0}, utils.GridPosition{Column: 4, Row: 8})
+	if err := g.AddWall(Vertical, utils.WallPosition{CellA: utils.GridPosition{Column: 5, Row: 2}, CellB: utils.GridPosition{Column: 6, Row: 2}}); err != nil {
+		t.Error(err)
+	}
+	if err := g.AddWall(Vertical, utils.WallPosition{CellA: utils.GridPosition{Column: 5, Row: 4}, CellB: utils.GridPosition{Column: 6, Row: 4}}); err != nil {
+		t.Error(err)
+	}
+
+}
+
 func TestPrintGrid(t *testing.T) {
-	graph := New()
+	graph := New(1)
 	err := graph.GenerateBoard(9, 9, utils.GridPosition{Column: 4, Row: 0}, utils.GridPosition{Column: 4, Row: 8})
 	if err != nil {
 		panic(err)
@@ -82,13 +94,13 @@ func TestPrintGrid(t *testing.T) {
 }
 
 func TestLegalMoves(t *testing.T) {
-	graph := generateBasicBoard()
-	graph.AddWall(6, 3, 6, 2)
-	graph.AddWall(6, 2, 7, 2)
-	graph.AddWall(8, 6, 7, 6)
-	graph.AddWall(1, 7, 2, 7)
-	graph.AddWall(5, 5, 5, 6)
-	graph.AddWall(0, 0, 1, 0)
+	graph := generateBasicBoard(1)
+	graph.AddWall(Horizontal, utils.WallPosition{CellA: utils.GridPosition{Column: 6, Row: 3}, CellB: utils.GridPosition{Column: 6, Row: 2}}) // (6, 3, 6, 2)
+	graph.AddWall(Horizontal, utils.WallPosition{CellA: utils.GridPosition{Column: 6, Row: 2}, CellB: utils.GridPosition{Column: 7, Row: 2}}) // (6, 2, 7, 2)
+	graph.AddWall(Horizontal, utils.WallPosition{CellA: utils.GridPosition{Column: 8, Row: 6}, CellB: utils.GridPosition{Column: 7, Row: 6}}) // (8, 6, 7, 6)
+	graph.AddWall(Horizontal, utils.WallPosition{CellA: utils.GridPosition{Column: 1, Row: 7}, CellB: utils.GridPosition{Column: 2, Row: 7}}) //1, 7, 2, 7
+	graph.AddWall(Horizontal, utils.WallPosition{CellA: utils.GridPosition{Column: 5, Row: 5}, CellB: utils.GridPosition{Column: 5, Row: 6}}) //5, 5, 5, 6)
+	graph.AddWall(Horizontal, utils.WallPosition{CellA: utils.GridPosition{Column: 0, Row: 0}, CellB: utils.GridPosition{Column: 1, Row: 0}}) // (0, 0, 1, 0)
 	/*
 		|R0-C0░R0-C1░R0-C2░|R0-C3░R0-C4░R0-C5░R0-C6░R0-C7░R0-C8|
 		░░░░░░█░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
@@ -154,7 +166,7 @@ func TestLegalMoves(t *testing.T) {
 }
 
 func BenchmarkLegalMoves(b *testing.B) {
-	g := generateBasicBoard()
+	g := generateBasicBoard(1)
 
 	for b.Loop() {
 		g.IsLegalMove(g.PlayerOnePosition, g.PlayerTwoPosition, g.PlayerTwoPosition)
@@ -162,15 +174,15 @@ func BenchmarkLegalMoves(b *testing.B) {
 }
 
 func BenchmarkLegalMoves2(b *testing.B) {
-	g := generateBasicBoard()
+	g := generateBasicBoard(1)
 
 	for b.Loop() {
 		g.IsLegalMove2(g.PlayerOnePosition, g.PlayerTwoPosition)
 	}
 }
 
-func generateBasicBoard() *Graph {
-	graph := New()
+func generateBasicBoard(wallLength int) *Graph {
+	graph := New(wallLength)
 	err := graph.GenerateBoard(9, 9, utils.GridPosition{Column: 4, Row: 0}, utils.GridPosition{Column: 4, Row: 8})
 	if err != nil {
 		panic(err)
