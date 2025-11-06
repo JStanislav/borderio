@@ -1,0 +1,23 @@
+.board {
+    width: 500px;
+    background-color: rgb(170, 159, 154);
+}
+
+.row-full-container {
+    display:flex;
+}
+.row-wall-container {
+    display:flex
+}
+
+.blank {
+    background-color: black;
+}
+
+.square {
+    background-color: orange;
+}
+
+.wall {
+    background-color: white;
+}
