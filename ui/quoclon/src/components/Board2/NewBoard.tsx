@@ -12,9 +12,15 @@ export const Board2 = () => {
         <div className="board">
             {board.map((row, indexRow) => 
                 <div key={`row-${indexRow}`} className={row.type === "Full" ? "row-full-container" : "row-wall-container"}>
-                    {row.cells.map((cell, indexCol) => 
-                        <div id={cell.id} key={cell.id} className={classes[cell.type]}>
-                            {cell.type}
+                    {row.cells.map((cell, colIdx) => 
+                        <div 
+                            id={cell.id} key={cell.id}
+                            className={`
+                                ${classes[cell.type]} \
+                                ${(colIdx % 2) === 0 ? "narrow-col" : "wide-col"} \
+                                ${cell.fillType ? "filled " + cell.fillType : ""}
+                            `}
+                        >
                         </div>
                     )}
                 </div>

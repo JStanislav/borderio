@@ -1,23 +1,82 @@
 .board {
     width: 500px;
-    background-color: rgb(170, 159, 154);
+    background-color: #aa9f9a;
 }
 
 .row-full-container {
     display:flex;
+    height: 40px;
 }
 .row-wall-container {
-    display:flex
+    display:flex;
+    height: 13px;
+}
+
+.wide-col {
+    min-width: 40px;
+}
+
+.narrow-col {
+    min-width: 13px;
 }
 
 .blank {
-    background-color: black;
+    background-color: #aa9f9a;
 }
 
 .square {
     background-color: orange;
+    border-radius: 8px;
 }
 
 .wall {
+    background-color: #aa9f9a;
+}
+
+.filled {
+    box-sizing: border-box;
+
     background-color: white;
+}
+
+.horizontal-start {
+    border-left: 1px solid black;
+    border-top: 1px solid black;
+    border-bottom: 1px solid black;
+    border-top-left-radius: 4px;
+    border-bottom-left-radius: 4px;
+}
+
+.horizontal-end {
+    border-right: 1px solid black;
+    border-top: 1px solid black;
+    border-bottom: 1px solid black;
+    border-bottom-right-radius: 4px;
+    border-top-right-radius: 4px;
+}
+
+.horizontal-middle {
+    border-top: 1px solid black;
+    border-bottom: 1px solid black;
+}
+
+.vertical-start {
+    border-left: 1px solid black;
+    border-right: 1px solid black;
+    border-top: 1px solid black;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+}
+
+.vertical-middle {
+    border-left: 1px solid black;
+    border-right: 1px solid black;
+}
+
+.vertical-end {
+    border-left: 1px solid black;
+    border-right: 1px solid black;
+    border-bottom: 1px solid black;
+    border-bottom-left-radius: 4px;
+    border-bottom-right-radius: 4px;
 }
