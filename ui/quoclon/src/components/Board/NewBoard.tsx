@@ -1,5 +1,5 @@
 import { board } from "../../board.type"
-import "./board2.css"
+import "./board.css"
 
 const classes = {
     Blank: "blank",
@@ -7,7 +7,7 @@ const classes = {
     Wall: "wall"
 }
 
-export const Board2 = () => {
+export const Board = () => {
     return (
         <div className="board">
             {board.map((row, indexRow) => 

@@ -80,4 +80,4 @@ setWall(board, 1, 4, 2)
 setWall(board, 13, 4, 2)
 setWall(board, 3, 6, 2)
 
-
+setWall(board, 12, 15, 2)
