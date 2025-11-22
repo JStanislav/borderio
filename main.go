@@ -2,36 +2,42 @@ package main
 
 import (
 	"fmt"
-	"net"
+	"log"
+	"net/http"
+
+	"github.com/gorilla/websocket"
 )
 
-func handleConnection(conn net.Conn) {
-	fmt.Printf("New connection from %s\n", conn.RemoteAddr().String())
-	input := make([]byte, 1024)
-	n, err := conn.Read(input)
+var upgrader = websocket.Upgrader{}
+
+func handle(w http.ResponseWriter, r *http.Request) {
+	c, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		fmt.Printf("[ERROR] reading: %v\n", err)
+		fmt.Printf("[ERROR] error upgrading, %s\n", err)
+		return
 	}
-	fmt.Printf("Reading n: %d\n", n)
-	fmt.Printf("Message: %s\n", input[:n])
+	defer c.Close()
 
-	conn.Write([]byte("Hello from the server"))
+	for {
+		mt, message, err := c.ReadMessage()
+		if err != nil {
+			fmt.Printf("[ERROR] error reading message, %s\n", err)
+			break
+		}
 
-	conn.Close()
+		fmt.Printf("received %s\n", message)
+		err = c.WriteMessage(mt, []byte("pong"))
+		if err != nil {
+			fmt.Printf("[ERROR] error writing message, %s\n", err)
+			break
+		}
+	}
 }
 
 func main() {
 	fmt.Println("Hello World")
 
-	ln, err := net.Listen("tcp", ":8080")
-	if err != nil {
-		// handle error
-	}
-	for {
-		conn, err := ln.Accept()
-		if err != nil {
-			// handle error
-		}
-		go handleConnection(conn)
-	}
+	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
+	http.HandleFunc("/", handle)
+	log.Fatal(http.ListenAndServe("localhost:8080", nil))
 }
