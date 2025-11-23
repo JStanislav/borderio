@@ -13,6 +13,7 @@ export const connect = () => {
     })
 
     websocket.addEventListener("message", (ev) => {
+        console.log("message arrived");
         console.log(ev.data);
     })
 }

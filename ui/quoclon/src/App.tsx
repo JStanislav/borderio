@@ -11,6 +11,7 @@ function App() {
 
   const sendData = () => {
     // sends data to server
+    console.log("sending data")
     send("hello", "world");
   }
 
