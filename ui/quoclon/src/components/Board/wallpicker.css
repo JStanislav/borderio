@@ -1,0 +1,31 @@
+
+.wall-to-be-picked-top {
+    height: 93px;
+    width: 40px;
+    background-color: white;
+    border: 1px solid black;
+    border-radius: 4px;
+}
+
+.wall-to-be-picked {
+    width: 3px;
+    border-top-right-radius: 3px;
+    border-bottom-right-radius: 3px;
+    background-color: white;
+    border: 1.5px solid black;
+    border-left: transparent;
+
+}
+
+.wall-picker {
+    display: flex;
+    flex-direction: row;
+}
+
+.top-position {
+    align-self: flex-start;
+}
+
+.bottom-position {
+    align-self: flex-end;
+}

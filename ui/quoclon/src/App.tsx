@@ -1,5 +1,5 @@
 import './App.css'
-import { Board } from './components/Board/NewBoard'
+import { GameFrame } from './Gameframe';
 import { connect, send } from './server-conn';
 
 function App() {
@@ -18,7 +18,7 @@ function App() {
   return (
     <div style={{display: "flex", flexDirection: "column", alignItems: "center"}}>      
       <h1>Quoridor</h1>
-      <Board />
+      <GameFrame />
       <button onClick={startConnection}>Start connection</button>
       <button onClick={sendData}>Send data</button>
     </div>
