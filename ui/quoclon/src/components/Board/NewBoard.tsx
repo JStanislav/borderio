@@ -20,6 +20,30 @@ type Player = {
     }
 }
 
+const onDrop = (ev: React.DragEvent<HTMLDivElement>, rowEnd: number, colEnd: number) => {
+    ev.preventDefault();
+    const row = ev.dataTransfer.getData("row");
+    const col = ev.dataTransfer.getData("col");
+    console.log("data start", { row: parseInt(row), col: parseInt(col) });
+    console.log("data end", { rowEnd, colEnd });
+    console.log("dropped");
+}
+
+const onDragOver = (ev: React.DragEvent<HTMLDivElement>) => {
+    ev.preventDefault();
+    ev.dataTransfer.dropEffect = "move";
+}
+
+const onDragStart = (ev: React.DragEvent<HTMLImageElement>, row: number, col: number) => {
+    console.log("drag start")
+    ev.dataTransfer.setData("row", row.toString())
+    ev.dataTransfer.setData("col", col.toString());
+}
+
+const isDraggable = (row: number, col: number) => {
+    return (row % 2 !== 0) && (col % 2 !== 0);
+}
+
 export const Board = ({players}: {players: Players}) => {
     return (
         <div className="board">
@@ -33,10 +57,19 @@ export const Board = ({players}: {players: Players}) => {
                                 ${(colIdx % 2) === 0 ? "narrow-col" : "wide-col"} \
                                 ${cell.fillType ? "filled " + cell.fillType : ""}
                             `}
+                            
+                            onDrop={e => onDrop(e, indexRow, colIdx)}
+                            onDragOver={isDraggable(indexRow, colIdx) ? onDragOver : undefined}
                         >
                             {players.map(player => 
                                 (player.position.row === indexRow && player.position.col === colIdx) ? (
-                                    <img src={player.id === 1 ? playerOne : playerTwo} alt={player.name} />
+                                    <img
+                                        className="img-player"
+                                        src={player.id === 1 ? playerOne : playerTwo} 
+                                        alt={player.name}
+                                        draggable
+                                        onDragStart={e => onDragStart(e, indexRow, colIdx)}
+                                    />
                                 ) : null
                             )}
                         </div>
