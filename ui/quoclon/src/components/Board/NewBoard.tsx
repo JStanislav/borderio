@@ -1,5 +1,7 @@
 import { board } from "../../board.type"
 import "./board.css"
+import playerTwo from  "../../assets/players/player_one.png"
+import playerOne from "../../assets/players/player_two.png"
 
 const classes = {
     Blank: "blank",
@@ -7,7 +9,18 @@ const classes = {
     Wall: "wall"
 }
 
-export const Board = () => {
+type Players = Player[]
+
+type Player = {
+    id: number,
+    name: string,
+    position: {
+        row: number,
+        col: number
+    }
+}
+
+export const Board = ({players}: {players: Players}) => {
     return (
         <div className="board">
             {board.map((row, indexRow) => 
@@ -21,6 +34,11 @@ export const Board = () => {
                                 ${cell.fillType ? "filled " + cell.fillType : ""}
                             `}
                         >
+                            {players.map(player => 
+                                (player.position.row === indexRow && player.position.col === colIdx) ? (
+                                    <img src={player.id === 1 ? playerOne : playerTwo} alt={player.name} />
+                                ) : null
+                            )}
                         </div>
                     )}
                 </div>
