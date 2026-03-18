@@ -21,6 +21,13 @@ type Message struct {
 		Row int `json:"row"`
 		Col int `json:"col"`
 	} `json:"target"`
+	WallTarget WallTargetMessage `json:"wallTarget"`
+}
+
+type WallTargetMessage struct {
+	CellA       PositionMessage `json:"cellA"`
+	CellB       PositionMessage `json:"cellB"`
+	Orientation string          `json:"orientation"` // "horizontal" or "vertical"
 }
 
 type PositionMessage struct {
@@ -35,9 +42,10 @@ type PlayerMessage struct {
 }
 
 type GameStateStateMessage struct {
-	Type      string        `json:"type"`
-	PlayerOne PlayerMessage `json:"playerOne"`
-	PlayerTwo PlayerMessage `json:"playerTwo"`
+	Type      string               `json:"type"`
+	PlayerOne PlayerMessage        `json:"playerOne"`
+	PlayerTwo PlayerMessage        `json:"playerTwo"`
+	Walls     []utils.WallPosition `json:"walls"`
 }
 
 func sendGameState(c *websocket.Conn, gameState *game.GameState, p1, p2 *player.Player) {
@@ -54,6 +62,7 @@ func sendGameState(c *websocket.Conn, gameState *game.GameState, p1, p2 *player.
 			Position: PositionMessage{Row: p2.Position.Row, Col: p2.Position.Column},
 		},
 	}
+	gameStateMessage.Walls = gameState.Board.GetWalls()
 
 	if err := c.WriteJSON(gameStateMessage); err != nil {
 		fmt.Printf("[ERROR] error sending game state, %s\n", err)
@@ -113,6 +122,23 @@ func handle(w http.ResponseWriter, r *http.Request) {
 			err = p.OnPlayerPlay(player.PlayerID(p.ID), player.Play{PlayType: player.PlayerMove, Position: &utils.GridPosition{Row: o.Target.Row, Column: o.Target.Col}})
 			if err != nil {
 				fmt.Printf("[ERROR] error processing player move, %s\n", err)
+				continue
+			}
+		case "wallPlacement":
+			fmt.Printf("Player %d wants to place a wall between [R%d-C%d] and [R%d-C%d] with orientation %s\n", o.PlayerId, o.WallTarget.CellA.Row, o.WallTarget.CellA.Col, o.WallTarget.CellB.Row, o.WallTarget.CellB.Col, o.WallTarget.Orientation)
+			var p *player.Player
+			switch o.PlayerId {
+			case 1:
+				p = p1
+			case 2:
+				p = p2
+			default:
+				fmt.Printf("[ERROR] invalid player ID: %d\n", o.PlayerId)
+				continue
+			}
+			err = p.OnPlayerPlay(player.PlayerID(p.ID), player.Play{PlayType: player.WallPlacement, WallPlaced: &utils.WallPosition{CellA: utils.GridPosition{Row: o.WallTarget.CellA.Row, Column: o.WallTarget.CellA.Col}, CellB: utils.GridPosition{Row: o.WallTarget.CellB.Row, Column: o.WallTarget.CellB.Col}}})
+			if err != nil {
+				fmt.Printf("[ERROR] error processing wall placement, %s\n", err)
 				continue
 			}
 		}

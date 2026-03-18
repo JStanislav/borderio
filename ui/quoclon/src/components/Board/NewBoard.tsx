@@ -1,4 +1,4 @@
-import { board } from "../../board.type"
+import { board, TOTAL_BOARD_DIM } from "../../board.type"
 import "./board.css"
 import playerTwo from  "../../assets/players/player_one.png"
 import playerOne from "../../assets/players/player_two.png"
@@ -37,7 +37,38 @@ const isDraggable = (row: number, col: number) => {
     return (row % 2 !== 0) && (col % 2 !== 0);
 }
 
-export const Board = ({players, requestPlayerMove}: {players: Players, requestPlayerMove: (playerId: number, row: number, col: number) => void}) => {
+const isVerticalCell = (cellId: number, totalBoardDim: number) => {
+    return (cellId % (2*totalBoardDim) ) >= totalBoardDim 
+}
+
+
+interface Props {
+    players: Players,
+    requestPlayerMove: (playerId: number, row: number, col: number) => void,
+    requestWallPlacement: (playerId: number, row: number, col: number, orientation: "horizontal" | "vertical") => void
+}
+
+export const Board = ({players, requestPlayerMove, requestWallPlacement}: Props) => {
+
+    const onClick = (ev: React.MouseEvent<HTMLDivElement>) => {
+        const cellId = Number(ev.currentTarget.id.split("-")[1]);
+
+        if (!cellId) return;
+        if (cellId % 2 === 0) return; // only allow clicking on wall placeable cells
+
+        const isVertical = isVerticalCell(cellId, TOTAL_BOARD_DIM);
+
+        if(isVertical) {
+            console.log("clicked vertical cell", cellId);
+        } else {
+            console.log("clicked horizontal cell", cellId);
+        }
+        
+        requestWallPlacement(1, 
+            Math.floor(cellId / TOTAL_BOARD_DIM),
+            (cellId % TOTAL_BOARD_DIM), 
+            isVertical ? "vertical" : "horizontal");
+    }
 
     const onDrop = (ev: React.DragEvent<HTMLDivElement>, rowEnd: number, colEnd: number) => {
         ev.preventDefault();
@@ -62,6 +93,8 @@ export const Board = ({players, requestPlayerMove}: {players: Players, requestPl
                                 ${(colIdx % 2) === 0 ? "narrow-col" : "wide-col"} \
                                 ${cell.fillType ? "filled " + cell.fillType : ""}
                             `}
+
+                            onClick={onClick}
                             
                             onDrop={e => onDrop(e, indexRow, colIdx)}
                             onDragOver={isDraggable(indexRow, colIdx) ? onDragOver : undefined}

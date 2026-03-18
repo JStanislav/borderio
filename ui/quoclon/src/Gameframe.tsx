@@ -18,6 +18,44 @@ const translateGridPositionToClient = (s_row: number, s_col: number) => {
     }
 }
 
+interface s_Position {
+    row: number,
+    col: number
+}
+
+interface s_WallTarget {
+    cellA: s_Position,
+    cellB: s_Position,
+}
+
+const translateWallGridPositionToServer = (row: number, col: number, orientation: "horizontal" | "vertical"): s_WallTarget  => {
+    const positions = translateGridPositionToServer(row, col);
+    if (orientation === "horizontal") {
+        return {
+            cellA: {
+                row: positions.s_row,
+                col: positions.s_col
+            },
+            cellB: {
+                row: positions.s_row -1,
+                col: positions.s_col
+            }
+        }
+    } else {
+        return {
+            cellA: {
+                row: positions.s_row,
+                col: positions.s_col
+            },
+            cellB: {
+                row: positions.s_row,
+                col: positions.s_col -1
+            }
+        }
+
+}
+}
+
 export const GameFrame = ({ gameState }: { gameState: GameState }) => {
     let p1Position = translateGridPositionToClient(gameState.playerOne.position.row, gameState.playerOne.position.col);
     let p2Position = translateGridPositionToClient(gameState.playerTwo.position.row, gameState.playerTwo.position.col);
@@ -47,10 +85,18 @@ export const GameFrame = ({ gameState }: { gameState: GameState }) => {
         send(type, { playerId, target });
     }
 
+    const requestWallPlacement = (playerId: number, row: number, col: number, orientation: "horizontal" | "vertical") => {
+        const wallPositions = translateWallGridPositionToServer(row, col, orientation);
+        const type = "wallPlacement";
+        const wallTarget = { cellA: { row: wallPositions.cellA.row, col: wallPositions.cellA.col }, cellB: { row: wallPositions.cellB.row, col: wallPositions.cellB.col }, orientation };
+        console.log("requesting wall placement with target", wallTarget);
+        send(type, { playerId, wallTarget: wallTarget });
+    }
+
     return (
         <div className="game-frame">
             <WallPicker walls={9} position="top"/>
-            <Board players={players} requestPlayerMove={requestPlayerMove}/>
+            <Board players={players} requestPlayerMove={requestPlayerMove} requestWallPlacement={requestWallPlacement}/>
             <WallPicker walls={9} position="bottom"/>
         </div>
     )

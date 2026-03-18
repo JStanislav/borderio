@@ -17,19 +17,20 @@ const (
 	Undefined  WallType = "undefined"
 )
 
-// TODO: add walls length (default should be 2, in this implementation is 1)
 type Board interface {
 	GenerateBoard(columns, rows int, playerOneStart, playerTwoStart utils.GridPosition) error
 	AddWall(wallType WallType, start utils.WallPosition) error
 	IsOccupied(column, row int) (bool, error)
 	IsLegalMove(source, target, opponentPosition utils.GridPosition) bool
 	IsLegalMove2(source, target utils.GridPosition) bool
+	GetWalls() []utils.WallPosition
 }
 
 type Graph struct {
 	Graph             graph.Graph[string, Cell]
 	PlayerOnePosition utils.GridPosition
 	PlayerTwoPosition utils.GridPosition
+	Walls             []utils.WallPosition
 	wallLength        int
 }
 
@@ -173,8 +174,6 @@ func (g *Graph) AddWall(wallType WallType, start utils.WallPosition) error {
 			return fmt.Errorf("error creating wall: %s", errCreatingWall)
 		}
 
-		g.Graph = _g
-		return nil
 	}
 
 	if wallType == Vertical {
@@ -208,11 +207,11 @@ func (g *Graph) AddWall(wallType WallType, start utils.WallPosition) error {
 			return fmt.Errorf("error creating wall: %s", errCreatingWall)
 		}
 
-		g.Graph = _g
-		return nil
 	}
 
-	return errors.New("unexpected")
+	g.Walls = append(g.Walls, utils.WallPosition{CellA: start.CellA, CellB: start.CellB})
+	g.Graph = _g
+	return nil
 }
 
 func (g *Graph) IsOccupied(column, row int) (bool, error) {
@@ -248,6 +247,11 @@ func (g *Graph) IsLegalMove2(source, target utils.GridPosition) bool {
 	}
 
 	return false
+}
+
+func (g *Graph) GetWalls() []utils.WallPosition {
+	// Implementation for getting walls
+	return g.Walls
 }
 
 func (g *Graph) IsAdjacent(source, target utils.GridPosition) bool {

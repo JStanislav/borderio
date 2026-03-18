@@ -1,11 +1,11 @@
 package utils
 
 type GridPosition struct {
-	Column int
-	Row    int
+	Column int `json:"column"`
+	Row    int `json:"row"`
 }
 
 type WallPosition struct {
-	CellA GridPosition
-	CellB GridPosition
+	CellA GridPosition `json:"cellA"`
+	CellB GridPosition `json:"cellB"`
 }

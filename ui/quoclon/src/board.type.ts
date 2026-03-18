@@ -15,7 +15,7 @@ export interface Cell {
 }
 
 const BOARD_DIM = 9
-const TOTAL_BOARD_DIM = BOARD_DIM * 2 + 1
+export const TOTAL_BOARD_DIM = BOARD_DIM * 2 + 1
 
 export const board: Array<Row> = Array.from({length: BOARD_DIM * 2 + 1}, (_, row) => {
     const cells: Array<Cell> = Array.from({length: BOARD_DIM * 2 + 1}, (_, col) => {
