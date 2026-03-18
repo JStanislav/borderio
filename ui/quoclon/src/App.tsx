@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import './App.css'
 import { GameFrame } from './Gameframe';
-import { connect, send } from './server-conn';
+import { connect } from './server-conn';
 
 export interface GameState {
   type: string,
@@ -58,18 +58,11 @@ function App() {
     connect(onMessage);
   }
 
-  const sendData = () => {
-    // sends data to server
-    console.log("sending data")
-    send("hello", "world");
-  }
-
   return (
     <div style={{display: "flex", flexDirection: "column", alignItems: "center"}}>      
       <h1>Quoridor</h1>
       <GameFrame gameState={gameState}/>
       <button onClick={startConnection}>Start connection</button>
-      <button onClick={sendData}>Send data</button>
     </div>
   )
 }
