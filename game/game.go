@@ -16,11 +16,15 @@ type GameState struct {
 	CurrentTurn player.PlayerID
 }
 
+func New() *GameState {
+	return &GameState{}
+}
+
 /*
 We receive player moves from the channels and send them to the movements channel
 If a player makes an illegal move, we send a nil to the movements channel
 */
-func (g *GameState) StartMatch(playerOne, playerTwo *player.Player, movements chan<- player.Play) {
+func (g *GameState) StartMatch(playerOne, playerTwo *player.Player, movements chan player.Play) {
 	g.Board = graph.New(2)
 	p1StartPosition := utils.GridPosition{Column: 4, Row: 0}
 	p2StartPosition := utils.GridPosition{Column: 4, Row: 8}
@@ -30,6 +34,9 @@ func (g *GameState) StartMatch(playerOne, playerTwo *player.Player, movements ch
 	g.StartTime = new(time.Time)
 	*g.StartTime = time.Now()
 	g.CurrentTurn = playerOne.ID
+
+	playerOne.Position = p1StartPosition
+	playerTwo.Position = p2StartPosition
 
 	playerOne.OnPlayerPlay = func(playerID player.PlayerID, play player.Play) error {
 		switch play.PlayType {

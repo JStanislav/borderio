@@ -1,7 +1,7 @@
 const wsURI = "ws://localhost:8080";
 let websocket: WebSocket
 
-export const connect = () => {
+export const connect = (onMessage: (ev: MessageEvent) => void) => {
     websocket = new WebSocket(wsURI);
     
     websocket.addEventListener("open", () => {
@@ -13,14 +13,13 @@ export const connect = () => {
     })
 
     websocket.addEventListener("message", (ev) => {
-        console.log("message arrived");
-        console.log(ev.data);
+        onMessage(ev)
     })
 }
 
-export const send = (name:string, data:string) => {
+export const send = (name:string, data:any) => {
     if (websocket != null) {
-        websocket.send(JSON.stringify({name, data}));
+        websocket.send(JSON.stringify({type: name, ...data}));
     }
 }
 
