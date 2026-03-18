@@ -96,18 +96,18 @@ func TestPrintGrid(t *testing.T) {
 func TestLegalMoves(t *testing.T) {
 	graph := generateBasicBoard(1)
 	graph.AddWall(Horizontal, utils.WallPosition{CellA: utils.GridPosition{Column: 6, Row: 3}, CellB: utils.GridPosition{Column: 6, Row: 2}}) // (6, 3, 6, 2)
-	graph.AddWall(Horizontal, utils.WallPosition{CellA: utils.GridPosition{Column: 6, Row: 2}, CellB: utils.GridPosition{Column: 7, Row: 2}}) // (6, 2, 7, 2)
-	graph.AddWall(Horizontal, utils.WallPosition{CellA: utils.GridPosition{Column: 8, Row: 6}, CellB: utils.GridPosition{Column: 7, Row: 6}}) // (8, 6, 7, 6)
-	graph.AddWall(Horizontal, utils.WallPosition{CellA: utils.GridPosition{Column: 1, Row: 7}, CellB: utils.GridPosition{Column: 2, Row: 7}}) //1, 7, 2, 7
+	graph.AddWall(Vertical, utils.WallPosition{CellA: utils.GridPosition{Column: 6, Row: 2}, CellB: utils.GridPosition{Column: 7, Row: 2}})   // (6, 2, 7, 2)
+	graph.AddWall(Vertical, utils.WallPosition{CellA: utils.GridPosition{Column: 8, Row: 6}, CellB: utils.GridPosition{Column: 7, Row: 6}})   // (8, 6, 7, 6)
+	graph.AddWall(Vertical, utils.WallPosition{CellA: utils.GridPosition{Column: 1, Row: 7}, CellB: utils.GridPosition{Column: 2, Row: 7}})   //1, 7, 2, 7
 	graph.AddWall(Horizontal, utils.WallPosition{CellA: utils.GridPosition{Column: 5, Row: 5}, CellB: utils.GridPosition{Column: 5, Row: 6}}) //5, 5, 5, 6)
-	graph.AddWall(Horizontal, utils.WallPosition{CellA: utils.GridPosition{Column: 0, Row: 0}, CellB: utils.GridPosition{Column: 1, Row: 0}}) // (0, 0, 1, 0)
+	graph.AddWall(Vertical, utils.WallPosition{CellA: utils.GridPosition{Column: 0, Row: 0}, CellB: utils.GridPosition{Column: 1, Row: 0}})   // (0, 0, 1, 0)
 	/*
 		|R0-C0░R0-C1░R0-C2░|R0-C3░R0-C4░R0-C5░R0-C6░R0-C7░R0-C8|
 		░░░░░░█░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 		|R1-C0░R1-C1░R1-C2░|R1-C3░R1-C4░R1-C5░R1-C6░R1-C7░R1-C8|
 		░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-		|R2-C0░R2-C1░R2-C2░|R2-C3░R2-C4░R2-C5░R2-C6░R2-C7░R2-C8|
-		░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░█████░█████░░░░░░░
+		|R2-C0░R2-C1░R2-C2░|R2-C3░R2-C4░R2-C5░R2-C6█R2-C7░R2-C8|
+		░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░█████░░░░░░░░░░░░░
 		|R3-C0░R3-C1░R3-C2░|R3-C3░R3-C4░R3-C5░R3-C6░R3-C7░R3-C8|
 		░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 		|R4-C0░R4-C1░R4-C2░|R4-C3░R4-C4░R4-C5░R4-C6░R4-C7░R4-C8|
