@@ -69,6 +69,7 @@ export const Board = ({players, requestPlayerMove}: {players: Players, requestPl
                             {players.map(player => 
                                 (player.position.row === indexRow && player.position.col === colIdx) ? (
                                     <img
+                                        key={`player-${player.id}`}
                                         className="img-player"
                                         src={player.id === 1 ? playerOne : playerTwo} 
                                         alt={player.name}
