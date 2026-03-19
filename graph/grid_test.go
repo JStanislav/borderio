@@ -82,6 +82,36 @@ func TestAddWallVertical(t *testing.T) {
 
 }
 
+// Test that you can place a wall between two walls that are 2 spaces apart, but not 1 space apart (which would cut through the wall)
+func TestAddWallBetweenWalls(t *testing.T) {
+	graph := generateBasicBoard(2)
+	err := graph.AddWall(Vertical, utils.WallPosition{CellA: utils.GridPosition{Column: 6, Row: 2}, CellB: utils.GridPosition{Column: 7, Row: 2}}) // (6, 2, 7, 2)
+	if err != nil {
+		t.Error(err)
+	}
+	err = graph.AddWall(Vertical, utils.WallPosition{CellA: utils.GridPosition{Column: 6, Row: 4}, CellB: utils.GridPosition{Column: 7, Row: 4}}) // (6, 4, 7, 4)
+	if err != nil {
+		t.Error(err)
+	}
+	err = graph.AddWall(Horizontal, utils.WallPosition{CellA: utils.GridPosition{Column: 6, Row: 3}, CellB: utils.GridPosition{Column: 6, Row: 4}}) // (6, 3, 6, 2)
+	if err != nil {
+		t.Error(err)
+	}
+}
+
+// Tests that you cant place a wall that cuts through another wall
+func TestWallCutThrough(t *testing.T) {
+	graph := generateBasicBoard(2)
+	err := graph.AddWall(Horizontal, utils.WallPosition{CellA: utils.GridPosition{Column: 6, Row: 2}, CellB: utils.GridPosition{Column: 6, Row: 3}})
+	if err != nil {
+		t.Error(err)
+	}
+	err = graph.AddWall(Vertical, utils.WallPosition{CellA: utils.GridPosition{Column: 6, Row: 2}, CellB: utils.GridPosition{Column: 7, Row: 2}})
+	if err == nil {
+		t.Error(err)
+	}
+}
+
 func TestPrintGrid(t *testing.T) {
 	graph := New(1)
 	err := graph.GenerateBoard(9, 9, utils.GridPosition{Column: 4, Row: 0}, utils.GridPosition{Column: 4, Row: 8})
@@ -181,6 +211,7 @@ func BenchmarkLegalMoves2(b *testing.B) {
 	}
 }
 
+// Generates a basic board with 9 columns, 9 rows and the players in their starting positions
 func generateBasicBoard(wallLength int) *Graph {
 	graph := New(wallLength)
 	err := graph.GenerateBoard(9, 9, utils.GridPosition{Column: 4, Row: 0}, utils.GridPosition{Column: 4, Row: 8})

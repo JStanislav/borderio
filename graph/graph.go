@@ -3,6 +3,7 @@ package graph
 import (
 	"errors"
 	"fmt"
+	"slices"
 
 	"github.com/JStanislav/quoridor-clone/player"
 	"github.com/JStanislav/quoridor-clone/utils"
@@ -152,9 +153,8 @@ func (g *Graph) AddWall(wallType WallType, start utils.WallPosition) error {
 
 			if j != end-1 {
 				// check if a wall is cut through
-				if g.IsWallOccupied(utils.WallPosition{CellA: utils.GridPosition{Column: j, Row: start.CellA.Row}, CellB: utils.GridPosition{Column: j + 1, Row: start.CellA.Row}}) &&
-					g.IsWallOccupied(utils.WallPosition{CellA: utils.GridPosition{Column: j, Row: start.CellB.Row}, CellB: utils.GridPosition{Column: j + 1, Row: start.CellB.Row}}) {
 
+				if slices.Contains(g.GetWalls(), utils.WallPosition{CellA: utils.GridPosition{Column: j, Row: start.CellA.Row}, CellB: utils.GridPosition{Column: j + 1, Row: start.CellA.Row}}) {
 					errCreatingWall = errors.New("wall is cut through")
 					str := fmt.Sprintf("j: %d, wallOccupied top: %t", j, g.IsWallOccupied(utils.WallPosition{CellA: utils.GridPosition{Column: j, Row: start.CellA.Row}, CellB: utils.GridPosition{Column: j + 1, Row: start.CellA.Row}}))
 					str2 := fmt.Sprintf("j: %d, wallOccupied bottom: %t", j, g.IsWallOccupied(utils.WallPosition{CellA: utils.GridPosition{Column: j, Row: start.CellB.Row}, CellB: utils.GridPosition{Column: j + 1, Row: start.CellB.Row}}))
@@ -185,9 +185,7 @@ func (g *Graph) AddWall(wallType WallType, start utils.WallPosition) error {
 
 			if i != end-1 {
 				// check if a wall is cut through
-				if g.IsWallOccupied(utils.WallPosition{CellA: utils.GridPosition{Row: i, Column: start.CellA.Column}, CellB: utils.GridPosition{Row: i + 1, Column: start.CellA.Column}}) &&
-					g.IsWallOccupied(utils.WallPosition{CellA: utils.GridPosition{Row: i, Column: start.CellB.Column}, CellB: utils.GridPosition{Row: i + 1, Column: start.CellB.Column}}) {
-
+				if slices.Contains(g.GetWalls(), utils.WallPosition{CellA: utils.GridPosition{Column: start.CellA.Column, Row: i}, CellB: utils.GridPosition{Column: start.CellA.Column, Row: i + 1}}) {
 					errCreatingWall = errors.New("wall is cut through")
 					str := fmt.Sprintf("i: %d, wallOccupied top: %t", i, g.IsWallOccupied(utils.WallPosition{CellA: utils.GridPosition{Row: i, Column: start.CellA.Column}, CellB: utils.GridPosition{Row: i + 1, Column: start.CellA.Column}}))
 					str2 := fmt.Sprintf("i: %d, wallOccupied bottom: %t", i, g.IsWallOccupied(utils.WallPosition{CellA: utils.GridPosition{Row: i, Column: start.CellB.Column}, CellB: utils.GridPosition{Row: i + 1, Column: start.CellB.Column}}))
