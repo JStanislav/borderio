@@ -69,15 +69,15 @@ export const setWall = (board: Array<Row>, row: number, col: number, wallLength:
 }
 
 // dummy test
-setWall(board, 4, 3, 2);
-setWall(board, 4, 7, 2);
-setWall(board, 4, 15, 2);
-setWall(board, 4, 11, 2);
+// setWall(board, 4, 3, 2);
+// setWall(board, 4, 7, 2);
+// setWall(board, 4, 15, 2);
+// setWall(board, 4, 11, 2);
 
-setWall(board, 9, 4, 2)
-setWall(board, 5, 4, 2)
-setWall(board, 1, 4, 2)
-setWall(board, 13, 4, 2)
-setWall(board, 3, 6, 2)
+// setWall(board, 9, 4, 2)
+// setWall(board, 5, 4, 2)
+// setWall(board, 1, 4, 2)
+// setWall(board, 13, 4, 2)
+// setWall(board, 3, 6, 2)
 
-setWall(board, 12, 15, 2)
+// setWall(board, 12, 15, 2)

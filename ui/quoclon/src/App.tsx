@@ -21,11 +21,20 @@ export interface GameState {
       col: number
     }
   }
+  walls: Array<{
+    cellA: {
+      row: number,
+      column: number
+    },
+    cellB: {
+      row: number,
+      column: number
+    },
+  }>
 }
 
 function App() {
   const [gameState, setGameState] = useState<GameState>({
-    
   type: "gameState",
   playerOne: {
     id: 1,
@@ -42,7 +51,8 @@ function App() {
       row: 8,
       col: 8
     }
-  }
+  },
+  walls: []
   })
 
 

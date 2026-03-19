@@ -1,4 +1,4 @@
-import { board, TOTAL_BOARD_DIM } from "../../board.type"
+import { board, setWall, TOTAL_BOARD_DIM } from "../../board.type"
 import "./board.css"
 import playerTwo from  "../../assets/players/player_one.png"
 import playerOne from "../../assets/players/player_two.png"
@@ -41,14 +41,17 @@ const isVerticalCell = (cellId: number, totalBoardDim: number) => {
     return (cellId % (2*totalBoardDim) ) >= totalBoardDim 
 }
 
-
 interface Props {
     players: Players,
     requestPlayerMove: (playerId: number, row: number, col: number) => void,
-    requestWallPlacement: (playerId: number, row: number, col: number, orientation: "horizontal" | "vertical") => void
+    requestWallPlacement: (playerId: number, row: number, col: number, orientation: "horizontal" | "vertical") => void,
+    activeWalls: { row: number, col: number, orientation: "horizontal" | "vertical" }[],
 }
 
-export const Board = ({players, requestPlayerMove, requestWallPlacement}: Props) => {
+export const Board = ({players, requestPlayerMove, requestWallPlacement, activeWalls}: Props) => {
+
+        activeWalls?.forEach(wall => {
+            setWall(board, wall.row, wall.col, 2);})
 
     const onClick = (ev: React.MouseEvent<HTMLDivElement>) => {
         const cellId = Number(ev.currentTarget.id.split("-")[1]);
