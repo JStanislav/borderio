@@ -1,76 +1,24 @@
-package main
+package websocket
 
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/JStanislav/quoridor-clone/game"
 	"github.com/JStanislav/quoridor-clone/player"
 	"github.com/JStanislav/quoridor-clone/utils"
+	"github.com/JStanislav/quoridor-clone/websocket/messages"
 	"github.com/gorilla/websocket"
 )
 
 var upgrader = websocket.Upgrader{}
 
-type Message struct {
-	Type     string `json:"type"`
-	PlayerId int    `json:"playerId"`
-	Target   struct {
-		Row int `json:"row"`
-		Col int `json:"col"`
-	} `json:"target"`
-	WallTarget WallTargetMessage `json:"wallTarget"`
+func init() {
+	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
 }
 
-type WallTargetMessage struct {
-	CellA       PositionMessage `json:"cellA"`
-	CellB       PositionMessage `json:"cellB"`
-	Orientation string          `json:"orientation"` // "horizontal" or "vertical"
-}
-
-type PositionMessage struct {
-	Row int `json:"row"`
-	Col int `json:"col"`
-}
-
-type PlayerMessage struct {
-	ID       int             `json:"id"`
-	Name     string          `json:"name"`
-	Position PositionMessage `json:"position"`
-}
-
-type GameStateStateMessage struct {
-	Type      string               `json:"type"`
-	PlayerOne PlayerMessage        `json:"playerOne"`
-	PlayerTwo PlayerMessage        `json:"playerTwo"`
-	Walls     []utils.WallPosition `json:"walls"`
-}
-
-func sendGameState(c *websocket.Conn, gameState *game.GameState, p1, p2 *player.Player) {
-	gameStateMessage := GameStateStateMessage{
-		Type: "gameState",
-		PlayerOne: PlayerMessage{
-			ID:       int(p1.ID),
-			Name:     p1.Name,
-			Position: PositionMessage{Row: p1.Position.Row, Col: p1.Position.Column},
-		},
-		PlayerTwo: PlayerMessage{
-			ID:       int(p2.ID),
-			Name:     p2.Name,
-			Position: PositionMessage{Row: p2.Position.Row, Col: p2.Position.Column},
-		},
-	}
-	gameStateMessage.Walls = gameState.Board.GetWalls()
-
-	if err := c.WriteJSON(gameStateMessage); err != nil {
-		fmt.Printf("[ERROR] error sending game state, %s\n", err)
-	}
-
-}
-
-func handle(w http.ResponseWriter, r *http.Request) {
+func Handle(w http.ResponseWriter, r *http.Request) {
 	c, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		fmt.Printf("[ERROR] error upgrading, %s\n", err)
@@ -89,6 +37,7 @@ func handle(w http.ResponseWriter, r *http.Request) {
 			fmt.Printf("Received move from game state: %+v\n", move)
 		}
 	}()
+
 	gameState.StartMatch(p1, p2, movementsChannel)
 	sendGameState(c, gameState, p1, p2)
 
@@ -99,8 +48,7 @@ func handle(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 
-		fmt.Printf("received %s\n", message)
-		var o Message
+		var o messages.Message
 		if err = json.Unmarshal(message, &o); err != nil {
 			fmt.Printf("[ERROR] error unmarshaling message, %s\n", err)
 			break
@@ -147,10 +95,23 @@ func handle(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func main() {
-	fmt.Println("Hello World")
+func sendGameState(c *websocket.Conn, gameState *game.GameState, p1, p2 *player.Player) {
+	gameStateMessage := messages.GameStateStateMessage{
+		Type: "gameState",
+		PlayerOne: messages.PlayerMessage{
+			ID:       int(p1.ID),
+			Name:     p1.Name,
+			Position: messages.PositionMessage{Row: p1.Position.Row, Col: p1.Position.Column},
+		},
+		PlayerTwo: messages.PlayerMessage{
+			ID:       int(p2.ID),
+			Name:     p2.Name,
+			Position: messages.PositionMessage{Row: p2.Position.Row, Col: p2.Position.Column},
+		},
+		Walls: gameState.Board.GetWalls(),
+	}
 
-	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
-	http.HandleFunc("/", handle)
-	log.Fatal(http.ListenAndServe("localhost:8080", nil))
+	if err := c.WriteJSON(gameStateMessage); err != nil {
+		fmt.Printf("[ERROR] error sending game state, %s\n", err)
+	}
 }
