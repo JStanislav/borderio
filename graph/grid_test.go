@@ -93,7 +93,7 @@ func TestAddWallBetweenWalls(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	err = graph.AddWall(Horizontal, utils.WallPosition{CellA: utils.GridPosition{Column: 6, Row: 3}, CellB: utils.GridPosition{Column: 6, Row: 4}}) // (6, 3, 6, 2)
+	err = graph.AddWall(Horizontal, utils.WallPosition{CellA: utils.GridPosition{Column: 6, Row: 3}, CellB: utils.GridPosition{Column: 6, Row: 4}}) // (6, 3, 6, 4)
 	if err != nil {
 		t.Error(err)
 	}
@@ -108,7 +108,7 @@ func TestWallCutThrough(t *testing.T) {
 	}
 	err = graph.AddWall(Vertical, utils.WallPosition{CellA: utils.GridPosition{Column: 6, Row: 2}, CellB: utils.GridPosition{Column: 7, Row: 2}})
 	if err == nil {
-		t.Error(err)
+		t.Error("error expected", err)
 	}
 }
 

@@ -132,79 +132,64 @@ func (g *Graph) AddWall(wallType WallType, start utils.WallPosition) error {
 	if err != nil {
 		return err
 	}
-	var errCreatingWall error
 
 	if wallType == Undefined {
-		// TODO: remove this crap
-		if start.CellA.Row == start.CellB.Row || start.CellA.Column != start.CellB.Column {
+		if start.CellA.Row == start.CellB.Row {
 			wallType = Vertical
-		}
-		if start.CellA.Column == start.CellB.Column || start.CellA.Row != start.CellB.Row {
+		} else {
 			wallType = Horizontal
 		}
 	}
 
-	if wallType == Horizontal {
-		if start.CellA.Row == start.CellB.Row || start.CellA.Column != start.CellB.Column {
-			return errors.New("wall is not horizontal")
+	horizontal := wallType == Horizontal
+
+	if horizontal {
+		if start.CellA.Row > start.CellB.Row {
+			start = utils.WallPosition{CellA: start.CellB, CellB: start.CellA}
 		}
-		end := start.CellA.Column + g.wallLength
-		for j := start.CellA.Column; j < end; j++ {
 
-			if j != end-1 {
-				// check if a wall is cut through
-
-				if slices.Contains(g.GetWalls(), utils.WallPosition{CellA: utils.GridPosition{Column: j, Row: start.CellA.Row}, CellB: utils.GridPosition{Column: j + 1, Row: start.CellA.Row}}) {
-					errCreatingWall = errors.New("wall is cut through")
-					str := fmt.Sprintf("j: %d, wallOccupied top: %t", j, g.IsWallOccupied(utils.WallPosition{CellA: utils.GridPosition{Column: j, Row: start.CellA.Row}, CellB: utils.GridPosition{Column: j + 1, Row: start.CellA.Row}}))
-					str2 := fmt.Sprintf("j: %d, wallOccupied bottom: %t", j, g.IsWallOccupied(utils.WallPosition{CellA: utils.GridPosition{Column: j, Row: start.CellB.Row}, CellB: utils.GridPosition{Column: j + 1, Row: start.CellB.Row}}))
-					fmt.Println(str)
-					fmt.Println(str2)
-
+		for i := 0; i < g.wallLength-1; i++ {
+			for j := 0; j < g.wallLength-1; j++ {
+				cellA := utils.GridPosition{Column: start.CellA.Column + j, Row: start.CellA.Row - i}
+				cellB := utils.GridPosition{Column: start.CellA.Column + j + 1, Row: start.CellA.Row - i}
+				completeWallExists := slices.Contains(g.Walls, utils.WallPosition{CellA: cellA, CellB: cellB}) || slices.Contains(g.Walls, utils.WallPosition{CellA: cellB, CellB: cellA})
+				if completeWallExists {
+					fmt.Printf("Wall already exists between %+v and %+v\n", cellA, cellB)
+					return errors.New("wall is cut through another wall")
 				}
 			}
-
-			err := _g.RemoveEdge(CellHash(Cell{Column: j, Row: start.CellA.Row}), CellHash(Cell{Column: j, Row: start.CellB.Row}))
-			if err != nil {
-				errCreatingWall = err
+		}
+		for i := 0; i < g.wallLength; i++ {
+			if err := _g.RemoveEdge(CellHash(Cell{Column: start.CellA.Column + i, Row: start.CellA.Row}), CellHash(Cell{Column: start.CellB.Column + i, Row: start.CellB.Row})); err != nil {
+				fmt.Printf("Error removing edge between %+v and %+v: %s\n", start.CellA, start.CellB, err)
+				return err
 			}
 		}
-
-		if errCreatingWall != nil {
-			return fmt.Errorf("error creating wall: %s", errCreatingWall)
+	} else {
+		if start.CellA.Column > start.CellB.Column {
+			start = utils.WallPosition{CellA: start.CellB, CellB: start.CellA}
 		}
 
-	}
-
-	if wallType == Vertical {
-		if start.CellA.Column == start.CellB.Column || start.CellA.Row != start.CellB.Row {
-			return errors.New("wall is not vertical")
-		}
-		end := start.CellA.Row + g.wallLength
-		for i := start.CellA.Row; i < end; i++ {
-
-			if i != end-1 {
-				// check if a wall is cut through
-				if slices.Contains(g.GetWalls(), utils.WallPosition{CellA: utils.GridPosition{Column: start.CellA.Column, Row: i}, CellB: utils.GridPosition{Column: start.CellA.Column, Row: i + 1}}) {
-					errCreatingWall = errors.New("wall is cut through")
-					str := fmt.Sprintf("i: %d, wallOccupied top: %t", i, g.IsWallOccupied(utils.WallPosition{CellA: utils.GridPosition{Row: i, Column: start.CellA.Column}, CellB: utils.GridPosition{Row: i + 1, Column: start.CellA.Column}}))
-					str2 := fmt.Sprintf("i: %d, wallOccupied bottom: %t", i, g.IsWallOccupied(utils.WallPosition{CellA: utils.GridPosition{Row: i, Column: start.CellB.Column}, CellB: utils.GridPosition{Row: i + 1, Column: start.CellB.Column}}))
-					fmt.Println(str)
-					fmt.Println(str2)
-
+		for i := 0; i < g.wallLength-1; i++ {
+			for j := 0; j < g.wallLength-1; j++ {
+				cellA := utils.GridPosition{Column: start.CellA.Column - i, Row: start.CellA.Row + j}
+				cellB := utils.GridPosition{Column: start.CellA.Column - i, Row: start.CellA.Row + j + 1}
+				completeWallExists := slices.Contains(g.Walls, utils.WallPosition{CellA: cellA, CellB: cellB}) || slices.Contains(g.Walls, utils.WallPosition{CellA: cellB, CellB: cellA})
+				if completeWallExists {
+					fmt.Printf("Wall already exists between %+v and %+v\n", cellA, cellB)
+					return errors.New("wall is cut through another wall")
 				}
 			}
-
-			err := _g.RemoveEdge(CellHash(Cell{Row: i, Column: start.CellA.Column}), CellHash(Cell{Row: i, Column: start.CellB.Column}))
-			if err != nil {
-				errCreatingWall = err
+		}
+		for i := 0; i < g.wallLength; i++ {
+			cellHashA := CellHash(Cell{Column: start.CellA.Column, Row: start.CellA.Row + i})
+			cellHashB := CellHash(Cell{Column: start.CellB.Column, Row: start.CellB.Row + i})
+			fmt.Printf("Removing edge between %+v and %+v\n", cellHashA, cellHashB)
+			if err := _g.RemoveEdge(cellHashA, cellHashB); err != nil {
+				fmt.Printf("Error removing edge between %+v and %+v: %s\n", start.CellA, start.CellB, err)
+				return err
 			}
 		}
-
-		if errCreatingWall != nil {
-			return fmt.Errorf("error creating wall: %s", errCreatingWall)
-		}
-
 	}
 
 	g.Walls = append(g.Walls, utils.WallPosition{CellA: start.CellA, CellB: start.CellB})

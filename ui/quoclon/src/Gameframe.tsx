@@ -63,8 +63,8 @@ const translateWallGridPositionToClient = (s_cellA: s_Position, s_cellB: s_Posit
     console.debug("cellA client pos", cellAClientPos, "cellB client pos", cellBClientPos);
     const orientation = cellAClientPos.row === cellBClientPos.row ? "vertical" : "horizontal";
     return {
-        row: orientation === "vertical" ? cellAClientPos.row : cellAClientPos.row -1,
-        col: orientation === "vertical" ? cellAClientPos.col -1 : cellAClientPos.col ,
+        row: orientation === "vertical" ? cellAClientPos.row : cellAClientPos.row + 1,
+        col: orientation === "vertical" ? cellAClientPos.col + 1 : cellAClientPos.col ,
         orientation
     }
 }
@@ -101,8 +101,13 @@ export const GameFrame = ({ gameState }: { gameState: GameState }) => {
     }
 
     const requestWallPlacement = (playerId: number, row: number, col: number, orientation: "horizontal" | "vertical") => {
-        const wallPositions = translateWallGridPositionToServer(row, col, orientation);
+        let wallPositions = translateWallGridPositionToServer(row, col, orientation);
         const type = "wallPlacement";
+        if (orientation === "horizontal") {
+            if (wallPositions.cellA.row > wallPositions.cellB.row) {
+                wallPositions = { cellA: wallPositions.cellB, cellB: wallPositions.cellA };
+            }
+        }
         const wallTarget = { cellA: { row: wallPositions.cellA.row, col: wallPositions.cellA.column }, cellB: { row: wallPositions.cellB.row, col: wallPositions.cellB.column }, orientation };
         console.log("requesting wall placement with target", wallTarget);
         send(type, { playerId, wallTarget: wallTarget });
