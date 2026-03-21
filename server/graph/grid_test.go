@@ -32,7 +32,7 @@ func TestGenerateGrid(t *testing.T) {
 		{3, 3, 2},
 	}
 
-	p1, p2 := player.Player{}, player.Player{}
+	p1, p2 := player.Player{Position: &utils.GridPosition{Column: 0, Row: 0}}, player.Player{Position: &utils.GridPosition{Column: 3, Row: 3}}
 	graph.PrintGrid(4, 4, &p1, &p2)
 
 	for _, tt := range tests {
@@ -54,8 +54,10 @@ func TestAddWallHorizontal(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	p1 := player.Player{}
-	p2 := player.Player{}
+	pos1 := utils.GridPosition{Column: 0, Row: 0}
+	pos2 := utils.GridPosition{Column: 3, Row: 3}
+	p1 := player.Player{Position: &pos1}
+	p2 := player.Player{Position: &pos2}
 	graph.PrintGrid(4, 4, &p1, &p2)
 	err = graph.AddWall(Horizontal, utils.WallPosition{CellA: utils.GridPosition{Column: 0, Row: 0}, CellB: utils.GridPosition{Column: 0, Row: 1}}) // (0, 0, 0, 1)
 	if err != nil {
@@ -118,8 +120,10 @@ func TestPrintGrid(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	p1 := player.Player{}
-	p2 := player.Player{}
+	pos1 := utils.GridPosition{Column: 4, Row: 0}
+	pos2 := utils.GridPosition{Column: 4, Row: 8}
+	p1 := player.Player{Position: &pos1}
+	p2 := player.Player{Position: &pos2}
 	graph.PrintGrid(9, 9, &p1, &p2)
 }
 
