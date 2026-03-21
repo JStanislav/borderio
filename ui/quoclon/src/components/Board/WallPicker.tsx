@@ -19,7 +19,7 @@ export const WallPicker = ({walls, position}: WallPickerProps) => {
                         Array.from({length: walls}, (_, index) => 
                         <div key={`wall-${index}`} className="wall-to-be-picked"/>)
                 }
-        </div>
+            </div>
         </div>
     )
 }
