@@ -14,6 +14,7 @@ type GameState struct {
 	Board       graph.Board
 	StartTime   *time.Time
 	CurrentTurn player.PlayerID
+	Players     []*player.Player
 }
 
 func New() *GameState {
@@ -31,60 +32,53 @@ func (g *GameState) StartMatch(playerOne, playerTwo *player.Player, movements ch
 	*g.StartTime = time.Now()
 	g.CurrentTurn = playerOne.ID
 
-	playerOne.Position = p1StartPosition
-	playerTwo.Position = p2StartPosition
+	playerOne.Position = &p1StartPosition
+	playerTwo.Position = &p2StartPosition
 
-	playerOne.OnPlayerPlay = func(playerID player.PlayerID, play player.Play) error {
-		switch play.PlayType {
-		case player.PlayerMove:
-			fmt.Printf("Moving p1 [R%d-C%d]->[R%d-C%d]\n", playerOne.Position.Row, playerOne.Position.Column, play.Position.Row, play.Position.Column)
-			if g.Board.IsLegalMove(playerOne.Position, *play.Position, playerTwo.Position) && g.CurrentTurn == playerOne.ID {
-				playerOne.Position = *play.Position
-				g.CurrentTurn = playerTwo.ID
-				movements <- play
-				fmt.Println("Moved")
-				return nil
-			} else {
-				return errors.New("illegal move")
-			}
-		case player.WallPlacement:
-			fmt.Printf("Placing wall p1 [R%d-C%d]||[R%d-C%d]\n", play.WallPlaced.CellA.Row, play.WallPlaced.CellA.Column, play.WallPlaced.CellB.Row, play.WallPlaced.CellB.Column)
-			if g.Board.AddWall(graph.Undefined, utils.WallPosition{CellA: play.WallPlaced.CellA, CellB: play.WallPlaced.CellB}) == nil && g.CurrentTurn == playerOne.ID {
-				movements <- play
-				fmt.Println("Placed wall")
-				return nil
-			} else {
-				return errors.New("illegal wall placement")
+	g.Players = []*player.Player{playerOne, playerTwo}
+
+	for _, p := range g.Players {
+		playersButNotCurrent := []*player.Player{}
+		for _, other := range g.Players {
+			if other.ID != p.ID {
+				playersButNotCurrent = append(playersButNotCurrent, other)
 			}
 		}
+		p.OnPlayerPlay = func(playerID player.PlayerID, play player.Play) error {
 
-		return errors.New("unexpected error ")
-	}
+			if p.ID != g.CurrentTurn {
+				fmt.Printf("Player %d attempted to place wall out of turn\n", p.ID)
+				return errors.New("not your turn")
+			}
 
-	playerTwo.OnPlayerPlay = func(playerID player.PlayerID, play player.Play) error {
-		switch play.PlayType {
-		case player.PlayerMove:
-			fmt.Printf("Moving p2 [R%d-C%d]->[R%d-C%d]\n", playerTwo.Position.Row, playerTwo.Position.Column, play.Position.Row, play.Position.Column)
-			if g.Board.IsLegalMove(playerTwo.Position, *play.Position, playerOne.Position) && g.CurrentTurn == playerTwo.ID {
-				playerTwo.Position = *play.Position
-				g.CurrentTurn = playerOne.ID
-				movements <- play
-				fmt.Println("Moved")
-				return nil
-			} else {
-				return errors.New("illegal move")
+			playersButNotCurrentPositions := player.GetPlayersPositions(playersButNotCurrent)
+
+			switch play.PlayType {
+			case player.PlayerMove:
+				fmt.Printf("Moving P%d [R%d-C%d]->[R%d-C%d]\n", p.ID, p.Position.Row, p.Position.Column, play.Position.Row, play.Position.Column)
+				if g.Board.IsLegalMove(*p.Position, *play.Position, playersButNotCurrentPositions) {
+					p.Position = play.Position
+					g.CurrentTurn = playersButNotCurrent[0].ID // WRONG! IMPLEMENT INFINITE STATE MACHINE
+					movements <- play
+					fmt.Println("Moved")
+					return nil
+				} else {
+					return errors.New("illegal move")
+				}
+			case player.WallPlacement:
+				fmt.Printf("Placing wall p%d [R%d-C%d]||[R%d-C%d]\n", p.ID, play.WallPlaced.CellA.Row, play.WallPlaced.CellA.Column, play.WallPlaced.CellB.Row, play.WallPlaced.CellB.Column)
+
+				if g.Board.AddWall(graph.Undefined, utils.WallPosition{CellA: play.WallPlaced.CellA, CellB: play.WallPlaced.CellB}) == nil {
+					movements <- play
+					fmt.Println("Placed wall")
+					return nil
+				} else {
+					return errors.New("illegal wall placement")
+				}
 			}
-		case player.WallPlacement:
-			fmt.Printf("Placing wall p2 [R%d-C%d]||[R%d-C%d]\n", play.WallPlaced.CellA.Row, play.WallPlaced.CellA.Column, play.WallPlaced.CellB.Row, play.WallPlaced.CellB.Column)
-			if g.Board.AddWall(graph.Undefined, utils.WallPosition{CellA: play.WallPlaced.CellA, CellB: play.WallPlaced.CellB}) == nil && g.CurrentTurn == playerTwo.ID {
-				movements <- play
-				fmt.Println("Placed wall")
-				return nil
-			} else {
-				return errors.New("illegal wall placement")
-			}
+
+			return errors.New("unexpected error ")
 		}
-
-		return errors.New("unexpected error ")
 	}
+
 }

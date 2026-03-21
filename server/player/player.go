@@ -22,7 +22,7 @@ type OnPlayerPlay func(playerID PlayerID, play Play) error
 type Player struct {
 	ID       PlayerID
 	Name     string
-	Position utils.GridPosition
+	Position *utils.GridPosition
 
 	OnPlayerPlay OnPlayerPlay
 	// TODO: Add other player properties
@@ -32,6 +32,17 @@ func New(name string, position utils.GridPosition) *Player {
 	return &Player{
 		ID:       1,
 		Name:     "Player 1",
-		Position: position,
+		Position: &position,
 	}
+}
+
+func GetPlayersPositions(players []*Player) []*utils.GridPosition {
+	positions := make([]*utils.GridPosition, len(players))
+	for i, p := range players {
+		positions[i] = &utils.GridPosition{
+			Row:    p.Position.Row,
+			Column: p.Position.Column,
+		}
+	}
+	return positions
 }

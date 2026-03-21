@@ -187,7 +187,7 @@ func TestLegalMoves(t *testing.T) {
 
 		testname := fmt.Sprintf("%s-[R%d,C%d]->[R%d,C%d]", tt.name, tt.source.Row, tt.source.Column, tt.target.Row, tt.target.Column)
 		t.Run(testname, func(t *testing.T) {
-			isValid := graph.IsLegalMove(tt.source, tt.target, tt.opponentPosition)
+			isValid := graph.IsLegalMove(tt.source, tt.target, []*utils.GridPosition{&tt.opponentPosition})
 			if isValid != tt.want {
 				t.Errorf("got %t, want %t", isValid, tt.want)
 			}
@@ -199,7 +199,7 @@ func BenchmarkLegalMoves(b *testing.B) {
 	g := generateBasicBoard(1)
 
 	for b.Loop() {
-		g.IsLegalMove(g.PlayerOnePosition, g.PlayerTwoPosition, g.PlayerTwoPosition)
+		g.IsLegalMove(g.PlayerOnePosition, g.PlayerTwoPosition, []*utils.GridPosition{&g.PlayerTwoPosition})
 	}
 }
 

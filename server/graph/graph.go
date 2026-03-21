@@ -22,7 +22,7 @@ type Board interface {
 	GenerateBoard(columns, rows int, playerOneStart, playerTwoStart utils.GridPosition) error
 	AddWall(wallType WallType, start utils.WallPosition) error
 	IsOccupied(column, row int) (bool, error)
-	IsLegalMove(source, target, opponentPosition utils.GridPosition) bool
+	IsLegalMove(source, target utils.GridPosition, opponentPosition []*utils.GridPosition) bool
 	IsLegalMove2(source, target utils.GridPosition) bool
 	GetWalls() []utils.WallPosition
 }
@@ -205,20 +205,22 @@ func (g *Graph) IsOccupied(column, row int) (bool, error) {
 	return cell.IsOccupied, nil
 }
 
-func (g *Graph) IsLegalMove(source, target, opponentPosition utils.GridPosition) bool {
-	// jugador intenta mover hacia una casilla ocupada
-	if target == opponentPosition {
-		return false
-	}
+func (g *Graph) IsLegalMove(source, target utils.GridPosition, opponentPositions []*utils.GridPosition) bool {
+	for _, oPos := range opponentPositions {
+		if target == *oPos {
+			return false
+		}
 
-	// el jugador intenta saltear al otro jugador
-	if g.IsAdjacent(source, opponentPosition) && g.IsAdjacent(opponentPosition, target) {
-		return true
+		// el jugador intenta saltear al otro jugador
+		if g.IsAdjacent(source, *oPos) && g.IsAdjacent(*oPos, target) {
+			return true
+		}
 	}
 
 	return g.IsAdjacent(source, target)
 }
 
+// Unused, benchmark too bad compared to IsLegalMove, but left here for reference
 func (g *Graph) IsLegalMove2(source, target utils.GridPosition) bool {
 	occupied, err := g.IsOccupied(target.Column, target.Row)
 	if err != nil {
