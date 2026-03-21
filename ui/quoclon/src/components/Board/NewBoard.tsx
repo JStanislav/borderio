@@ -1,4 +1,4 @@
-import { board, setWall, TOTAL_BOARD_DIM } from "../../board.type"
+import { board, setWall, TOTAL_BOARD_DIM } from "./board.type"
 import "./board.css"
 import playerTwo from  "../../assets/players/player_one.png"
 import playerOne from "../../assets/players/player_two.png"

@@ -1,8 +1,8 @@
-import type { GameState } from "./App"
-import { Board } from "./components/Board/NewBoard"
-import { WallPicker } from "./components/Board/WallPicker"
+import { Board } from "../Board/NewBoard"
+import { WallPicker } from "../Board/WallPicker"
 import "./gameframe.css"
-import { send } from "./server-conn"
+import { send } from "../../server/server-conn"
+import type { GameState } from "../../game/GameState"
 
 const translateGridPositionToServer = (row: number, col: number) => {
     return {
