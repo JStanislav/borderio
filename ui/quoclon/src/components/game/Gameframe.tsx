@@ -1,9 +1,9 @@
-import { Board } from "../Board/NewBoard"
-import { WallPicker } from "../Board/WallPicker"
+import { WallPicker } from "../board/WallPicker"
 import "./gameframe.css"
 import { type GameState } from "../../game/GameState"
 import { requestPlayerMove, requestWallPlacement } from "../../server/server"
 import { translateGridPositionToClient, translateWallsToClient } from "../../server/utils"
+import { Board } from "../board/Board"
 
 
 export const GameFrame = ({ gameState }: { gameState: GameState }) => {

@@ -8,6 +8,12 @@ export interface Row {
 
 type CellType = "Square" | "Wall" | "Blank"
 
+export const classes = {
+    Blank: "blank",
+    Square: "square",
+    Wall: "wall"
+}
+
 export interface Cell {
     id: string
     type: CellType
