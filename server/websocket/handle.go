@@ -69,6 +69,7 @@ func Handle(w http.ResponseWriter, r *http.Request) {
 			}
 			err = p.OnPlayerPlay(player.PlayerID(p.ID), player.Play{PlayType: player.PlayerMove, Position: &utils.GridPosition{Row: o.Target.Row, Column: o.Target.Col}})
 			if err != nil {
+				sendErrorMessage(c, err.Error())
 				fmt.Printf("[ERROR] error processing player move, %s\n", err)
 				continue
 			}
@@ -86,6 +87,7 @@ func Handle(w http.ResponseWriter, r *http.Request) {
 			}
 			err = p.OnPlayerPlay(player.PlayerID(p.ID), player.Play{PlayType: player.WallPlacement, WallPlaced: &utils.WallPosition{CellA: utils.GridPosition{Row: o.WallTarget.CellA.Row, Column: o.WallTarget.CellA.Col}, CellB: utils.GridPosition{Row: o.WallTarget.CellB.Row, Column: o.WallTarget.CellB.Col}}})
 			if err != nil {
+				sendErrorMessage(c, err.Error())
 				fmt.Printf("[ERROR] error processing wall placement, %s\n", err)
 				continue
 			}
@@ -113,5 +115,15 @@ func sendGameState(c *websocket.Conn, gameState *game.GameState, p1, p2 *player.
 
 	if err := c.WriteJSON(gameStateMessage); err != nil {
 		fmt.Printf("[ERROR] error sending game state, %s\n", err)
+	}
+}
+
+func sendErrorMessage(c *websocket.Conn, errorMessage string) {
+	errorMessageStruct := messages.ErrorMessage{
+		Type:    "error",
+		Message: errorMessage,
+	}
+	if err := c.WriteJSON(errorMessageStruct); err != nil {
+		fmt.Printf("[ERROR] error sending error message, %s\n", err)
 	}
 }

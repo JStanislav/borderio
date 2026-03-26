@@ -1,3 +1,4 @@
+import toast from "react-hot-toast";
 import { type GameState } from "../game/GameState";
 import { connect,send } from "./server-conn";
 import { translateGridPositionToServer, translateWallGridPositionToServer } from "./utils";
@@ -6,7 +7,12 @@ import { translateGridPositionToServer, translateWallGridPositionToServer } from
 const onMessage = (ev: MessageEvent, setGameState: (gameState: GameState) => void) => {
     console.log("message arrived");
     console.log("ev", ev.data)
-    setGameState(JSON.parse(ev.data));
+    const data = JSON.parse(ev.data);
+    if (data.type === "gameState") {
+        setGameState(data);
+    } else if (data.type === "error") {
+        toast.error(`Error: ${data.message}`);
+    }
 }
 
 
