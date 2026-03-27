@@ -1,5 +1,5 @@
-
-const wsURI = `ws://${import.meta.env.VITE_SERVER_URL}`;
+import {config} from "../../config/config"
+const wsURI = `ws://${config.serverUrl}`;
 let websocket: WebSocket
 
 export const connect = (onMessage: (ev: MessageEvent) => void) => {

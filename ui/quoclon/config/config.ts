@@ -14,6 +14,6 @@ const LoadOrDefaultValue = (key: string, defaultValue: string): string => {
 };
 
 export const config: Config = {
-    serverUrl: LoadOrDefaultValue("REACT_APP_SERVER_URL", "localhost:8080"),
-    port: parseInt(LoadOrDefaultValue("REACT_APP_PORT", "5173"))
+    serverUrl: LoadOrDefaultValue("VITE_SERVER_URL", "localhost:8080"),
+    port: parseInt(LoadOrDefaultValue("VITE_APP_PORT", "5173"))
 }
