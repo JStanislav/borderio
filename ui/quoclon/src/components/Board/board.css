@@ -29,6 +29,10 @@
     border-radius: 8px;
 }
 
+.finish-line.square  {
+    background-color: #d9d9d9;
+}
+
 .wall {
     background-color: #aa9f9a;
 }

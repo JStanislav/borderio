@@ -23,8 +23,8 @@ export interface Cell {
 const BOARD_DIM = 9
 export const TOTAL_BOARD_DIM = BOARD_DIM * 2 + 1
 
-export const board: Array<Row> = Array.from({length: BOARD_DIM * 2 + 1}, (_, row) => {
-    const cells: Array<Cell> = Array.from({length: BOARD_DIM * 2 + 1}, (_, col) => {
+export const board: Array<Row> = Array.from({length: TOTAL_BOARD_DIM + 4}, (_, row) => {
+    const cells: Array<Cell> = Array.from({length: BOARD_DIM*2+1}, (_, col) => {
         let type: CellType
         if ((row + col) % 2 === 0) { // sum is even
             if ((row % 2 === 0) && (col % 2 === 0)) { // even + even

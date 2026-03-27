@@ -22,11 +22,14 @@ func New() *GameState {
 }
 
 func (g *GameState) StartMatch(playerOne, playerTwo *player.Player, movements chan player.Play) {
+	boardDimension := 9
+	actualBoardDimension := boardDimension + 2
+
 	g.Board = graph.New(2)
 	p1StartPosition := utils.GridPosition{Column: 4, Row: 0}
-	p2StartPosition := utils.GridPosition{Column: 4, Row: 8}
+	p2StartPosition := utils.GridPosition{Column: 4, Row: actualBoardDimension + 1}
 
-	g.Board.GenerateBoard(9, 9, p1StartPosition, p2StartPosition)
+	g.Board.GenerateBoard(boardDimension, actualBoardDimension, p1StartPosition, p2StartPosition)
 
 	g.StartTime = new(time.Time)
 	*g.StartTime = time.Now()
