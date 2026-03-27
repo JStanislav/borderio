@@ -1,4 +1,5 @@
-const wsURI = "ws://localhost:8080";
+
+const wsURI = `ws://${import.meta.env.VITE_SERVER_URL}`;
 let websocket: WebSocket
 
 export const connect = (onMessage: (ev: MessageEvent) => void) => {
