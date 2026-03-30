@@ -27,7 +27,12 @@ func (g *GameState) StartMatch(playerOne, playerTwo *player.Player, movements ch
 
 	g.Board = graph.New(2)
 	p1StartPosition := utils.GridPosition{Column: 4, Row: 0}
-	p2StartPosition := utils.GridPosition{Column: 4, Row: actualBoardDimension + 1}
+	p2StartPosition := utils.GridPosition{Column: 4, Row: actualBoardDimension - 1}
+
+	p1StartLine := utils.Line{Type: utils.HorizontalLine, Index: p1StartPosition.Row}
+	p2StartLine := utils.Line{Type: utils.HorizontalLine, Index: p2StartPosition.Row}
+	p1FinishLine := utils.Line{Type: utils.HorizontalLine, Index: p2StartPosition.Row}
+	p2FinishLine := utils.Line{Type: utils.HorizontalLine, Index: p1StartPosition.Row}
 
 	g.Board.GenerateBoard(boardDimension, actualBoardDimension, p1StartPosition, p2StartPosition)
 
@@ -36,7 +41,11 @@ func (g *GameState) StartMatch(playerOne, playerTwo *player.Player, movements ch
 	g.CurrentTurn = playerOne.ID
 
 	playerOne.Position = &p1StartPosition
+	playerOne.StartLine = p1StartLine
+	playerOne.FinishLine = p1FinishLine
 	playerTwo.Position = &p2StartPosition
+	playerTwo.StartLine = p2StartLine
+	playerTwo.FinishLine = p2FinishLine
 
 	g.Players = []*player.Player{playerOne, playerTwo}
 
@@ -59,15 +68,26 @@ func (g *GameState) StartMatch(playerOne, playerTwo *player.Player, movements ch
 			switch play.PlayType {
 			case player.PlayerMove:
 				fmt.Printf("Moving P%d [R%d-C%d]->[R%d-C%d]\n", p.ID, p.Position.Row, p.Position.Column, play.Position.Row, play.Position.Column)
+
+				if play.OutOfBounds(boardDimension, actualBoardDimension) && !p.IsFinishLine(play) {
+					return errors.New("move out of bounds")
+				}
+
 				if g.Board.IsLegalMove(*p.Position, *play.Position, playersButNotCurrentPositions) {
 					p.Position = play.Position
 					g.CurrentTurn = playersButNotCurrent[0].ID // WRONG! IMPLEMENT INFINITE STATE MACHINE
 					movements <- play
 					fmt.Println("Moved")
+
+					if p.IsWinner() {
+						fmt.Printf("Player %d wins!\n", p.ID)
+					}
+
 					return nil
 				} else {
 					return errors.New("illegal move")
 				}
+
 			case player.WallPlacement:
 				fmt.Printf("Placing wall p%d [R%d-C%d]||[R%d-C%d]\n", p.ID, play.WallPlaced.CellA.Row, play.WallPlaced.CellA.Column, play.WallPlaced.CellB.Row, play.WallPlaced.CellB.Column)
 
