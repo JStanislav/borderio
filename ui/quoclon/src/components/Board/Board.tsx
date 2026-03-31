@@ -3,7 +3,7 @@ import "./board.css"
 import playerTwo from  "../../assets/players/player_one.png"
 import playerOne from "../../assets/players/player_two.png"
 import type { Players } from "../game/player.type"
-import { isDraggable, onClick, onDragOver, onDragStart, onDrop, setActiveWalls } from "./board.utils"
+import { isDraggable, isFinishLine, onClick, onDragOver, onDragStart, onDrop, setActiveWalls } from "./board.utils"
 
 interface Props {
     players: Players,
@@ -26,7 +26,8 @@ export const Board = ({players, requestPlayerMove, requestWallPlacement, activeW
                             className={`
                                 ${classes[cell.type]} \
                                 ${(colIdx % 2) === 0 ? "narrow-col" : "wide-col"} \
-                                ${cell.fillType ? "filled " + cell.fillType : ""}
+                                ${cell.fillType ? "filled " + cell.fillType : ""} \ 
+                                ${isFinishLine(indexRow) ? "finish-line" : ""}
                             `}
 
                             onClick={e => onClick(e, requestWallPlacement)}

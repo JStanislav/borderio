@@ -19,20 +19,16 @@ const (
 )
 
 type Board interface {
-	GenerateBoard(columns, rows int, playerOneStart, playerTwoStart utils.GridPosition) error
+	GenerateBoard(columns, rows int) error
 	AddWall(wallType WallType, start utils.WallPosition) error
-	IsOccupied(column, row int) (bool, error)
 	IsLegalMove(source, target utils.GridPosition, opponentPosition []*utils.GridPosition) bool
-	IsLegalMove2(source, target utils.GridPosition) bool
 	GetWalls() []utils.WallPosition
 }
 
 type Graph struct {
-	Graph             graph.Graph[string, Cell]
-	PlayerOnePosition utils.GridPosition
-	PlayerTwoPosition utils.GridPosition
-	Walls             []utils.WallPosition
-	wallLength        int
+	Graph      graph.Graph[string, Cell]
+	Walls      []utils.WallPosition
+	wallLength int
 }
 
 func New(wallLength int) *Graph {
@@ -40,19 +36,16 @@ func New(wallLength int) *Graph {
 }
 
 type Cell struct {
-	Id                  string
-	IsOccupied          bool
-	Column              int
-	Row                 int
-	IsPlayerOneFinalRow bool
-	IsPlayerTwoFinalRow bool
+	Id     string
+	Column int
+	Row    int
 }
 
 func CellHash(c Cell) string {
 	return fmt.Sprintf("C%d-R%d", c.Column, c.Row)
 }
 
-func (g *Graph) GenerateBoard(columns, rows int, playerOneStart, playerTwoStart utils.GridPosition) error {
+func (g *Graph) GenerateBoard(columns, rows int) error {
 	g.Graph = graph.New(CellHash)
 
 	for i := range rows {
@@ -62,24 +55,7 @@ func (g *Graph) GenerateBoard(columns, rows int, playerOneStart, playerTwoStart 
 				Column: j,
 				Row:    i,
 			}
-			if i == playerOneStart.Row && j == playerOneStart.Column {
-				cell.IsOccupied = true
-				g.PlayerOnePosition = playerOneStart
-			}
-			if i == playerTwoStart.Row && j == playerTwoStart.Column {
-				cell.IsOccupied = true
-				g.PlayerTwoPosition = playerTwoStart
-			}
 			g.Graph.AddVertex(cell)
-
-			// Creates the goal line for each player
-			if i == 0 {
-				cell.IsPlayerTwoFinalRow = true
-			}
-			if i == rows-1 {
-				cell.IsPlayerOneFinalRow = true
-			}
-
 		}
 
 	}
@@ -197,14 +173,6 @@ func (g *Graph) AddWall(wallType WallType, start utils.WallPosition) error {
 	return nil
 }
 
-func (g *Graph) IsOccupied(column, row int) (bool, error) {
-	cell, err := g.Graph.Vertex(CellHash(Cell{Column: column, Row: row}))
-	if err != nil {
-		return false, errors.New("vertex not found")
-	}
-	return cell.IsOccupied, nil
-}
-
 func (g *Graph) IsLegalMove(source, target utils.GridPosition, opponentPositions []*utils.GridPosition) bool {
 	for _, oPos := range opponentPositions {
 		if target == *oPos {
@@ -218,20 +186,6 @@ func (g *Graph) IsLegalMove(source, target utils.GridPosition, opponentPositions
 	}
 
 	return g.IsAdjacent(source, target)
-}
-
-// Unused, benchmark too bad compared to IsLegalMove, but left here for reference
-func (g *Graph) IsLegalMove2(source, target utils.GridPosition) bool {
-	occupied, err := g.IsOccupied(target.Column, target.Row)
-	if err != nil {
-		return false
-	}
-
-	if !occupied {
-		return g.IsAdjacent(source, target)
-	}
-
-	return false
 }
 
 func (g *Graph) GetWalls() []utils.WallPosition {

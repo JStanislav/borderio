@@ -1,6 +1,8 @@
 package player
 
-import "github.com/JStanislav/quoridor-clone/utils"
+import (
+	"github.com/JStanislav/quoridor-clone/utils"
+)
 
 type PlayerID int
 type PlayType int
@@ -25,14 +27,19 @@ type Player struct {
 	Position *utils.GridPosition
 
 	OnPlayerPlay OnPlayerPlay
-	// TODO: Add other player properties
+
+	StartLine  utils.Line
+	FinishLine utils.Line
 }
 
-func New(name string, position utils.GridPosition) *Player {
+func New(id PlayerID, name string, position utils.GridPosition, startLine utils.Line, finishLine utils.Line) *Player {
 	return &Player{
-		ID:       1,
-		Name:     "Player 1",
+		ID:       id,
+		Name:     name,
 		Position: &position,
+
+		StartLine:  startLine,
+		FinishLine: finishLine,
 	}
 }
 
@@ -45,4 +52,34 @@ func GetPlayersPositions(players []*Player) []*utils.GridPosition {
 		}
 	}
 	return positions
+}
+
+func GetPlayersFinishLines(players []*Player) []utils.Line {
+	finishLines := make([]utils.Line, len(players))
+	for i, p := range players {
+		finishLines[i] = p.FinishLine
+	}
+	return finishLines
+}
+
+func (p *Player) IsWinner() bool {
+	if p.Position == nil {
+		return false
+	}
+	if p.FinishLine.Type == utils.HorizontalLine {
+		return p.Position.Row == p.FinishLine.Index
+	} else {
+		return p.Position.Column == p.FinishLine.Index
+	}
+}
+
+func (p *Player) IsFinishLine(play Play) bool {
+	if p.Position == nil {
+		return false
+	}
+	if p.FinishLine.Type == utils.HorizontalLine {
+		return play.Position.Row == p.FinishLine.Index
+	} else {
+		return play.Position.Column == p.FinishLine.Index
+	}
 }

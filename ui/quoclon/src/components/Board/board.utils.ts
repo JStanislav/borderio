@@ -41,3 +41,7 @@ export const setActiveWalls = (board: Array<Row>, activeWalls: { row: number, co
     activeWalls.forEach(wall => {
         setWall(board, wall.row, wall.col, 2);})
 }
+
+export const isFinishLine = (row: number): boolean=> {
+    return row === 1 || row === TOTAL_BOARD_DIM + 2
+}

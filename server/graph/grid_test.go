@@ -12,7 +12,7 @@ import (
 
 func TestGenerateGrid(t *testing.T) {
 	graph := New(1)
-	err := graph.GenerateBoard(4, 4, utils.GridPosition{Column: 1, Row: 0}, utils.GridPosition{Column: 2, Row: 3})
+	err := graph.GenerateBoard(4, 4)
 	if err != nil {
 		t.Error(err)
 	}
@@ -50,7 +50,7 @@ func TestGenerateGrid(t *testing.T) {
 
 func TestAddWallHorizontal(t *testing.T) {
 	graph := New(2)
-	err := graph.GenerateBoard(4, 4, utils.GridPosition{Column: 0, Row: 0}, utils.GridPosition{Column: 3, Row: 3})
+	err := graph.GenerateBoard(4, 4)
 	if err != nil {
 		t.Error(err)
 	}
@@ -74,7 +74,7 @@ func TestAddWallHorizontal(t *testing.T) {
 
 func TestAddWallVertical(t *testing.T) {
 	g := New(2)
-	g.GenerateBoard(9, 9, utils.GridPosition{Column: 4, Row: 0}, utils.GridPosition{Column: 4, Row: 8})
+	g.GenerateBoard(9, 9)
 	if err := g.AddWall(Vertical, utils.WallPosition{CellA: utils.GridPosition{Column: 5, Row: 2}, CellB: utils.GridPosition{Column: 6, Row: 2}}); err != nil {
 		t.Error(err)
 	}
@@ -116,7 +116,7 @@ func TestWallCutThrough(t *testing.T) {
 
 func TestPrintGrid(t *testing.T) {
 	graph := New(1)
-	err := graph.GenerateBoard(9, 9, utils.GridPosition{Column: 4, Row: 0}, utils.GridPosition{Column: 4, Row: 8})
+	err := graph.GenerateBoard(9, 9)
 	if err != nil {
 		panic(err)
 	}
@@ -173,13 +173,13 @@ func TestLegalMoves(t *testing.T) {
 		source, target, opponentPosition utils.GridPosition
 		want                             bool
 	}{
-		{"Illegal", p("R3-C6"), p("R2-C6"), graph.PlayerTwoPosition, false},
-		{"Illegal", p("R2-C6"), p("R2-C7"), graph.PlayerTwoPosition, false},
-		{"Illegal", p("R6-C8"), p("R6-C7"), graph.PlayerTwoPosition, false},
-		{"Illegal", p("R7-C1"), p("R7-C2"), graph.PlayerTwoPosition, false},
-		{"Illegal", p("R5-C5"), p("R6-C5"), graph.PlayerTwoPosition, false},
-		{"Illegal", p("R0-C0"), p("R0-C1"), graph.PlayerTwoPosition, false},
-		{"Legal", p("R0-C0"), p("R1-C0"), graph.PlayerTwoPosition, true},
+		{"Illegal", p("R3-C6"), p("R2-C6"), p("R8-C8"), false},
+		{"Illegal", p("R2-C6"), p("R2-C7"), p("R8-C8"), false},
+		{"Illegal", p("R6-C8"), p("R6-C7"), p("R8-C8"), false},
+		{"Illegal", p("R7-C1"), p("R7-C2"), p("R8-C8"), false},
+		{"Illegal", p("R5-C5"), p("R6-C5"), p("R8-C8"), false},
+		{"Illegal", p("R0-C0"), p("R0-C1"), p("R8-C8"), false},
+		{"Legal", p("R0-C0"), p("R1-C0"), p("R8-C8"), true},
 		{"Position occupied", p("R4-C6"), p("R4-C5"), p("R4-C5"), false},
 		{"No relation at all", p("R0-C0"), p("R4-C5"), p("R4-C5"), false},
 		{"Simple skip", p("R2-C2"), p("R2-C4"), p("R2-C3"), true},
@@ -199,26 +199,10 @@ func TestLegalMoves(t *testing.T) {
 	}
 }
 
-func BenchmarkLegalMoves(b *testing.B) {
-	g := generateBasicBoard(1)
-
-	for b.Loop() {
-		g.IsLegalMove(g.PlayerOnePosition, g.PlayerTwoPosition, []*utils.GridPosition{&g.PlayerTwoPosition})
-	}
-}
-
-func BenchmarkLegalMoves2(b *testing.B) {
-	g := generateBasicBoard(1)
-
-	for b.Loop() {
-		g.IsLegalMove2(g.PlayerOnePosition, g.PlayerTwoPosition)
-	}
-}
-
 // Generates a basic board with 9 columns, 9 rows and the players in their starting positions
 func generateBasicBoard(wallLength int) *Graph {
 	graph := New(wallLength)
-	err := graph.GenerateBoard(9, 9, utils.GridPosition{Column: 4, Row: 0}, utils.GridPosition{Column: 4, Row: 8})
+	err := graph.GenerateBoard(9, 9)
 	if err != nil {
 		panic(err)
 	}
