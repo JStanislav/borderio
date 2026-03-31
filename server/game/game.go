@@ -26,13 +26,13 @@ func (g *GameState) StartMatch(playerOne, playerTwo *player.Player, movements ch
 	actualBoardDimension := boardDimension + 2
 
 	g.Board = graph.New(2)
-	p1StartPosition := utils.GridPosition{Column: 4, Row: 0}
-	p2StartPosition := utils.GridPosition{Column: 4, Row: actualBoardDimension - 1}
+	p1StartPosition := utils.GridPosition{Column: 4, Row: 1}
+	p2StartPosition := utils.GridPosition{Column: 4, Row: actualBoardDimension - 2}
 
-	p1StartLine := utils.Line{Type: utils.HorizontalLine, Index: p1StartPosition.Row}
-	p2StartLine := utils.Line{Type: utils.HorizontalLine, Index: p2StartPosition.Row}
-	p1FinishLine := utils.Line{Type: utils.HorizontalLine, Index: p2StartPosition.Row}
-	p2FinishLine := utils.Line{Type: utils.HorizontalLine, Index: p1StartPosition.Row}
+	p1StartLine := utils.Line{Type: utils.HorizontalLine, Index: 1}
+	p2StartLine := utils.Line{Type: utils.HorizontalLine, Index: actualBoardDimension - 2}
+	p1FinishLine := utils.Line{Type: utils.HorizontalLine, Index: actualBoardDimension - 1}
+	p2FinishLine := utils.Line{Type: utils.HorizontalLine, Index: 0}
 
 	g.Board.GenerateBoard(boardDimension, actualBoardDimension, p1StartPosition, p2StartPosition)
 
@@ -69,7 +69,7 @@ func (g *GameState) StartMatch(playerOne, playerTwo *player.Player, movements ch
 			case player.PlayerMove:
 				fmt.Printf("Moving P%d [R%d-C%d]->[R%d-C%d]\n", p.ID, p.Position.Row, p.Position.Column, play.Position.Row, play.Position.Column)
 
-				if play.OutOfBounds(boardDimension, actualBoardDimension) && !p.IsFinishLine(play) {
+				if OutOfBounds(play, boardDimension, actualBoardDimension) && !p.IsFinishLine(play) {
 					return errors.New("move out of bounds")
 				}
 
@@ -91,6 +91,10 @@ func (g *GameState) StartMatch(playerOne, playerTwo *player.Player, movements ch
 			case player.WallPlacement:
 				fmt.Printf("Placing wall p%d [R%d-C%d]||[R%d-C%d]\n", p.ID, play.WallPlaced.CellA.Row, play.WallPlaced.CellA.Column, play.WallPlaced.CellB.Row, play.WallPlaced.CellB.Column)
 
+				if OutOfBounds(play, boardDimension, actualBoardDimension) {
+					return errors.New("wall out of bounds")
+				}
+
 				if g.Board.AddWall(graph.Undefined, utils.WallPosition{CellA: play.WallPlaced.CellA, CellB: play.WallPlaced.CellB}) == nil {
 					movements <- play
 					fmt.Println("Placed wall")
@@ -104,4 +108,29 @@ func (g *GameState) StartMatch(playerOne, playerTwo *player.Player, movements ch
 		}
 	}
 
+}
+
+func RowOutOfBounds(p utils.GridPosition, row int) bool {
+	return p.Row < 1 || p.Row >= row-1
+}
+
+func ColumnOutOfBounds(p utils.GridPosition, column int) bool {
+	return p.Column < 0 || p.Column >= column
+}
+
+func OutOfBounds(p player.Play, columns, rows int) bool {
+	switch p.PlayType {
+	case player.PlayerMove:
+		return RowOutOfBounds(*p.Position, rows) || ColumnOutOfBounds(*p.Position, columns)
+	case player.WallPlacement:
+		if p.WallPlaced.Orientation() == utils.VerticalLine && RowOutOfBounds(p.WallPlaced.CellA, rows-1) {
+			return true
+		}
+		if p.WallPlaced.Orientation() == utils.HorizontalLine && ColumnOutOfBounds(p.WallPlaced.CellA, columns-1) {
+			return true
+		}
+		return false
+	default:
+		return true
+	}
 }

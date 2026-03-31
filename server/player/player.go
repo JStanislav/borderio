@@ -19,17 +19,6 @@ type Play struct {
 	WallPlaced *utils.WallPosition
 }
 
-func (p Play) OutOfBounds(columns, rows int) bool {
-	switch p.PlayType {
-	case PlayerMove:
-		return p.Position.Row < 1 || p.Position.Row >= rows-1 || p.Position.Column < 0 || p.Position.Column >= columns
-	case WallPlacement:
-		return false // TODO: implement wall placement out of bounds check
-	default:
-		return true
-	}
-}
-
 type OnPlayerPlay func(playerID PlayerID, play Play) error
 
 type Player struct {
