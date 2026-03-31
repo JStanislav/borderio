@@ -15,10 +15,13 @@ type GameState struct {
 	StartTime   *time.Time
 	CurrentTurn player.PlayerID
 	Players     []*player.Player
+	WallLength  int
 }
 
-func New() *GameState {
-	return &GameState{}
+func New(wallLength int) *GameState {
+	return &GameState{
+		WallLength: wallLength,
+	}
 }
 
 func (g *GameState) StartMatch(playerOne, playerTwo *player.Player, movements chan player.Play) {
@@ -69,7 +72,7 @@ func (g *GameState) StartMatch(playerOne, playerTwo *player.Player, movements ch
 			case player.PlayerMove:
 				fmt.Printf("Moving P%d [R%d-C%d]->[R%d-C%d]\n", p.ID, p.Position.Row, p.Position.Column, play.Position.Row, play.Position.Column)
 
-				if OutOfBounds(play, boardDimension, actualBoardDimension) && !p.IsFinishLine(play) {
+				if g.OutOfBounds(play, boardDimension, actualBoardDimension) && !p.IsFinishLine(play) {
 					return errors.New("move out of bounds")
 				}
 
@@ -91,7 +94,7 @@ func (g *GameState) StartMatch(playerOne, playerTwo *player.Player, movements ch
 			case player.WallPlacement:
 				fmt.Printf("Placing wall p%d [R%d-C%d]||[R%d-C%d]\n", p.ID, play.WallPlaced.CellA.Row, play.WallPlaced.CellA.Column, play.WallPlaced.CellB.Row, play.WallPlaced.CellB.Column)
 
-				if OutOfBounds(play, boardDimension, actualBoardDimension) {
+				if g.OutOfBounds(play, boardDimension, actualBoardDimension) {
 					return errors.New("wall out of bounds")
 				}
 
@@ -118,15 +121,15 @@ func ColumnOutOfBounds(p utils.GridPosition, column int) bool {
 	return p.Column < 0 || p.Column >= column
 }
 
-func OutOfBounds(p player.Play, columns, rows int) bool {
+func (g *GameState) OutOfBounds(p player.Play, columns, rows int) bool {
 	switch p.PlayType {
 	case player.PlayerMove:
 		return RowOutOfBounds(*p.Position, rows) || ColumnOutOfBounds(*p.Position, columns)
 	case player.WallPlacement:
-		if p.WallPlaced.Orientation() == utils.VerticalLine && RowOutOfBounds(p.WallPlaced.CellA, rows-1) {
+		if p.WallPlaced.Orientation() == utils.VerticalLine && RowOutOfBounds(p.WallPlaced.CellA, rows-(g.WallLength-1)) {
 			return true
 		}
-		if p.WallPlaced.Orientation() == utils.HorizontalLine && ColumnOutOfBounds(p.WallPlaced.CellA, columns-1) {
+		if p.WallPlaced.Orientation() == utils.HorizontalLine && ColumnOutOfBounds(p.WallPlaced.CellA, columns-(g.WallLength-1)) {
 			return true
 		}
 		return false

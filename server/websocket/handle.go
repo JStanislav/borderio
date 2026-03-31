@@ -29,7 +29,7 @@ func Handle(w http.ResponseWriter, r *http.Request) {
 	p1 := &player.Player{ID: 1, Name: "Colo"}
 	p2 := &player.Player{ID: 2, Name: "Stan"}
 
-	gameState := game.New()
+	gameState := game.New(2)
 
 	movementsChannel := make(chan player.Play)
 	go func() {
