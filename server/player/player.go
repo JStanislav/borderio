@@ -32,10 +32,10 @@ type Player struct {
 	FinishLine utils.Line
 }
 
-func New(name string, position utils.GridPosition, startLine utils.Line, finishLine utils.Line) *Player {
+func New(id PlayerID, name string, position utils.GridPosition, startLine utils.Line, finishLine utils.Line) *Player {
 	return &Player{
-		ID:       1,
-		Name:     "Player 1",
+		ID:       id,
+		Name:     name,
 		Position: &position,
 
 		StartLine:  startLine,

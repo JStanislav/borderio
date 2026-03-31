@@ -12,7 +12,7 @@ import (
 
 func TestMain(t *testing.T) {
 	graph := g.New(2)
-	err := graph.GenerateBoard(9, 9, utils.GridPosition{Column: 4, Row: 0}, utils.GridPosition{Column: 4, Row: 8})
+	err := graph.GenerateBoard(9, 9)
 	if err != nil {
 		panic(err)
 	}
@@ -21,8 +21,8 @@ func TestMain(t *testing.T) {
 	p2StartLine := utils.Line{Type: utils.HorizontalLine, Index: 8}
 	p1FinishLine := utils.Line{Type: utils.HorizontalLine, Index: 8}
 	p2FinishLine := utils.Line{Type: utils.HorizontalLine, Index: 0}
-	playerOne := player.New("quoro", utils.GridPosition{Column: 4, Row: 0}, p1StartLine, p1FinishLine)
-	playerTwo := player.New("wally", utils.GridPosition{Column: 4, Row: 8}, p2StartLine, p2FinishLine)
+	playerOne := player.New(1, "quoro", utils.GridPosition{Column: 4, Row: 0}, p1StartLine, p1FinishLine)
+	playerTwo := player.New(2, "wally", utils.GridPosition{Column: 4, Row: 8}, p2StartLine, p2FinishLine)
 
 	p1Move := utils.GridPosition{Column: 4, Row: 1}
 	p2Move := utils.GridPosition{Column: 4, Row: 7}
@@ -108,25 +108,17 @@ func TestMain(t *testing.T) {
 func TestMatch(t *testing.T) {
 	movesChannel := make(chan player.Play)
 
-	p1StartPosition := utils.GridPosition{Column: 4, Row: 0}
-	p2StartPosition := utils.GridPosition{Column: 4, Row: 8}
-	p1StartLine := utils.Line{Type: utils.HorizontalLine, Index: 0}
-	p2StartLine := utils.Line{Type: utils.HorizontalLine, Index: 8}
-	p1FinishLine := utils.Line{Type: utils.HorizontalLine, Index: 8}
-	p2FinishLine := utils.Line{Type: utils.HorizontalLine, Index: 0}
-	playerOne := player.New("quoro", p1StartPosition, p1StartLine, p1FinishLine)
-	playerOne.ID = 1
-	playerTwo := player.New("wally", p2StartPosition, p2StartLine, p2FinishLine)
-	playerTwo.ID = 2
+	gs := NewTwoPlayerMatch([]string{"Player 1", "Player 2"})
 
-	gs := GameState{}
-
-	go gs.StartMatch(playerOne, playerTwo, movesChannel)
+	go gs.StartMatch(movesChannel) // use new two player match
 	go receiveSelected(movesChannel)
 
 	time.Sleep(1 * time.Second)
 
 	g := gs.Board.(*g.Graph)
+	playerOne := gs.Players[0]
+	playerTwo := gs.Players[1]
+
 	g.PrintGrid(9, 9, playerOne, playerTwo)
 
 	plays := []struct {

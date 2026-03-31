@@ -26,10 +26,7 @@ func Handle(w http.ResponseWriter, r *http.Request) {
 	}
 	defer c.Close()
 
-	p1 := &player.Player{ID: 1, Name: "Colo"}
-	p2 := &player.Player{ID: 2, Name: "Stan"}
-
-	gameState := game.New(2)
+	gameState := game.NewTwoPlayerMatch([]string{"Player 1", "Player 2"})
 
 	movementsChannel := make(chan player.Play)
 	go func() {
@@ -38,7 +35,11 @@ func Handle(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	gameState.StartMatch(p1, p2, movementsChannel)
+	gameState.StartMatch(movementsChannel)
+
+	p1 := gameState.Players[0]
+	p2 := gameState.Players[1]
+
 	sendGameState(c, gameState, p1, p2)
 
 	for {

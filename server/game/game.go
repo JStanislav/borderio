@@ -11,46 +11,45 @@ import (
 )
 
 type GameState struct {
-	Board       graph.Board
 	StartTime   *time.Time
 	CurrentTurn player.PlayerID
 	Players     []*player.Player
 	WallLength  int
+
+	// Board related
+	Board          graph.Board
+	FinishLineType FinishLineType //
+	Columns        int
+	Rows           int
 }
 
-func New(wallLength int) *GameState {
+type FinishLineType string
+
+const (
+	Horizontal            FinishLineType = "horizontal"
+	Vertical              FinishLineType = "vertical"
+	HorizontalAndVertical FinishLineType = "square"
+)
+
+func New(wallLength int, players []*player.Player, columns, rows int, finishLineType FinishLineType) *GameState {
 	return &GameState{
-		WallLength: wallLength,
+		WallLength:     wallLength,
+		Players:        players,
+		FinishLineType: finishLineType,
+		Columns:        columns,
+		Rows:           rows,
 	}
 }
 
-func (g *GameState) StartMatch(playerOne, playerTwo *player.Player, movements chan player.Play) {
+func (g *GameState) StartMatch(movements chan player.Play) {
 	boardDimension := 9
 	actualBoardDimension := boardDimension + 2
 
 	g.Board = graph.New(2)
-	p1StartPosition := utils.GridPosition{Column: 4, Row: 1}
-	p2StartPosition := utils.GridPosition{Column: 4, Row: actualBoardDimension - 2}
-
-	p1StartLine := utils.Line{Type: utils.HorizontalLine, Index: 1}
-	p2StartLine := utils.Line{Type: utils.HorizontalLine, Index: actualBoardDimension - 2}
-	p1FinishLine := utils.Line{Type: utils.HorizontalLine, Index: actualBoardDimension - 1}
-	p2FinishLine := utils.Line{Type: utils.HorizontalLine, Index: 0}
-
-	g.Board.GenerateBoard(boardDimension, actualBoardDimension, p1StartPosition, p2StartPosition)
+	g.Board.GenerateBoard(boardDimension, actualBoardDimension)
 
 	g.StartTime = new(time.Time)
 	*g.StartTime = time.Now()
-	g.CurrentTurn = playerOne.ID
-
-	playerOne.Position = &p1StartPosition
-	playerOne.StartLine = p1StartLine
-	playerOne.FinishLine = p1FinishLine
-	playerTwo.Position = &p2StartPosition
-	playerTwo.StartLine = p2StartLine
-	playerTwo.FinishLine = p2FinishLine
-
-	g.Players = []*player.Player{playerOne, playerTwo}
 
 	for _, p := range g.Players {
 		playersButNotCurrent := []*player.Player{}
