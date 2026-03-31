@@ -17,8 +17,12 @@ func TestMain(t *testing.T) {
 		panic(err)
 	}
 
-	playerOne := player.New("quoro", utils.GridPosition{Column: 4, Row: 0})
-	playerTwo := player.New("wally", utils.GridPosition{Column: 4, Row: 8})
+	p1StartLine := utils.Line{Type: utils.HorizontalLine, Index: 0}
+	p2StartLine := utils.Line{Type: utils.HorizontalLine, Index: 8}
+	p1FinishLine := utils.Line{Type: utils.HorizontalLine, Index: 8}
+	p2FinishLine := utils.Line{Type: utils.HorizontalLine, Index: 0}
+	playerOne := player.New("quoro", utils.GridPosition{Column: 4, Row: 0}, p1StartLine, p1FinishLine)
+	playerTwo := player.New("wally", utils.GridPosition{Column: 4, Row: 8}, p2StartLine, p2FinishLine)
 
 	p1Move := utils.GridPosition{Column: 4, Row: 1}
 	p2Move := utils.GridPosition{Column: 4, Row: 7}
@@ -106,9 +110,13 @@ func TestMatch(t *testing.T) {
 
 	p1StartPosition := utils.GridPosition{Column: 4, Row: 0}
 	p2StartPosition := utils.GridPosition{Column: 4, Row: 8}
-	playerOne := player.New("quoro", p1StartPosition)
+	p1StartLine := utils.Line{Type: utils.HorizontalLine, Index: 0}
+	p2StartLine := utils.Line{Type: utils.HorizontalLine, Index: 8}
+	p1FinishLine := utils.Line{Type: utils.HorizontalLine, Index: 8}
+	p2FinishLine := utils.Line{Type: utils.HorizontalLine, Index: 0}
+	playerOne := player.New("quoro", p1StartPosition, p1StartLine, p1FinishLine)
 	playerOne.ID = 1
-	playerTwo := player.New("wally", p2StartPosition)
+	playerTwo := player.New("wally", p2StartPosition, p2StartLine, p2FinishLine)
 	playerTwo.ID = 2
 
 	gs := GameState{}
