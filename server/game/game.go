@@ -91,19 +91,52 @@ func (g *GameState) StartMatch(movements chan player.Play) {
 				}
 
 			case player.WallPlacement:
+				wallPosition := utils.WallPosition{CellA: play.WallPlaced.CellA, CellB: play.WallPlaced.CellB}
+
 				fmt.Printf("Placing wall p%d [R%d-C%d]||[R%d-C%d]\n", p.ID, play.WallPlaced.CellA.Row, play.WallPlaced.CellA.Column, play.WallPlaced.CellB.Row, play.WallPlaced.CellB.Column)
 
 				if g.OutOfBounds(play, boardDimension, actualBoardDimension) {
 					return errors.New("wall out of bounds")
 				}
 
-				if g.Board.AddWall(graph.Undefined, utils.WallPosition{CellA: play.WallPlaced.CellA, CellB: play.WallPlaced.CellB}) == nil {
-					movements <- play
-					fmt.Println("Placed wall")
-					return nil
-				} else {
+				err := g.Board.AddWall(graph.Undefined, wallPosition)
+				if err != nil {
 					return errors.New("illegal wall placement")
 				}
+
+				finishLinesFound := 0
+				for _, p := range playersButNotCurrent {
+					existsPathToFinishLine := false
+					if p.FinishLine.Type == utils.HorizontalLine {
+						for i := range boardDimension {
+							winCell := utils.GridPosition{Row: p.FinishLine.Index, Column: i}
+							if g.Board.ExistsPath(*p.Position, winCell) {
+								existsPathToFinishLine = true
+							}
+						}
+					} else {
+						for i := 1; i < actualBoardDimension-1; i++ {
+							winCell := utils.GridPosition{Row: i, Column: p.FinishLine.Index}
+							if g.Board.ExistsPath(*p.Position, winCell) {
+								existsPathToFinishLine = true
+							}
+						}
+					}
+					if existsPathToFinishLine {
+						finishLinesFound++
+						break
+					}
+				}
+
+				if finishLinesFound != len(playersButNotCurrent) {
+					g.Board.RemoveWall(graph.Undefined, wallPosition)
+					return errors.New("illegal wall placement, no path to finish line")
+				}
+
+				movements <- play
+				fmt.Println("Placed wall")
+
+				return nil
 			}
 
 			return errors.New("unexpected error ")

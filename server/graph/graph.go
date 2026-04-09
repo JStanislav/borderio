@@ -22,6 +22,8 @@ type Board interface {
 	GenerateBoard(columns, rows int) error
 	AddWall(wallType WallType, start utils.WallPosition) error
 	IsLegalMove(source, target utils.GridPosition, opponentPosition []*utils.GridPosition) bool
+	RemoveWall(wallType WallType, start utils.WallPosition) error
+	ExistsPath(source, target utils.GridPosition) bool
 	GetWalls() []utils.WallPosition
 }
 
@@ -110,11 +112,7 @@ func (g *Graph) AddWall(wallType WallType, start utils.WallPosition) error {
 	}
 
 	if wallType == Undefined {
-		if start.CellA.Row == start.CellB.Row {
-			wallType = Vertical
-		} else {
-			wallType = Horizontal
-		}
+		wallType = infereWallType(start)
 	}
 
 	horizontal := wallType == Horizontal
@@ -173,6 +171,79 @@ func (g *Graph) AddWall(wallType WallType, start utils.WallPosition) error {
 	return nil
 }
 
+func (g *Graph) RemoveWall(wallType WallType, start utils.WallPosition) error {
+	s := slices.DeleteFunc(g.Walls, func(wall utils.WallPosition) bool {
+		return (wall.CellA == start.CellA && wall.CellB == start.CellB) || (wall.CellA == start.CellB && wall.CellB == start.CellA)
+	})
+
+	if len(s) < len(g.Walls) {
+		g.Walls = s
+	}
+
+	_g, err := g.Graph.Clone()
+	if err != nil {
+		return err
+	}
+
+	if wallType == Undefined {
+		wallType = infereWallType(start)
+	}
+
+	if wallType == Horizontal {
+		if start.CellA.Row > start.CellB.Row { // normalize wall position, make cell A < cell B
+			start = utils.WallPosition{CellA: start.CellB, CellB: start.CellA}
+		}
+
+		for i := 0; i < g.wallLength; i++ {
+			cellAHash := CellHash(Cell{Column: start.CellA.Column + i, Row: start.CellA.Row})
+			cellBHash := CellHash(Cell{Column: start.CellB.Column + i, Row: start.CellB.Row})
+			fmt.Printf("Adding edge between %+v and %+v\n", cellAHash, cellBHash)
+			if err := _g.AddEdge(cellAHash, cellBHash); err != nil {
+				fmt.Printf("Error adding edge between %+v and %+v: %s\n", start.CellA, start.CellB, err)
+				return err
+			}
+		}
+	} else {
+		if start.CellA.Column > start.CellB.Column { // normalize wall position, make cell A < cell B
+			start = utils.WallPosition{CellA: start.CellB, CellB: start.CellA}
+		}
+
+		for i := 0; i < g.wallLength; i++ {
+			cellAHash := CellHash(Cell{Column: start.CellA.Column, Row: start.CellA.Row + i})
+			cellBHash := CellHash(Cell{Column: start.CellB.Column, Row: start.CellB.Row + i})
+			fmt.Printf("Adding edge between %+v and %+v\n", cellAHash, cellBHash)
+			if err := _g.AddEdge(cellAHash, cellBHash); err != nil {
+				fmt.Printf("Error adding edge between %+v and %+v: %s\n", start.CellA, start.CellB, err)
+				return err
+			}
+		}
+	}
+
+	g.Graph = _g
+	fmt.Printf("Edge added successfully\n")
+
+	return nil
+}
+
+func (g *Graph) ExistsPath(source, target utils.GridPosition) bool {
+	exists := false
+
+	sourceHash := CellHash(Cell{Column: source.Column, Row: source.Row})
+	targetHash := CellHash(Cell{Column: target.Column, Row: target.Row})
+	err := graph.DFS(g.Graph, sourceHash, func(vertex string) bool {
+		if vertex == targetHash {
+			exists = true
+			return true
+		}
+		return false
+	})
+
+	if err != nil {
+		fmt.Printf("Error during DFS: %s\n", err)
+	}
+	return exists
+}
+
 func (g *Graph) IsLegalMove(source, target utils.GridPosition, opponentPositions []*utils.GridPosition) bool {
 	for _, oPos := range opponentPositions {
 		if target == *oPos {
@@ -217,4 +288,15 @@ func (g *Graph) PrintGrid(columns, rows int, playerOne, playerTwo *player.Player
 		}
 		fmt.Println()
 	}
+}
+
+func infereWallType(start utils.WallPosition) WallType {
+	var wallType WallType
+	if start.CellA.Row == start.CellB.Row {
+		wallType = Vertical
+	} else {
+		wallType = Horizontal
+	}
+
+	return wallType
 }
