@@ -105,13 +105,14 @@ func (g *GameState) StartMatch(movements chan player.Play) {
 				}
 
 				finishLinesFound := 0
-				for _, p := range playersButNotCurrent {
+				for _, p := range g.Players {
 					existsPathToFinishLine := false
 					if p.FinishLine.Type == utils.HorizontalLine {
 						for i := range boardDimension {
 							winCell := utils.GridPosition{Row: p.FinishLine.Index, Column: i}
 							if g.Board.ExistsPath(*p.Position, winCell) {
 								existsPathToFinishLine = true
+								break
 							}
 						}
 					} else {
@@ -119,16 +120,16 @@ func (g *GameState) StartMatch(movements chan player.Play) {
 							winCell := utils.GridPosition{Row: i, Column: p.FinishLine.Index}
 							if g.Board.ExistsPath(*p.Position, winCell) {
 								existsPathToFinishLine = true
+								break
 							}
 						}
 					}
 					if existsPathToFinishLine {
 						finishLinesFound++
-						break
 					}
 				}
 
-				if finishLinesFound != len(playersButNotCurrent) {
+				if finishLinesFound != len(g.Players) {
 					g.Board.RemoveWall(graph.Undefined, wallPosition)
 					return errors.New("illegal wall placement, no path to finish line")
 				}
