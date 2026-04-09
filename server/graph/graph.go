@@ -31,11 +31,20 @@ type Graph struct {
 	Graph      graph.Graph[string, Cell]
 	Walls      []utils.WallPosition
 	wallLength int
+	boardType  BoardType
 }
 
-func New(wallLength int) *Graph {
-	return &Graph{wallLength: wallLength}
+func New(wallLength int, boardType BoardType) *Graph {
+	return &Graph{wallLength: wallLength, boardType: boardType}
 }
+
+type BoardType string
+
+const (
+	ExtraRows    BoardType = "extra-rows"
+	ExtraColumns BoardType = "extra-columns"
+	Square       BoardType = "square"
+)
 
 type Cell struct {
 	Id     string
@@ -91,7 +100,24 @@ func (g *Graph) GenerateBoard(columns, rows int) error {
 		}
 	}
 
+	removeEdgesFromFinishLines(g.Graph, columns, rows, g.boardType)
+
 	return nil
+}
+
+func removeEdgesFromFinishLines(g graph.Graph[string, Cell], columns, rows int, boardType BoardType) {
+	switch boardType {
+	case ExtraRows:
+		for i := 0; i < columns-1; i++ {
+			g.RemoveEdge(CellHash(Cell{Row: 0, Column: i}), CellHash(Cell{Row: 0, Column: i + 1}))
+			g.RemoveEdge(CellHash(Cell{Row: rows - 1, Column: i}), CellHash(Cell{Row: rows - 1, Column: i + 1}))
+		}
+	case ExtraColumns:
+		for i := 0; i < rows-1; i++ {
+			g.RemoveEdge(CellHash(Cell{Row: i, Column: 0}), CellHash(Cell{Row: i + 1, Column: 0}))
+			g.RemoveEdge(CellHash(Cell{Row: i, Column: columns - 1}), CellHash(Cell{Row: i + 1, Column: columns - 1}))
+		}
+	}
 }
 
 func (g *Graph) AdjacencyMap() (map[string]map[string]graph.Edge[string], error) {

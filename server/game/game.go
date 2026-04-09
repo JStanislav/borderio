@@ -45,7 +45,7 @@ func (g *GameState) StartMatch(movements chan player.Play) {
 	boardDimension := 9
 	actualBoardDimension := boardDimension + 2
 
-	g.Board = graph.New(2)
+	g.Board = graph.New(2, graph.ExtraRows)
 	g.Board.GenerateBoard(boardDimension, actualBoardDimension)
 
 	g.StartTime = new(time.Time)
