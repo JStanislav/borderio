@@ -5,13 +5,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/JStanislav/quoridor-clone/graph"
 	g "github.com/JStanislav/quoridor-clone/graph"
 	"github.com/JStanislav/quoridor-clone/player"
 	"github.com/JStanislav/quoridor-clone/utils"
 )
 
 func TestMain(t *testing.T) {
-	graph := g.New(2)
+	graph := g.New(2, graph.Square)
 	err := graph.GenerateBoard(9, 9)
 	if err != nil {
 		panic(err)

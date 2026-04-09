@@ -11,7 +11,7 @@ import (
 )
 
 func TestGenerateGrid(t *testing.T) {
-	graph := New(1)
+	graph := New(1, Square)
 	err := graph.GenerateBoard(4, 4)
 	if err != nil {
 		t.Error(err)
@@ -49,7 +49,7 @@ func TestGenerateGrid(t *testing.T) {
 }
 
 func TestAddWallHorizontal(t *testing.T) {
-	graph := New(2)
+	graph := New(2, Square)
 	err := graph.GenerateBoard(4, 4)
 	if err != nil {
 		t.Error(err)
@@ -73,7 +73,7 @@ func TestAddWallHorizontal(t *testing.T) {
 }
 
 func TestAddWallVertical(t *testing.T) {
-	g := New(2)
+	g := New(2, Square)
 	g.GenerateBoard(9, 9)
 	if err := g.AddWall(Vertical, utils.WallPosition{CellA: utils.GridPosition{Column: 5, Row: 2}, CellB: utils.GridPosition{Column: 6, Row: 2}}); err != nil {
 		t.Error(err)
@@ -115,7 +115,7 @@ func TestWallCutThrough(t *testing.T) {
 }
 
 func TestPrintGrid(t *testing.T) {
-	graph := New(1)
+	graph := New(1, Square)
 	err := graph.GenerateBoard(9, 9)
 	if err != nil {
 		panic(err)
@@ -201,7 +201,7 @@ func TestLegalMoves(t *testing.T) {
 
 // Generates a basic board with 9 columns, 9 rows and the players in their starting positions
 func generateBasicBoard(wallLength int) *Graph {
-	graph := New(wallLength)
+	graph := New(wallLength, Square)
 	err := graph.GenerateBoard(9, 9)
 	if err != nil {
 		panic(err)
