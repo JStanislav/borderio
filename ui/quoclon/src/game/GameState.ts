@@ -1,6 +1,7 @@
 
 export interface GameState {
   type: string,
+  currentTurnPlayerId: number,
   playerOne: {
     id: number,
     name: string,
@@ -8,6 +9,7 @@ export interface GameState {
       row: number,
       col: number
     }
+    wallsRemaining: number
   },
   playerTwo: {
     id: number,
@@ -16,6 +18,7 @@ export interface GameState {
       row: number,
       col: number
     }
+    wallsRemaining: number
   }
   walls: Array<{
     cellA: {
@@ -32,13 +35,15 @@ export interface GameState {
 export const getDefaultGameState = (): GameState => {
     return {
       type: "gameState",
+      currentTurnPlayerId: 1,
       playerOne: {
         id: 1,
         name: "P1",
         position: {
           row: 0,
           col: 0
-        }
+        },
+        wallsRemaining: 10
       },
       playerTwo: {
         id: 2,
@@ -46,7 +51,8 @@ export const getDefaultGameState = (): GameState => {
         position: {
           row: 8,
           col: 8
-        }
+        },
+        wallsRemaining: 10
       },
       walls: []
     }

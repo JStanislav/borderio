@@ -91,6 +91,9 @@ func (g *GameState) StartMatch(movements chan player.Play) {
 				}
 
 			case player.WallPlacement:
+				if p.WallsRemaining <= 0 {
+					return errors.New("player has no more walls")
+				}
 				wallPosition := utils.WallPosition{CellA: play.WallPlaced.CellA, CellB: play.WallPlaced.CellB}
 
 				fmt.Printf("Placing wall p%d [R%d-C%d]||[R%d-C%d]\n", p.ID, play.WallPlaced.CellA.Row, play.WallPlaced.CellA.Column, play.WallPlaced.CellB.Row, play.WallPlaced.CellB.Column)
@@ -134,7 +137,9 @@ func (g *GameState) StartMatch(movements chan player.Play) {
 					return errors.New("illegal wall placement, no path to finish line")
 				}
 
+				g.CurrentTurn = playersButNotCurrent[0].ID // WRONG! IMPLEMENT INFINITE STATE MACHINE
 				movements <- play
+				p.WallsRemaining -= 1
 				fmt.Println("Placed wall")
 
 				return nil

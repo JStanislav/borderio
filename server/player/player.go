@@ -22,9 +22,10 @@ type Play struct {
 type OnPlayerPlay func(playerID PlayerID, play Play) error
 
 type Player struct {
-	ID       PlayerID
-	Name     string
-	Position *utils.GridPosition
+	ID             PlayerID
+	Name           string
+	Position       *utils.GridPosition
+	WallsRemaining int
 
 	OnPlayerPlay OnPlayerPlay
 
@@ -32,11 +33,12 @@ type Player struct {
 	FinishLine utils.Line
 }
 
-func New(id PlayerID, name string, position utils.GridPosition, startLine utils.Line, finishLine utils.Line) *Player {
+func New(id PlayerID, name string, position utils.GridPosition, walls int, startLine utils.Line, finishLine utils.Line) *Player {
 	return &Player{
-		ID:       id,
-		Name:     name,
-		Position: &position,
+		ID:             id,
+		Name:           name,
+		Position:       &position,
+		WallsRemaining: walls,
 
 		StartLine:  startLine,
 		FinishLine: finishLine,

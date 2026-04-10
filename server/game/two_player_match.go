@@ -9,8 +9,8 @@ func NewTwoPlayerMatch(playerNames []string) *GameState {
 	columns := 9
 	rows := 11
 
-	playerOne := player.New(1, playerNames[0], utils.GridPosition{}, utils.Line{}, utils.Line{})
-	playerTwo := player.New(2, playerNames[1], utils.GridPosition{}, utils.Line{}, utils.Line{})
+	playerOne := player.New(1, playerNames[0], utils.GridPosition{}, 8, utils.Line{}, utils.Line{})
+	playerTwo := player.New(2, playerNames[1], utils.GridPosition{}, 8, utils.Line{}, utils.Line{})
 
 	p1StartPosition := utils.GridPosition{Column: 4, Row: 1}
 	p2StartPosition := utils.GridPosition{Column: 4, Row: rows - 2}

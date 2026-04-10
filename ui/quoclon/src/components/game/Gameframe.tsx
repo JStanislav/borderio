@@ -32,9 +32,14 @@ export const GameFrame = ({ gameState }: { gameState: GameState }) => {
 
     return (
         <div className="game-frame">
-            <WallPicker walls={9} position="top"/>
-            <Board players={players} requestPlayerMove={requestPlayerMove} requestWallPlacement={requestWallPlacement} activeWalls={activeWalls}/>
-            <WallPicker walls={9} position="bottom"/>
+            <WallPicker walls={gameState.playerOne.wallsRemaining} position="top"/>
+            <Board players={players}
+                    requestPlayerMove={requestPlayerMove}
+                    requestWallPlacement={requestWallPlacement}
+                    activeWalls={activeWalls}
+                    currentTurnPlayerId={gameState.currentTurnPlayerId}
+            />
+            <WallPicker walls={gameState.playerTwo.wallsRemaining} position="bottom"/>
         </div>
     )
 }

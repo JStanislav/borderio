@@ -100,16 +100,19 @@ func Handle(w http.ResponseWriter, r *http.Request) {
 
 func sendGameState(c *websocket.Conn, gameState *game.GameState, p1, p2 *player.Player) {
 	gameStateMessage := messages.GameStateStateMessage{
-		Type: "gameState",
+		Type:                "gameState",
+		CurrentTurnPlayerId: int(gameState.CurrentTurn),
 		PlayerOne: messages.PlayerMessage{
-			ID:       int(p1.ID),
-			Name:     p1.Name,
-			Position: messages.PositionMessage{Row: p1.Position.Row, Col: p1.Position.Column},
+			ID:             int(p1.ID),
+			Name:           p1.Name,
+			Position:       messages.PositionMessage{Row: p1.Position.Row, Col: p1.Position.Column},
+			WallsRemaining: p1.WallsRemaining,
 		},
 		PlayerTwo: messages.PlayerMessage{
-			ID:       int(p2.ID),
-			Name:     p2.Name,
-			Position: messages.PositionMessage{Row: p2.Position.Row, Col: p2.Position.Column},
+			ID:             int(p2.ID),
+			Name:           p2.Name,
+			Position:       messages.PositionMessage{Row: p2.Position.Row, Col: p2.Position.Column},
+			WallsRemaining: p2.WallsRemaining,
 		},
 		Walls: gameState.Board.GetWalls(),
 	}

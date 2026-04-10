@@ -24,14 +24,16 @@ type PositionMessage struct {
 }
 
 type PlayerMessage struct {
-	ID       int             `json:"id"`
-	Name     string          `json:"name"`
-	Position PositionMessage `json:"position"`
+	ID             int             `json:"id"`
+	Name           string          `json:"name"`
+	Position       PositionMessage `json:"position"`
+	WallsRemaining int             `json:"wallsRemaining"`
 }
 
 type GameStateStateMessage struct {
-	Type      string               `json:"type"`
-	PlayerOne PlayerMessage        `json:"playerOne"`
-	PlayerTwo PlayerMessage        `json:"playerTwo"`
-	Walls     []utils.WallPosition `json:"walls"`
+	Type                string               `json:"type"`
+	CurrentTurnPlayerId int                  `json:"currentTurnPlayerId"`
+	PlayerOne           PlayerMessage        `json:"playerOne"`
+	PlayerTwo           PlayerMessage        `json:"playerTwo"`
+	Walls               []utils.WallPosition `json:"walls"`
 }

@@ -22,8 +22,8 @@ func TestMain(t *testing.T) {
 	p2StartLine := utils.Line{Type: utils.HorizontalLine, Index: 8}
 	p1FinishLine := utils.Line{Type: utils.HorizontalLine, Index: 8}
 	p2FinishLine := utils.Line{Type: utils.HorizontalLine, Index: 0}
-	playerOne := player.New(1, "quoro", utils.GridPosition{Column: 4, Row: 0}, p1StartLine, p1FinishLine)
-	playerTwo := player.New(2, "wally", utils.GridPosition{Column: 4, Row: 8}, p2StartLine, p2FinishLine)
+	playerOne := player.New(1, "quoro", utils.GridPosition{Column: 4, Row: 0}, 9, p1StartLine, p1FinishLine)
+	playerTwo := player.New(2, "wally", utils.GridPosition{Column: 4, Row: 8}, 9, p2StartLine, p2FinishLine)
 
 	p1Move := utils.GridPosition{Column: 4, Row: 1}
 	p2Move := utils.GridPosition{Column: 4, Row: 7}

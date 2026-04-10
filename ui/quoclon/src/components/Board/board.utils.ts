@@ -18,13 +18,15 @@ const isVerticalCell = (cellId: number, totalBoardDim: number) => {
 }
 
 
-export const onClick = (ev: React.MouseEvent<HTMLDivElement>, requestWallPlacement: (playerId: number, row: number, col: number, orientation: "horizontal" | "vertical") => void) => {
+export const onClick = (ev: React.MouseEvent<HTMLDivElement>,
+                        requestWallPlacement: (playerId: number, row: number, col: number, orientation: "horizontal" | "vertical") => void,
+                        playerId: number) => {
     const cellId = Number(ev.currentTarget.id.split("-")[1]);
     if (!cellId) return;
     if (cellId % 2 === 0) return; // only allow clicking on wall placeable cells
     const isVertical = isVerticalCell(cellId, TOTAL_BOARD_DIM);
     
-    requestWallPlacement(1, 
+    requestWallPlacement(playerId, 
         Math.floor(cellId / TOTAL_BOARD_DIM),
         (cellId % TOTAL_BOARD_DIM), 
         isVertical ? "vertical" : "horizontal");

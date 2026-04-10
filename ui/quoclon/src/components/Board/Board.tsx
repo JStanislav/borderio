@@ -10,9 +10,10 @@ interface Props {
     requestPlayerMove: (playerId: number, row: number, col: number) => void,
     requestWallPlacement: (playerId: number, row: number, col: number, orientation: "horizontal" | "vertical") => void,
     activeWalls: { row: number, col: number, orientation: "horizontal" | "vertical" }[],
+    currentTurnPlayerId: number
 }
 
-export const Board = ({players, requestPlayerMove, requestWallPlacement, activeWalls}: Props) => {
+export const Board = ({players, requestPlayerMove, requestWallPlacement, activeWalls, currentTurnPlayerId}: Props) => {
 
     setActiveWalls(board, activeWalls);
 
@@ -30,7 +31,7 @@ export const Board = ({players, requestPlayerMove, requestWallPlacement, activeW
                                 ${isFinishLine(indexRow) ? "finish-line" : ""}
                             `}
 
-                            onClick={e => onClick(e, requestWallPlacement)}
+                            onClick={e => onClick(e, requestWallPlacement, currentTurnPlayerId)}
                             
                             onDrop={e => onDrop(e, indexRow, colIdx, requestPlayerMove)}
                             onDragOver={isDraggable(indexRow, colIdx) ? onDragOver : undefined}

@@ -12,7 +12,7 @@ export const WallPicker = ({walls, position}: WallPickerProps) => {
             <div className="wall-picker">
                 {
                     walls > 0 &&
-                        <div key={`wall-0-${position}`} className="wall-to-be-picked-top"/>
+                        <div key={`wall-0-${position}`} className="wall-to-be-picked-top"> {walls}</div>
                 }
                 {
                     walls > 1 &&
