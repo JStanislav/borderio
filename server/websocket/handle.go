@@ -101,7 +101,7 @@ func Handle(w http.ResponseWriter, r *http.Request) {
 func sendGameState(c *websocket.Conn, gameState *game.GameState, p1, p2 *player.Player) {
 	gameStateMessage := messages.GameStateStateMessage{
 		Type:                "gameState",
-		CurrentTurnPlayerId: int(gameState.CurrentTurn),
+		CurrentTurnPlayerId: int(gameState.GetCurrentTurnPlayer().ID),
 		PlayerOne: messages.PlayerMessage{
 			ID:             int(p1.ID),
 			Name:           p1.Name,

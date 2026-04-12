@@ -1,6 +1,7 @@
 package game
 
 import (
+	"container/ring"
 	"errors"
 	"fmt"
 	"time"
@@ -11,16 +12,17 @@ import (
 )
 
 type GameState struct {
-	StartTime   *time.Time
-	CurrentTurn player.PlayerID
-	Players     []*player.Player
-	WallLength  int
+	StartTime  *time.Time
+	Players    []*player.Player
+	WallLength int
 
 	// Board related
 	Board          graph.Board
 	FinishLineType FinishLineType //
 	Columns        int
 	Rows           int
+
+	Turner *ring.Ring
 }
 
 type FinishLineType string
@@ -51,6 +53,12 @@ func (g *GameState) StartMatch(movements chan player.Play) {
 	g.StartTime = new(time.Time)
 	*g.StartTime = time.Now()
 
+	g.Turner = ring.New(len(g.Players))
+	for _, p := range g.Players {
+		g.Turner.Value = p
+		g.Turner = g.Turner.Next()
+	}
+
 	for _, p := range g.Players {
 		playersButNotCurrent := []*player.Player{}
 		for _, other := range g.Players {
@@ -60,7 +68,7 @@ func (g *GameState) StartMatch(movements chan player.Play) {
 		}
 		p.OnPlayerPlay = func(playerID player.PlayerID, play player.Play) error {
 
-			if p.ID != g.CurrentTurn {
+			if p.ID != g.GetCurrentTurnPlayer().ID {
 				fmt.Printf("Player %d attempted to place wall out of turn\n", p.ID)
 				return errors.New("not your turn")
 			}
@@ -77,7 +85,7 @@ func (g *GameState) StartMatch(movements chan player.Play) {
 
 				if g.Board.IsLegalMove(*p.Position, *play.Position, playersButNotCurrentPositions) {
 					p.Position = play.Position
-					g.CurrentTurn = playersButNotCurrent[0].ID // WRONG! IMPLEMENT INFINITE STATE MACHINE
+					g.Turner = g.Turner.Next()
 					movements <- play
 					fmt.Println("Moved")
 
@@ -137,7 +145,7 @@ func (g *GameState) StartMatch(movements chan player.Play) {
 					return errors.New("illegal wall placement, no path to finish line")
 				}
 
-				g.CurrentTurn = playersButNotCurrent[0].ID // WRONG! IMPLEMENT INFINITE STATE MACHINE
+				g.Turner = g.Turner.Next()
 				movements <- play
 				p.WallsRemaining -= 1
 				fmt.Println("Placed wall")
@@ -173,5 +181,13 @@ func (g *GameState) OutOfBounds(p player.Play, columns, rows int) bool {
 		return false
 	default:
 		return true
+	}
+}
+
+func (g *GameState) GetCurrentTurnPlayer() *player.Player {
+	if g.Turner.Value != nil {
+		return g.Turner.Value.(*player.Player)
+	} else {
+		return nil
 	}
 }

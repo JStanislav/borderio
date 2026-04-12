@@ -29,7 +29,6 @@ func NewTwoPlayerMatch(playerNames []string) *GameState {
 
 	g := New(2, []*player.Player{playerOne, playerTwo}, columns, rows, Vertical)
 	g.Players = []*player.Player{playerOne, playerTwo}
-	g.CurrentTurn = playerOne.ID
 
 	return g
 }
