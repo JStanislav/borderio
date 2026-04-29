@@ -18,7 +18,7 @@ const onMessage = (ev: MessageEvent, setGameState: (gameState: GameState) => voi
 
 export const startConnection = (setGameState : (gameState: GameState) => void) => {
     // starts socket connection
-    connect((ev: MessageEvent) => onMessage(ev, setGameState));
+    connect("testHash", (ev: MessageEvent) => onMessage(ev, setGameState));
 }
 
 export const requestPlayerMove = (playerId: number, row: number, col: number) => {
