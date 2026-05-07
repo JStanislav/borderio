@@ -77,19 +77,21 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 
+		var p *player.Player
+		switch o.PlayerId {
+		case 1:
+			p = p1
+		case 2:
+			p = p2
+		default:
+			fmt.Printf("[ERROR] invalid player ID: %d\n", o.PlayerId)
+			continue
+		}
+
 		switch o.Type {
 		case "playerMove":
 			fmt.Printf("Player %d wants to move to row %d, col %d\n", o.PlayerId, o.Target.Row, o.Target.Col)
-			var p *player.Player
-			switch o.PlayerId {
-			case 1:
-				p = p1
-			case 2:
-				p = p2
-			default:
-				fmt.Printf("[ERROR] invalid player ID: %d\n", o.PlayerId)
-				continue
-			}
+
 			err = p.OnPlayerPlay(player.PlayerID(p.ID), player.Play{PlayType: player.PlayerMove, Position: &utils.GridPosition{Row: o.Target.Row, Column: o.Target.Col}})
 			if err != nil {
 				sendErrorMessage(c, err.Error())
@@ -98,16 +100,7 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 			}
 		case "wallPlacement":
 			fmt.Printf("Player %d wants to place a wall between [R%d-C%d] and [R%d-C%d] with orientation %s\n", o.PlayerId, o.WallTarget.CellA.Row, o.WallTarget.CellA.Col, o.WallTarget.CellB.Row, o.WallTarget.CellB.Col, o.WallTarget.Orientation)
-			var p *player.Player
-			switch o.PlayerId {
-			case 1:
-				p = p1
-			case 2:
-				p = p2
-			default:
-				fmt.Printf("[ERROR] invalid player ID: %d\n", o.PlayerId)
-				continue
-			}
+
 			err = p.OnPlayerPlay(player.PlayerID(p.ID), player.Play{PlayType: player.WallPlacement, WallPlaced: &utils.WallPosition{CellA: utils.GridPosition{Row: o.WallTarget.CellA.Row, Column: o.WallTarget.CellA.Col}, CellB: utils.GridPosition{Row: o.WallTarget.CellB.Row, Column: o.WallTarget.CellB.Col}}})
 			if err != nil {
 				sendErrorMessage(c, err.Error())
