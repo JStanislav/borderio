@@ -12,8 +12,13 @@ import (
 
 var games = make(map[string]*game.GameState)
 
-func createHash(h string) {
+func createHash(h string) *game.GameState {
 	games[h] = nil
+	return games[h]
+}
+
+func getGame(h string) *game.GameState {
+	return games[h]
 }
 
 func main() {
@@ -24,6 +29,8 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/{id}", ws.WrapHandler(createHash))
+	wsHandler := ws.NewHandler(createHash, getGame)
+
+	mux.HandleFunc("/{id}", wsHandler.Handler)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf("%s:%s", localhost, config.Port), mux))
 }
