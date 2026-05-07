@@ -71,7 +71,7 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 
-		var o messages.Message
+		var o messages.Message[any]
 		if err = json.Unmarshal(message, &o); err != nil {
 			fmt.Printf("[ERROR] error unmarshaling message, %s\n", err)
 			break
@@ -106,6 +106,12 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 				sendErrorMessage(c, err.Error())
 				fmt.Printf("[ERROR] error processing wall placement, %s\n", err)
 				continue
+			}
+		case "playerReady":
+			fmt.Printf("Player %d is ready\n", o.PlayerId)
+			p.Ready()
+			if gameState.AllPlayersReady() {
+				fmt.Println("All players are ready, starting the match")
 			}
 		}
 		// err = c.WriteMessage(mt, []byte("pong"))

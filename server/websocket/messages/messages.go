@@ -2,14 +2,14 @@ package messages
 
 import "github.com/JStanislav/quoridor-clone/utils"
 
-type Message struct {
-	Type     string `json:"type"`
-	PlayerId int    `json:"playerId"`
-	Target   struct {
-		Row int `json:"row"`
-		Col int `json:"col"`
-	} `json:"target"`
-	WallTarget WallTargetMessage `json:"wallTarget"`
+type Message[T any] struct {
+	Type       string            `json:"type"`
+	PlayerId   int               `json:"playerId"`
+	Target     PositionMessage   `json:"target"`     // remove this and put it in Payload when we have time to refactor the client
+	WallTarget WallTargetMessage `json:"wallTarget"` // remove this and put it in Payload when we have time to refactor the client
+	Payload    T                 `json:"payload"`
+
+	PrivatePlayerId int `json:"privatePlayerId"`
 }
 
 type WallTargetMessage struct {

@@ -31,6 +31,8 @@ type Player struct {
 
 	StartLine  utils.Line
 	FinishLine utils.Line
+
+	ready bool
 }
 
 func New(id PlayerID, name string, position utils.GridPosition, walls int, startLine utils.Line, finishLine utils.Line) *Player {
@@ -84,4 +86,12 @@ func (p *Player) IsFinishLine(play Play) bool {
 	} else {
 		return play.Position.Column == p.FinishLine.Index
 	}
+}
+
+func (p *Player) Ready() {
+	p.ready = !p.ready
+}
+
+func (p *Player) IsReady() bool {
+	return p.ready
 }

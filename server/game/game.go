@@ -191,3 +191,12 @@ func (g *GameState) GetCurrentTurnPlayer() *player.Player {
 		return nil
 	}
 }
+
+func (g *GameState) AllPlayersReady() bool {
+	for _, p := range g.Players {
+		if !p.IsReady() {
+			return false
+		}
+	}
+	return true
+}
