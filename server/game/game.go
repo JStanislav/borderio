@@ -12,9 +12,10 @@ import (
 )
 
 type GameState struct {
-	StartTime  *time.Time
-	Players    []*player.Player
-	WallLength int
+	PlayerCount int
+	StartTime   *time.Time
+	Players     []*player.Player
+	WallLength  int
 
 	// Board related
 	Board          graph.Board
@@ -33,10 +34,9 @@ const (
 	HorizontalAndVertical FinishLineType = "square"
 )
 
-func New(wallLength int, players []*player.Player, columns, rows int, finishLineType FinishLineType) *GameState {
+func New(wallLength int, players int, columns, rows int, finishLineType FinishLineType) *GameState {
 	return &GameState{
 		WallLength:     wallLength,
-		Players:        players,
 		FinishLineType: finishLineType,
 		Columns:        columns,
 		Rows:           rows,
@@ -199,4 +199,13 @@ func (g *GameState) AllPlayersReady() bool {
 		}
 	}
 	return true
+}
+
+func (g *GameState) AddPlayer(p *player.Player) error {
+	if len(g.Players) < g.PlayerCount {
+		g.Players = append(g.Players, p)
+		return nil
+	}
+
+	return errors.New("game is full")
 }

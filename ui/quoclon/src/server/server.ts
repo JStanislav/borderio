@@ -1,6 +1,6 @@
 import toast from "react-hot-toast";
 import { type GameState } from "../game/GameState";
-import { connect,send } from "./server-conn";
+import { connect,send, type actionType } from "./server-conn";
 import { translateGridPositionToServer, translateWallGridPositionToServer } from "./utils";
 
 
@@ -16,9 +16,9 @@ const onMessage = (ev: MessageEvent, setGameState: (gameState: GameState) => voi
 }
 
 
-export const startConnection = (setGameState : (gameState: GameState) => void) => {
+export const startConnection = (hash: string, action: actionType, ppid: string, setGameState : (gameState: GameState) => void) => {
     // starts socket connection
-    connect("testHash", "create", (ev: MessageEvent) => onMessage(ev, setGameState));
+    connect(hash, action, ppid, (ev: MessageEvent) => onMessage(ev, setGameState));
 }
 
 export const requestPlayerMove = (playerId: number, row: number, col: number) => {

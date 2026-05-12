@@ -2,10 +2,10 @@ import {config} from "../../config/config"
 const wsURI = `ws://${config.serverUrl}`;
 let websocket: WebSocket
 
-type actionType = "create" | "join"
+export type actionType = "create" | "join"
 
-export const connect = (hash: string, actionType: actionType, onMessage: (ev: MessageEvent) => void) => {
-    websocket = new WebSocket(`${wsURI}/${hash}?action=${actionType}`);
+export const connect = (hash: string, actionType: actionType, ppid: string, onMessage: (ev: MessageEvent) => void) => {
+    websocket = new WebSocket(`${wsURI}/${hash}?action=${actionType}?ppid=${ppid}`);
     
     websocket.addEventListener("open", () => {
         console.log("connected");

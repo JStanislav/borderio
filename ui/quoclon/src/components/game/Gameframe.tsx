@@ -13,18 +13,12 @@ export const GameFrame = ({ gameState }: { gameState: GameState }) => {
         {
             id: gameState.playerOne.id,
             name: gameState.playerOne.name,
-            position: {
-                row: p1Position.row,
-                col: p1Position.col
-            }
+            position: p1Position
         },
         {
             id: gameState.playerTwo.id,
             name: gameState.playerTwo.name,
-            position: {
-                row: p2Position.row,
-                col: p2Position.col
-            }
+            position: p2Position
         }
     ]
 

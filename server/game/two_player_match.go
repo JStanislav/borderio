@@ -1,34 +1,50 @@
 package game
 
 import (
+	"errors"
+
 	"github.com/JStanislav/quoridor-clone/player"
 	"github.com/JStanislav/quoridor-clone/utils"
 )
 
-func NewTwoPlayerMatch(playerNames []string) *GameState {
+type TwoPlayerMatch struct {
+	GameState
+}
+
+func NewTwoPlayerMatch() *TwoPlayerMatch {
 	columns := 9
 	rows := 11
 
-	playerOne := player.New(1, playerNames[0], utils.GridPosition{}, 8, utils.Line{}, utils.Line{})
-	playerTwo := player.New(2, playerNames[1], utils.GridPosition{}, 8, utils.Line{}, utils.Line{})
+	g := New(2, 2, columns, rows, Vertical)
 
-	p1StartPosition := utils.GridPosition{Column: 4, Row: 1}
-	p2StartPosition := utils.GridPosition{Column: 4, Row: rows - 2}
+	return &TwoPlayerMatch{GameState: *g}
+}
 
-	p1StartLine := utils.Line{Type: utils.HorizontalLine, Index: 1}
-	p2StartLine := utils.Line{Type: utils.HorizontalLine, Index: rows - 2}
-	p1FinishLine := utils.Line{Type: utils.HorizontalLine, Index: rows - 1}
-	p2FinishLine := utils.Line{Type: utils.HorizontalLine, Index: 0}
+func (m *TwoPlayerMatch) AddPlayer(p *player.Player) error {
+	if p.ID == 1 {
+		p1StartPosition := utils.GridPosition{Column: 4, Row: 1}
 
-	playerOne.Position = &p1StartPosition
-	playerOne.StartLine = p1StartLine
-	playerOne.FinishLine = p1FinishLine
-	playerTwo.Position = &p2StartPosition
-	playerTwo.StartLine = p2StartLine
-	playerTwo.FinishLine = p2FinishLine
+		p1StartLine := utils.Line{Type: utils.HorizontalLine, Index: 1}
+		p1FinishLine := utils.Line{Type: utils.HorizontalLine, Index: m.Rows - 1}
 
-	g := New(2, []*player.Player{playerOne, playerTwo}, columns, rows, Vertical)
-	g.Players = []*player.Player{playerOne, playerTwo}
+		p.Position = &p1StartPosition
+		p.StartLine = p1StartLine
+		p.FinishLine = p1FinishLine
+		return m.GameState.AddPlayer(p)
+	}
 
-	return g
+	if p.ID == 2 {
+		p2StartPosition := utils.GridPosition{Column: 4, Row: m.Rows - 2}
+
+		p2StartLine := utils.Line{Type: utils.HorizontalLine, Index: m.Rows - 2}
+		p2FinishLine := utils.Line{Type: utils.HorizontalLine, Index: 0}
+
+		p.Position = &p2StartPosition
+		p.StartLine = p2StartLine
+		p.FinishLine = p2FinishLine
+
+		return m.GameState.AddPlayer(p)
+	}
+
+	return errors.New("invalid player ID")
 }

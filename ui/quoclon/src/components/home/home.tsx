@@ -7,6 +7,7 @@ import { Link } from "react-router";
 
 export const Home = () => {
     const [gameCode, setGameCode] = useState<string | null>(null);
+    const [joinCode, setJoinCode] = useState<string>("");
 
     return <div className="home-container">
         <div className="codes-container">
@@ -15,7 +16,7 @@ export const Home = () => {
                 {!gameCode ? 
                     <button onClick={() => setGameCode(generateGameCode())}>Generate code</button>
                 :
-                    <Link to={`/game/${gameCode}`}>
+                    <Link to={`/game/${gameCode}?action=create`}>
                         <button>Join</button>
                     </Link>
                 }
@@ -25,8 +26,10 @@ export const Home = () => {
 
             <CodeBox title="Join game">
                 <div>Enter a code to join a game</div>
-                <input placeholder="Enter code here" />
-                <button>Join game</button>
+                <input placeholder="Enter code here" onChange={(e) => setJoinCode(e.target.value)} />
+                <Link to={`/game/${joinCode}?action=join`}>
+                    <button>Join game</button>
+                </Link>
             </CodeBox>
         </div>
     </div>

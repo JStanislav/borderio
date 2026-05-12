@@ -12,8 +12,8 @@ import (
 
 var games = make(map[string]*game.GameState)
 
-func createHash(h string) *game.GameState {
-	games[h] = nil
+func createHash(h string, gameState *game.GameState) *game.GameState {
+	games[h] = gameState
 	return games[h]
 }
 

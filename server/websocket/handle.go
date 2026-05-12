@@ -19,26 +19,40 @@ func init() {
 }
 
 type Handler struct {
-	CreateHash func(h string) *game.GameState
+	CreateHash func(h string, gameState *game.GameState) *game.GameState
 	GetGame    func(h string) *game.GameState
 }
 
-func NewHandler(createHash func(h string) *game.GameState, getGame func(h string) *game.GameState) Handler {
+func NewHandler(createHash func(h string, gameState *game.GameState) *game.GameState, getGame func(h string) *game.GameState) Handler {
 	return Handler{CreateHash: createHash, GetGame: getGame}
 }
 
 func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 	action := r.URL.Query().Get("action")
+	ppid := r.URL.Query().Get("ppid")
 	id := r.PathValue("id")
 
-	var gameState *game.GameState
+	var gameState *game.TwoPlayerMatch
 
 	if action == "create" {
-		gameState = h.CreateHash(id)
+		gameState = game.NewTwoPlayerMatch()
+		gameState.GameState = *h.CreateHash(id, &gameState.GameState)
+		playerOne := player.New(1, ppid, "Player 1", utils.GridPosition{}, 8, utils.Line{}, utils.Line{})
+		err := gameState.AddPlayer(playerOne)
+		if err != nil {
+			fmt.Printf("[ERROR] error adding player to game state, %s\n", err)
+			return
+		}
 	}
 
 	if action == "join" {
-		gameState = h.GetGame(id)
+		gameState.GameState = *h.GetGame(id)
+		playerTwo := player.New(2, ppid, "Player 2", utils.GridPosition{}, 8, utils.Line{}, utils.Line{})
+		err := gameState.AddPlayer(playerTwo)
+		if err != nil {
+			fmt.Printf("[ERROR] error adding player to game state, %s\n", err)
+			return
+		}
 	}
 
 	c, err := upgrader.Upgrade(w, r, nil)
@@ -47,8 +61,6 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer c.Close()
-
-	gameState = game.NewTwoPlayerMatch([]string{"Player 1", "Player 2"})
 
 	movementsChannel := make(chan player.Play)
 	go func() {
@@ -62,7 +74,7 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 	p1 := gameState.Players[0]
 	p2 := gameState.Players[1]
 
-	sendGameState(c, gameState, p1, p2)
+	sendGameState(c, &gameState.GameState, p1, p2)
 
 	for {
 		_, message, err := c.ReadMessage()
@@ -115,7 +127,7 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		// err = c.WriteMessage(mt, []byte("pong"))
-		sendGameState(c, gameState, p1, p2)
+		sendGameState(c, &gameState.GameState, p1, p2)
 	}
 }
 
