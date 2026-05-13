@@ -32,12 +32,16 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 	ppid := r.URL.Query().Get("ppid")
 	id := r.PathValue("id")
 
+	fmt.Print("Received request with action: ", action, " and ppid: ", ppid, " and id: ", id, "\n")
+
 	var gameState *game.TwoPlayerMatch
+	var currentPlayer *player.Player
 
 	if action == "create" {
 		gameState = game.NewTwoPlayerMatch()
 		gameState.GameState = *h.CreateHash(id, &gameState.GameState)
 		playerOne := player.New(1, ppid, "Player 1", utils.GridPosition{}, 8, utils.Line{}, utils.Line{})
+		currentPlayer = playerOne
 		err := gameState.AddPlayer(playerOne)
 		if err != nil {
 			fmt.Printf("[ERROR] error adding player to game state, %s\n", err)
@@ -48,6 +52,7 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 	if action == "join" {
 		gameState.GameState = *h.GetGame(id)
 		playerTwo := player.New(2, ppid, "Player 2", utils.GridPosition{}, 8, utils.Line{}, utils.Line{})
+		currentPlayer = playerTwo
 		err := gameState.AddPlayer(playerTwo)
 		if err != nil {
 			fmt.Printf("[ERROR] error adding player to game state, %s\n", err)
@@ -69,12 +74,16 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	gameState.StartMatch(movementsChannel)
+	var p1, p2 *player.Player
+	if len(gameState.Players) > 0 {
+		p1 = gameState.Players[0]
+	}
+	if len(gameState.Players) > 1 {
+		p2 = gameState.Players[1]
+	}
 
-	p1 := gameState.Players[0]
-	p2 := gameState.Players[1]
-
-	sendGameState(c, &gameState.GameState, p1, p2)
+	sendPlayerConfiguration(c, currentPlayer)
+	sendLobbyMessage(c, &gameState.GameState)
 
 	for {
 		_, message, err := c.ReadMessage()
@@ -120,34 +129,79 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 		case "playerReady":
-			fmt.Printf("Player %d is ready\n", o.PlayerId)
-			p.Ready()
-			if gameState.AllPlayersReady() {
+			fmt.Printf("Player %d toggled readiness\n", o.PlayerId)
+			p.ToggleReady()
+			if gameState.AllPlayersReady() && gameState.GameState.PlayerCount == len(gameState.GameState.Players) {
 				fmt.Println("All players are ready, starting the match")
 			}
+			sendLobbyMessage(c, &gameState.GameState)
+			continue
 		}
 		// err = c.WriteMessage(mt, []byte("pong"))
 		sendGameState(c, &gameState.GameState, p1, p2)
 	}
 }
 
+func sendPlayerConfiguration(c *websocket.Conn, player *player.Player) {
+	playerMessage := messages.PlayerConfigurationMessage{
+		Type:            "playerConfiguration",
+		ID:              int(player.ID),
+		Name:            player.Name,
+		PrivatePlayerId: player.PrivatePlayerID,
+	}
+
+	if err := c.WriteJSON(playerMessage); err != nil {
+		fmt.Printf("[ERROR] error sending player configuration, %s\n", err)
+	}
+}
+
+func sendLobbyMessage(c *websocket.Conn, gameState *game.GameState) {
+	players := make([]messages.PlayerMessage, len(gameState.Players))
+	for i, p := range gameState.Players {
+		players[i] = messages.PlayerMessage{
+			ID:    int(p.ID),
+			Name:  p.Name,
+			Ready: p.Ready,
+		}
+	}
+	lobbyMessage := messages.LobbyMessage{
+		Type:    "lobby",
+		Players: players,
+	}
+
+	if err := c.WriteJSON(lobbyMessage); err != nil {
+		fmt.Printf("[ERROR] error sending lobby message, %s\n", err)
+	}
+}
+
 func sendGameState(c *websocket.Conn, gameState *game.GameState, p1, p2 *player.Player) {
+	var currentTurn int
+	var walls []utils.WallPosition
+
+	// Match started
+	if gameState.StartTime != nil {
+		currentTurn = int(gameState.GetCurrentTurnPlayer().ID)
+		walls = gameState.Board.GetWalls()
+	}
+
 	gameStateMessage := messages.GameStateStateMessage{
 		Type:                "gameState",
-		CurrentTurnPlayerId: int(gameState.GetCurrentTurnPlayer().ID),
+		CurrentTurnPlayerId: currentTurn,
 		PlayerOne: messages.PlayerMessage{
 			ID:             int(p1.ID),
 			Name:           p1.Name,
 			Position:       messages.PositionMessage{Row: p1.Position.Row, Col: p1.Position.Column},
 			WallsRemaining: p1.WallsRemaining,
+			Ready:          p1.Ready,
 		},
 		PlayerTwo: messages.PlayerMessage{
 			ID:             int(p2.ID),
 			Name:           p2.Name,
 			Position:       messages.PositionMessage{Row: p2.Position.Row, Col: p2.Position.Column},
 			WallsRemaining: p2.WallsRemaining,
+			Ready:          p2.Ready,
 		},
-		Walls: gameState.Board.GetWalls(),
+		Walls: walls,
 	}
 
 	if err := c.WriteJSON(gameStateMessage); err != nil {

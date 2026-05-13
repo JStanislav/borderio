@@ -5,7 +5,7 @@ let websocket: WebSocket
 export type actionType = "create" | "join"
 
 export const connect = (hash: string, actionType: actionType, ppid: string, onMessage: (ev: MessageEvent) => void) => {
-    websocket = new WebSocket(`${wsURI}/${hash}?action=${actionType}?ppid=${ppid}`);
+    websocket = new WebSocket(`${wsURI}/${hash}?action=${actionType}&ppid=${ppid}`);
     
     websocket.addEventListener("open", () => {
         console.log("connected");
@@ -27,6 +27,12 @@ export const connect = (hash: string, actionType: actionType, ppid: string, onMe
 export const send = (name:string, data:any) => {
     if (websocket != null) {
         websocket.send(JSON.stringify({type: name, ...data}));
+    }
+}
+
+export const closeConn = () => {
+    if (websocket != null) {
+        websocket.close();
     }
 }
 

@@ -2,9 +2,14 @@ import toast from "react-hot-toast";
 import { type GameState } from "../game/GameState";
 import { connect,send, type actionType } from "./server-conn";
 import { translateGridPositionToServer, translateWallGridPositionToServer } from "./utils";
+import type { LobbyMessage, LobbyPlayer, PlayerConfigurationMessage } from "./messages";
+import type { Player } from "../game/player";
 
 
-const onMessage = (ev: MessageEvent, setGameState: (gameState: GameState) => void) => {
+const onMessage = (ev: MessageEvent,
+                    setGameState: (gameState: GameState) => void,
+                    setPlayerConfig: (player: Player) => void,
+                    setLobbyPlayers: (players: LobbyPlayer[]) => void) => {
     console.log("message arrived");
     console.log("ev", ev.data)
     const data = JSON.parse(ev.data);
@@ -13,12 +18,26 @@ const onMessage = (ev: MessageEvent, setGameState: (gameState: GameState) => voi
     } else if (data.type === "error") {
         toast.error(`Error: ${data.message}`);
     }
+    if (data.type === "playerConfiguration") {
+        const config = data as PlayerConfigurationMessage;
+        toast.success(`You are ${config.name} (id: ${config.id}) with ppid: ${config.ppid}`);
+        setPlayerConfig({ id: config.id, name: config.name, ppid: config.ppid, ready: false });
+    }
+    if (data.type === "lobby") {
+        const config = data as LobbyMessage;
+        setLobbyPlayers(config.players);
+    }
 }
 
 
-export const startConnection = (hash: string, action: actionType, ppid: string, setGameState : (gameState: GameState) => void) => {
+export const startConnection = (hash: string,
+                                action: actionType,
+                                ppid: string,
+                                setGameState: (gameState: GameState) => void,
+                                setPlayerConfig: (player: Player) => void,
+                                setLobbyPlayers: (players: LobbyPlayer[]) => void) => {
     // starts socket connection
-    connect(hash, action, ppid, (ev: MessageEvent) => onMessage(ev, setGameState));
+    connect(hash, action, ppid, (ev: MessageEvent) => onMessage(ev, setGameState, setPlayerConfig, setLobbyPlayers));
 }
 
 export const requestPlayerMove = (playerId: number, row: number, col: number) => {

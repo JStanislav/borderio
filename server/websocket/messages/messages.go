@@ -9,7 +9,7 @@ type Message[T any] struct {
 	WallTarget WallTargetMessage `json:"wallTarget"` // remove this and put it in Payload when we have time to refactor the client
 	Payload    T                 `json:"payload"`
 
-	PrivatePlayerId int `json:"privatePlayerId"`
+	PrivatePlayerId string `json:"privatePlayerId"`
 }
 
 type WallTargetMessage struct {
@@ -28,6 +28,19 @@ type PlayerMessage struct {
 	Name           string          `json:"name"`
 	Position       PositionMessage `json:"position"`
 	WallsRemaining int             `json:"wallsRemaining"`
+	Ready          bool            `json:"ready"`
+}
+
+type PlayerConfigurationMessage struct {
+	Type            string `json:"type"`
+	ID              int    `json:"id"`
+	Name            string `json:"name"`
+	PrivatePlayerId string `json:"ppid"`
+}
+
+type LobbyMessage struct {
+	Type    string          `json:"type"`
+	Players []PlayerMessage `json:"players"`
 }
 
 type GameStateStateMessage struct {

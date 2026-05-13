@@ -32,7 +32,7 @@ type Player struct {
 	StartLine  utils.Line
 	FinishLine utils.Line
 
-	ready bool
+	Ready bool
 
 	PrivatePlayerID string
 }
@@ -92,10 +92,6 @@ func (p *Player) IsFinishLine(play Play) bool {
 	}
 }
 
-func (p *Player) Ready() {
-	p.ready = !p.ready
-}
-
-func (p *Player) IsReady() bool {
-	return p.ready
+func (p *Player) ToggleReady() {
+	p.Ready = !p.Ready
 }

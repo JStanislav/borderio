@@ -36,6 +36,7 @@ const (
 
 func New(wallLength int, players int, columns, rows int, finishLineType FinishLineType) *GameState {
 	return &GameState{
+		PlayerCount:    players,
 		WallLength:     wallLength,
 		FinishLineType: finishLineType,
 		Columns:        columns,
@@ -194,7 +195,7 @@ func (g *GameState) GetCurrentTurnPlayer() *player.Player {
 
 func (g *GameState) AllPlayersReady() bool {
 	for _, p := range g.Players {
-		if !p.IsReady() {
+		if !p.Ready {
 			return false
 		}
 	}
@@ -208,4 +209,13 @@ func (g *GameState) AddPlayer(p *player.Player) error {
 	}
 
 	return errors.New("game is full")
+}
+
+func (g *GameState) GetPlayerPPID(ppid string) *player.Player {
+	for _, p := range g.Players {
+		if p.PrivatePlayerID == ppid {
+			return p
+		}
+	}
+	return nil
 }
