@@ -34,11 +34,10 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Print("Received request with action: ", action, " and ppid: ", ppid, " and id: ", id, "\n")
 
-	var gameState *game.TwoPlayerMatch
+	gameState := game.NewTwoPlayerMatch()
 	var currentPlayer *player.Player
 
 	if action == "create" {
-		gameState = game.NewTwoPlayerMatch()
 		gameState.GameState = *h.CreateHash(id, &gameState.GameState)
 		playerOne := player.New(1, ppid, "Player 1", utils.GridPosition{}, 8, utils.Line{}, utils.Line{})
 		currentPlayer = playerOne
