@@ -82,7 +82,7 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sendPlayerConfiguration(c, currentPlayer)
-	sendLobbyMessage(c, &gameState.GameState)
+	sendLobbyMessage(c, gameState.GameState.Players)
 
 	for {
 		_, message, err := c.ReadMessage()
@@ -98,13 +98,9 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		var p *player.Player
-		switch o.PlayerId {
-		case 1:
-			p = p1
-		case 2:
-			p = p2
-		default:
-			fmt.Printf("[ERROR] invalid player ID: %d\n", o.PlayerId)
+		p = gameState.GetPlayerPPID(o.PrivatePlayerId)
+		if p == nil {
+			fmt.Printf("[ERROR] player with ppid %s not found\n", o.PrivatePlayerId)
 			continue
 		}
 
@@ -133,7 +129,7 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 			if gameState.AllPlayersReady() && gameState.GameState.PlayerCount == len(gameState.GameState.Players) {
 				fmt.Println("All players are ready, starting the match")
 			}
-			sendLobbyMessage(c, &gameState.GameState)
+			sendLobbyMessage(c, gameState.GameState.Players)
 			continue
 		}
 		// err = c.WriteMessage(mt, []byte("pong"))
@@ -154,10 +150,10 @@ func sendPlayerConfiguration(c *websocket.Conn, player *player.Player) {
 	}
 }
 
-func sendLobbyMessage(c *websocket.Conn, gameState *game.GameState) {
-	players := make([]messages.PlayerMessage, len(gameState.Players))
-	for i, p := range gameState.Players {
-		players[i] = messages.PlayerMessage{
+func sendLobbyMessage(c *websocket.Conn, players []*player.Player) {
+	playersMsg := make([]messages.PlayerMessage, len(players))
+	for i, p := range players {
+		playersMsg[i] = messages.PlayerMessage{
 			ID:    int(p.ID),
 			Name:  p.Name,
 			Ready: p.Ready,
@@ -165,7 +161,7 @@ func sendLobbyMessage(c *websocket.Conn, gameState *game.GameState) {
 	}
 	lobbyMessage := messages.LobbyMessage{
 		Type:    "lobby",
-		Players: players,
+		Players: playersMsg,
 	}
 
 	if err := c.WriteJSON(lobbyMessage); err != nil {

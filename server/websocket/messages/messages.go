@@ -9,7 +9,7 @@ type Message[T any] struct {
 	WallTarget WallTargetMessage `json:"wallTarget"` // remove this and put it in Payload when we have time to refactor the client
 	Payload    T                 `json:"payload"`
 
-	PrivatePlayerId string `json:"privatePlayerId"`
+	PrivatePlayerId string `json:"ppid"`
 }
 
 type WallTargetMessage struct {
