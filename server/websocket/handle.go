@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/JStanislav/quoridor-clone/game"
+	"github.com/JStanislav/quoridor-clone/gamemanager"
 	"github.com/JStanislav/quoridor-clone/player"
 	"github.com/JStanislav/quoridor-clone/utils"
 	"github.com/JStanislav/quoridor-clone/websocket/messages"
@@ -19,12 +20,13 @@ func init() {
 }
 
 type Handler struct {
-	CreateHash func(h string, gameState *game.GameState) *game.GameState
-	GetGame    func(h string) *game.GameState
+	GamesManager *gamemanager.Games
 }
 
-func NewHandler(createHash func(h string, gameState *game.GameState) *game.GameState, getGame func(h string) *game.GameState) Handler {
-	return Handler{CreateHash: createHash, GetGame: getGame}
+func NewHandler(gamesManager *gamemanager.Games) Handler {
+	return Handler{
+		GamesManager: gamesManager,
+	}
 }
 
 func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
@@ -38,10 +40,15 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 	var currentPlayer *player.Player
 
 	if action == "create" {
-		gameState.GameState = *h.CreateHash(id, &gameState.GameState)
+		err := h.GamesManager.AddGame(id, gamemanager.NewGameManager(&gameState.GameState))
+		if err != nil {
+			fmt.Printf("[ERROR] error creating hash, %s\n", err)
+			return
+		}
+
 		playerOne := player.New(1, ppid, "Player 1", utils.GridPosition{}, 8, utils.Line{}, utils.Line{})
 		currentPlayer = playerOne
-		err := gameState.AddPlayer(playerOne)
+		err = gameState.AddPlayer(playerOne)
 		if err != nil {
 			fmt.Printf("[ERROR] error adding player to game state, %s\n", err)
 			return
@@ -49,7 +56,13 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if action == "join" {
-		gameState.GameState = *h.GetGame(id)
+		gs := h.GamesManager.GetGame(id).Game
+		if gs == nil {
+			fmt.Printf("[ERROR] game not found\n")
+			return
+		}
+		gameState.GameState = *gs
+
 		playerTwo := player.New(2, ppid, "Player 2", utils.GridPosition{}, 8, utils.Line{}, utils.Line{})
 		currentPlayer = playerTwo
 		err := gameState.AddPlayer(playerTwo)
@@ -66,10 +79,20 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer c.Close()
 
+	h.GamesManager.GetGame(id).AddConnection(ppid, c)
+
+	// This movements channel has to go away from here. It should be only one in the game, not one for every connection
 	movementsChannel := make(chan player.Play)
 	go func() {
 		for move := range movementsChannel {
 			fmt.Printf("Received move from game state: %+v\n", move)
+		}
+	}()
+
+	lobbyChannel := make(chan messages.LobbyMessage)
+	go func() {
+		for lobbyMessage := range lobbyChannel {
+			fmt.Printf("Received lobby message%+v\n", lobbyMessage)
 		}
 	}()
 

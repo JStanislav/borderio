@@ -6,20 +6,9 @@ import (
 	"net/http"
 
 	"github.com/JStanislav/quoridor-clone/config"
-	"github.com/JStanislav/quoridor-clone/game"
+	"github.com/JStanislav/quoridor-clone/gamemanager"
 	ws "github.com/JStanislav/quoridor-clone/websocket"
 )
-
-var games = make(map[string]*game.GameState)
-
-func createHash(h string, gameState *game.GameState) *game.GameState {
-	games[h] = gameState
-	return games[h]
-}
-
-func getGame(h string) *game.GameState {
-	return games[h]
-}
 
 func main() {
 	config := config.LoadConfig()
@@ -29,7 +18,9 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	wsHandler := ws.NewHandler(createHash, getGame)
+	games := gamemanager.NewGames()
+
+	wsHandler := ws.NewHandler(&games)
 
 	mux.HandleFunc("/{id}", wsHandler.Handler)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf("%s:%s", localhost, config.Port), mux))
