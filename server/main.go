@@ -23,5 +23,6 @@ func main() {
 	wsHandler := ws.NewHandler(&games)
 
 	mux.HandleFunc("/{id}", wsHandler.Handler)
+	mux.HandleFunc("/ping/{hash}", wsHandler.GamePing)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf("%s:%s", localhost, config.Port), mux))
 }

@@ -2,12 +2,26 @@ import { useState } from "react"
 import { CodeBox } from "./codebox"
 import "./home.css"
 import { generateGameCode } from "./home";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
+import { GameExist } from "../../server/server";
+import toast, { Toaster } from "react-hot-toast";
 
 
 export const Home = () => {
     const [gameCode, setGameCode] = useState<string | null>(null);
     const [joinCode, setJoinCode] = useState<string>("");
+
+    const navigate = useNavigate();
+    
+    async function PingGame() {
+        const exist = await GameExist(joinCode);
+        if (exist) {
+            navigate(`/game/${joinCode}?action=join`);
+        } else {
+            setJoinCode("");
+            toast.error("Game does not exist");
+        }
+    }
 
     return <div className="home-container">
         <div className="codes-container">
@@ -17,7 +31,7 @@ export const Home = () => {
                     <button onClick={() => setGameCode(generateGameCode())}>Generate code</button>
                 :
                     <Link to={`/game/${gameCode}?action=create`}>
-                        <button>Join</button>
+                        <button disabled={!gameCode}>Join</button>
                     </Link>
                 }
 
@@ -26,11 +40,11 @@ export const Home = () => {
 
             <CodeBox title="Join game">
                 <div>Enter a code to join a game</div>
-                <input placeholder="Enter code here" onChange={(e) => setJoinCode(e.target.value)} />
-                <Link to={`/game/${joinCode}?action=join`}>
-                    <button>Join game</button>
-                </Link>
+                <input placeholder="Enter code here" value={joinCode} onChange={(e) => setJoinCode(e.target.value)} />
+                <button onClick={PingGame} disabled={!joinCode}>Join game</button>
             </CodeBox>
         </div>
+        <Toaster />
+
     </div>
 }

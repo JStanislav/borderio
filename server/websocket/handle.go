@@ -56,11 +56,13 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if action == "join" {
-		gs := h.GamesManager.GetGame(id).Game
-		if gs == nil {
+		gm := h.GamesManager.GetGame(id)
+		if gm == nil {
 			fmt.Printf("[ERROR] game not found\n")
 			return
 		}
+		gs := gm.Game
+
 		gameState.GameState = *gs
 
 		playerTwo := player.New(2, ppid, "Player 2", utils.GridPosition{}, 8, utils.Line{}, utils.Line{})
@@ -154,6 +156,24 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 		// // err = c.WriteMessage(mt, []byte("pong"))
 		// sendGameState(c, &gameState.GameState, p1, p2)
 	}
+}
+
+func (h Handler) GamePing(w http.ResponseWriter, r *http.Request) {
+
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+	w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Authorization")
+
+	hash := r.PathValue("hash")
+
+	fmt.Printf("Pinged for game %s\n", hash)
+
+	if h.GamesManager.GetGame(hash) == nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }
 
 func sendPlayerConfiguration(c *websocket.Conn, player *player.Player) {

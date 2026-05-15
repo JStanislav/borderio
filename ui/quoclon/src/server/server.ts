@@ -4,7 +4,9 @@ import { connect,send, type actionType } from "./server-conn";
 import { translateGridPositionToServer, translateWallGridPositionToServer } from "./utils";
 import type { LobbyMessage, LobbyPlayer, PlayerConfigurationMessage, PlayerJoinedMessage } from "./messages";
 import type { Player } from "../game/player";
+import { config } from "../../config/config";
 
+const serverURL = `http://${config.serverUrl}`
 
 const onMessage = (ev: MessageEvent,
                     setGameState: (gameState: GameState) => void,
@@ -59,4 +61,14 @@ export const requestWallPlacement = (playerId: number, row: number, col: number,
     const type = "wallPlacement";
     const wallTarget = { cellA: { row: wallPositions.cellA.row, col: wallPositions.cellA.column }, cellB: { row: wallPositions.cellB.row, col: wallPositions.cellB.column }, orientation };
     send(type, { playerId, wallTarget: wallTarget });
+}
+
+export async function GameExist(hash: string) {
+    if (hash === "") return false;
+
+    const res = await fetch(`${serverURL}/ping/${hash}`, { method: "GET" });
+
+    if (res.status !== 200) return false
+    return true
+
 }
