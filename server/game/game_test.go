@@ -116,14 +116,15 @@ func TestMatch(t *testing.T) {
 	gs.AddPlayer(p1)
 	gs.AddPlayer(p2)
 
-	go gs.StartMatch(movesChannel) // use new two player match
+	gs.StartMatch(movesChannel) // use new two player match
 	go receiveSelected(movesChannel)
 
 	time.Sleep(1 * time.Second)
 
 	g := gs.Board.(*g.Graph)
-	playerOne := gs.Players[0]
-	playerTwo := gs.Players[1]
+	players := *gs.Players
+	playerOne := players[0]
+	playerTwo := players[1]
 
 	g.PrintGrid(9, 9, playerOne, playerTwo)
 

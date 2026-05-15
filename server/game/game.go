@@ -14,7 +14,7 @@ import (
 type GameState struct {
 	PlayerCount int
 	StartTime   *time.Time
-	Players     []*player.Player
+	Players     *[]*player.Player
 	WallLength  int
 
 	// Board related
@@ -41,6 +41,7 @@ func New(wallLength int, players int, columns, rows int, finishLineType FinishLi
 		FinishLineType: finishLineType,
 		Columns:        columns,
 		Rows:           rows,
+		Players:        &[]*player.Player{},
 	}
 }
 
@@ -54,15 +55,15 @@ func (g *GameState) StartMatch(movements chan player.Play) {
 	g.StartTime = new(time.Time)
 	*g.StartTime = time.Now()
 
-	g.Turner = ring.New(len(g.Players))
-	for _, p := range g.Players {
+	g.Turner = ring.New(len(*g.Players))
+	for _, p := range *g.Players {
 		g.Turner.Value = p
 		g.Turner = g.Turner.Next()
 	}
 
-	for _, p := range g.Players {
+	for _, p := range *g.Players {
 		playersButNotCurrent := []*player.Player{}
-		for _, other := range g.Players {
+		for _, other := range *g.Players {
 			if other.ID != p.ID {
 				playersButNotCurrent = append(playersButNotCurrent, other)
 			}
@@ -117,7 +118,7 @@ func (g *GameState) StartMatch(movements chan player.Play) {
 				}
 
 				finishLinesFound := 0
-				for _, p := range g.Players {
+				for _, p := range *g.Players {
 					existsPathToFinishLine := false
 					if p.FinishLine.Type == utils.HorizontalLine {
 						for i := range boardDimension {
@@ -141,7 +142,7 @@ func (g *GameState) StartMatch(movements chan player.Play) {
 					}
 				}
 
-				if finishLinesFound != len(g.Players) {
+				if finishLinesFound != len(*g.Players) {
 					g.Board.RemoveWall(graph.Undefined, wallPosition)
 					return errors.New("illegal wall placement, no path to finish line")
 				}
@@ -194,7 +195,7 @@ func (g *GameState) GetCurrentTurnPlayer() *player.Player {
 }
 
 func (g *GameState) AllPlayersReady() bool {
-	for _, p := range g.Players {
+	for _, p := range *g.Players {
 		if !p.Ready {
 			return false
 		}
@@ -203,8 +204,8 @@ func (g *GameState) AllPlayersReady() bool {
 }
 
 func (g *GameState) AddPlayer(p *player.Player) error {
-	if len(g.Players) < g.PlayerCount {
-		g.Players = append(g.Players, p)
+	if len(*g.Players) < g.PlayerCount {
+		*g.Players = append(*g.Players, p)
 		return nil
 	}
 
@@ -212,7 +213,7 @@ func (g *GameState) AddPlayer(p *player.Player) error {
 }
 
 func (g *GameState) GetPlayerPPID(ppid string) *player.Player {
-	for _, p := range g.Players {
+	for _, p := range *g.Players {
 		if p.PrivatePlayerID == ppid {
 			return p
 		}

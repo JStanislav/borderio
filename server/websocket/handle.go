@@ -96,14 +96,6 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	var p1, p2 *player.Player
-	if len(gameState.Players) > 0 {
-		p1 = gameState.Players[0]
-	}
-	if len(gameState.Players) > 1 {
-		p2 = gameState.Players[1]
-	}
-
 	sendPlayerConfiguration(c, currentPlayer)
 	sendLobbyMessage(c, gameState.GameState.Players)
 
@@ -149,7 +141,7 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 		case "playerReady":
 			fmt.Printf("Player %d toggled readiness\n", o.PlayerId)
 			p.ToggleReady()
-			if gameState.AllPlayersReady() && gameState.GameState.PlayerCount == len(gameState.GameState.Players) {
+			if gameState.AllPlayersReady() && gameState.GameState.PlayerCount == len(*gameState.GameState.Players) {
 				fmt.Println("All players are ready, starting the match")
 			}
 			// sendLobbyMessage(c, gameState.GameState.Players)
@@ -158,8 +150,8 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		// err = c.WriteMessage(mt, []byte("pong"))
-		sendGameState(c, &gameState.GameState, p1, p2)
+		// // err = c.WriteMessage(mt, []byte("pong"))
+		// sendGameState(c, &gameState.GameState, p1, p2)
 	}
 }
 
@@ -176,9 +168,9 @@ func sendPlayerConfiguration(c *websocket.Conn, player *player.Player) {
 	}
 }
 
-func getLobbyMessage(players []*player.Player) messages.LobbyMessage {
-	playersMsg := make([]messages.PlayerMessage, len(players))
-	for i, p := range players {
+func getLobbyMessage(players *[]*player.Player) messages.LobbyMessage {
+	playersMsg := make([]messages.PlayerMessage, len(*players))
+	for i, p := range *players {
 		playersMsg[i] = messages.PlayerMessage{
 			ID:    int(p.ID),
 			Name:  p.Name,
@@ -193,7 +185,7 @@ func getLobbyMessage(players []*player.Player) messages.LobbyMessage {
 	return lobbyMessage
 }
 
-func sendLobbyMessage(c *websocket.Conn, players []*player.Player) {
+func sendLobbyMessage(c *websocket.Conn, players *[]*player.Player) {
 	lobbyMessage := getLobbyMessage(players)
 	if err := c.WriteJSON(lobbyMessage); err != nil {
 		fmt.Printf("[ERROR] error sending lobby message, %s\n", err)
