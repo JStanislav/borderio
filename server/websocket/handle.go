@@ -152,9 +152,12 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 			if gameState.AllPlayersReady() && gameState.GameState.PlayerCount == len(gameState.GameState.Players) {
 				fmt.Println("All players are ready, starting the match")
 			}
-			sendLobbyMessage(c, gameState.GameState.Players)
+			// sendLobbyMessage(c, gameState.GameState.Players)
+
+			h.GamesManager.GetGame(id).BroadcastJSON(getLobbyMessage(gameState.GameState.Players))
 			continue
 		}
+
 		// err = c.WriteMessage(mt, []byte("pong"))
 		sendGameState(c, &gameState.GameState, p1, p2)
 	}
@@ -173,7 +176,7 @@ func sendPlayerConfiguration(c *websocket.Conn, player *player.Player) {
 	}
 }
 
-func sendLobbyMessage(c *websocket.Conn, players []*player.Player) {
+func getLobbyMessage(players []*player.Player) messages.LobbyMessage {
 	playersMsg := make([]messages.PlayerMessage, len(players))
 	for i, p := range players {
 		playersMsg[i] = messages.PlayerMessage{
@@ -187,6 +190,11 @@ func sendLobbyMessage(c *websocket.Conn, players []*player.Player) {
 		Players: playersMsg,
 	}
 
+	return lobbyMessage
+}
+
+func sendLobbyMessage(c *websocket.Conn, players []*player.Player) {
+	lobbyMessage := getLobbyMessage(players)
 	if err := c.WriteJSON(lobbyMessage); err != nil {
 		fmt.Printf("[ERROR] error sending lobby message, %s\n", err)
 	}

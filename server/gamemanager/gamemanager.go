@@ -25,6 +25,26 @@ func (gm *GameManager) AddConnection(ppid string, conn *websocket.Conn) {
 	gm.Connections[ppid] = conn
 }
 
+func (gm *GameManager) RemoveConnection(ppid string) {
+	delete(gm.Connections, ppid)
+}
+
+func (gm *GameManager) GetConnection(ppid string) *websocket.Conn {
+	return gm.Connections[ppid]
+}
+
+func (gm *GameManager) Broadcast(msg string) {
+	for _, conn := range gm.Connections {
+		conn.WriteMessage(websocket.TextMessage, []byte(msg))
+	}
+}
+
+func (gm *GameManager) BroadcastJSON(msg any) {
+	for _, conn := range gm.Connections {
+		conn.WriteJSON(msg)
+	}
+}
+
 type Games map[string]*GameManager
 
 func NewGames() Games {
