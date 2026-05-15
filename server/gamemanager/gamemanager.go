@@ -2,6 +2,7 @@ package gamemanager
 
 import (
 	"errors"
+	"slices"
 
 	"github.com/JStanislav/quoridor-clone/game"
 	"github.com/gorilla/websocket"
@@ -42,6 +43,15 @@ func (gm *GameManager) Broadcast(msg string) {
 func (gm *GameManager) BroadcastJSON(msg any) {
 	for _, conn := range gm.Connections {
 		conn.WriteJSON(msg)
+	}
+}
+
+// Function to broadcast messages to every player except the specified in the parameter
+func (gm *GameManager) BroadcastExcept(msg any, ppids []string) {
+	for ppid, conn := range gm.Connections {
+		if !slices.Contains(ppids, ppid) {
+			conn.WriteJSON(msg)
+		}
 	}
 }
 

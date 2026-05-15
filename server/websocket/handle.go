@@ -97,7 +97,8 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	sendPlayerConfiguration(c, currentPlayer)
-	sendLobbyMessage(c, gameState.GameState.Players)
+	h.GamesManager.GetGame(id).BroadcastExcept(getJoinedMessage(*currentPlayer), []string{ppid})
+	h.GamesManager.GetGame(id).BroadcastJSON(getLobbyMessage(gameState.GameState.Players))
 
 	for {
 		_, message, err := c.ReadMessage()
@@ -183,6 +184,14 @@ func getLobbyMessage(players *[]*player.Player) messages.LobbyMessage {
 	}
 
 	return lobbyMessage
+}
+
+func getJoinedMessage(player player.Player) messages.LobbyJoin {
+	return messages.LobbyJoin{
+		Type: "joined",
+		Name: player.Name,
+		ID:   int(player.ID),
+	}
 }
 
 func sendLobbyMessage(c *websocket.Conn, players *[]*player.Player) {

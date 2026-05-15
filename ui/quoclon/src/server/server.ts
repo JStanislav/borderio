@@ -2,7 +2,7 @@ import toast from "react-hot-toast";
 import { type GameState } from "../game/GameState";
 import { connect,send, type actionType } from "./server-conn";
 import { translateGridPositionToServer, translateWallGridPositionToServer } from "./utils";
-import type { LobbyMessage, LobbyPlayer, PlayerConfigurationMessage } from "./messages";
+import type { LobbyMessage, LobbyPlayer, PlayerConfigurationMessage, PlayerJoinedMessage } from "./messages";
 import type { Player } from "../game/player";
 
 
@@ -10,9 +10,12 @@ const onMessage = (ev: MessageEvent,
                     setGameState: (gameState: GameState) => void,
                     setPlayerConfig: (player: Player) => void,
                     setLobbyPlayers: (players: LobbyPlayer[]) => void) => {
+
     console.log("message arrived");
     console.log("ev", ev.data)
+
     const data = JSON.parse(ev.data);
+    
     if (data.type === "gameState") {
         setGameState(data);
     } else if (data.type === "error") {
@@ -26,6 +29,10 @@ const onMessage = (ev: MessageEvent,
     if (data.type === "lobby") {
         const config = data as LobbyMessage;
         setLobbyPlayers(config.players);
+    }
+    if (data.type === "joined") { 
+        const joined = data as PlayerJoinedMessage;
+        toast.success(`${joined.name}[${joined.id}] has joined game!`);
     }
 }
 

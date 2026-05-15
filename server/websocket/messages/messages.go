@@ -43,6 +43,12 @@ type LobbyMessage struct {
 	Players []PlayerMessage `json:"players"`
 }
 
+type LobbyJoin struct {
+	Type string `json:"type"`
+	Name string `json:"name"`
+	ID   int    `json:"id"`
+}
+
 type GameStateStateMessage struct {
 	Type                string               `json:"type"`
 	CurrentTurnPlayerId int                  `json:"currentTurnPlayerId"`

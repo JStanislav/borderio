@@ -10,6 +10,12 @@ export interface LobbyMessage {
     players: LobbyPlayer[]
 }
 
+export interface PlayerJoinedMessage {
+    type: string,
+    id: number,
+    name: string
+}
+
 export interface LobbyPlayer {
     id: number,
     name: string,
