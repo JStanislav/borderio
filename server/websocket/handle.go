@@ -79,7 +79,15 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("[ERROR] error upgrading, %s\n", err)
 		return
 	}
-	defer c.Close()
+	defer func() {
+		h.GamesManager.GetGame(id).Game.RemovePlayer(currentPlayer.ID)
+		h.GamesManager.GetGame(id).CleanUpConnection(ppid)
+		h.GamesManager.GetGame(id).BroadcastJSON(getPlayerLeftMessage(*currentPlayer))
+
+		// Broadcast lobby, what would happen if player left in middle of the game?
+		h.GamesManager.GetGame(id).BroadcastJSON(getLobbyMessage(gameState.GameState.Players))
+
+	}()
 
 	h.GamesManager.GetGame(id).AddConnection(ppid, c)
 
@@ -174,6 +182,14 @@ func (h Handler) GamePing(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
+}
+
+func getPlayerLeftMessage(player player.Player) messages.PlayerLeftMessage {
+	return messages.PlayerLeftMessage{
+		Type: "playerLeft",
+		Name: player.Name,
+		ID:   int(player.ID),
+	}
 }
 
 func sendPlayerConfiguration(c *websocket.Conn, player *player.Player) {

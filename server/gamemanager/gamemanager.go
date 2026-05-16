@@ -55,6 +55,12 @@ func (gm *GameManager) BroadcastExcept(msg any, ppids []string) {
 	}
 }
 
+func (gm *GameManager) CleanUpConnection(ppid string) {
+	c := gm.Connections[ppid]
+	c.Close()
+	gm.RemoveConnection(ppid)
+}
+
 type Games map[string]*GameManager
 
 func NewGames() Games {

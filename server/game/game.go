@@ -212,6 +212,16 @@ func (g *GameState) AddPlayer(p *player.Player) error {
 	return errors.New("game is full")
 }
 
+func (g *GameState) RemovePlayer(pid player.PlayerID) error {
+	for i, player := range *g.Players {
+		if player.ID == pid {
+			*g.Players = append((*g.Players)[:i], (*g.Players)[i+1:]...)
+			return nil
+		}
+	}
+	return errors.New("player not found")
+}
+
 func (g *GameState) GetPlayerPPID(ppid string) *player.Player {
 	for _, p := range *g.Players {
 		if p.PrivatePlayerID == ppid {

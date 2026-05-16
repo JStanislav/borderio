@@ -36,6 +36,10 @@ const onMessage = (ev: MessageEvent,
         const joined = data as PlayerJoinedMessage;
         toast.success(`${joined.name}[${joined.id}] has joined game!`);
     }
+    if (data.type === "playerLeft") {
+        const left = data as PlayerJoinedMessage;
+        toast.success(`${left.name} has left game!`);
+    }
 }
 
 
