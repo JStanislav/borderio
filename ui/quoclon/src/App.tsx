@@ -4,7 +4,7 @@ import { allPlayersReady, getDefaultGameState, type GameState } from './game/Gam
 import { startConnection  } from './server/server';
 import { Toaster } from 'react-hot-toast';
 import { useParams, useSearchParams } from 'react-router';
-import { generatePPID } from './app';
+import { canDisplayStartButton, generatePPID } from './app';
 import { send, closeConn } from './server/server-conn';
 import { DefaultPlayer, type Player } from './game/player';
 import type { LobbyPlayer } from './server/messages';
@@ -14,7 +14,7 @@ const getReadyText = (ready: boolean): string => {
 }
 
 const GameFrameContext = createContext<GameState>(getDefaultGameState());
-  const PlayerContext = createContext<Player>(DefaultPlayer);
+const PlayerContext = createContext<Player>(DefaultPlayer);
 
 function App() {
   const [gameState, setGameState] = useState<GameState>(getDefaultGameState())
@@ -45,6 +45,11 @@ function App() {
       const data = {playerId: player.id, ppid: player.ppid, ready: !player.ready };
       send(type, data);
   }
+  const onClickStartGame = () => {
+    const type = "startGame";
+    const data = {ppid: player.ppid};
+    send(type, data);
+  }
 
 
   return (
@@ -60,6 +65,7 @@ function App() {
           Waiting for others players to be ready...
           {lobbyPlayers.map((lobbyPlayer, index) => <div key={index}>{lobbyPlayer.name + getReadyText(lobbyPlayer.ready)}</div>)}
           <button onClick={toggleReady}>{player.ready ? "Unready" : "Ready"}</button>
+          {canDisplayStartButton(lobbyPlayers, player) && <button onClick={onClickStartGame}>Start</button>}
         </div>
       }
         <Toaster />

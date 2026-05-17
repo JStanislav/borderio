@@ -131,6 +131,13 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		switch o.Type {
+		case "startGame":
+			fmt.Printf("Player %d wants to start the game\n", o.PlayerId)
+
+			gameState.StartMatch(movementsChannel)
+
+			msg := getGameStateMessage(&gameState.GameState)
+			h.GamesManager.GetGame(id).BroadcastJSON(msg)
 		case "playerMove":
 			fmt.Printf("Player %d wants to move to row %d, col %d\n", o.PlayerId, o.Target.Row, o.Target.Col)
 
@@ -140,6 +147,9 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 				fmt.Printf("[ERROR] error processing player move, %s\n", err)
 				continue
 			}
+
+			msg := getGameStateMessage(&gameState.GameState)
+			h.GamesManager.GetGame(id).BroadcastJSON(msg)
 		case "wallPlacement":
 			fmt.Printf("Player %d wants to place a wall between [R%d-C%d] and [R%d-C%d] with orientation %s\n", o.PlayerId, o.WallTarget.CellA.Row, o.WallTarget.CellA.Col, o.WallTarget.CellB.Row, o.WallTarget.CellB.Col, o.WallTarget.Orientation)
 
@@ -149,6 +159,9 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 				fmt.Printf("[ERROR] error processing wall placement, %s\n", err)
 				continue
 			}
+
+			msg := getGameStateMessage(&gameState.GameState)
+			h.GamesManager.GetGame(id).BroadcastJSON(msg)
 		case "playerReady":
 			fmt.Printf("Player %d toggled readiness\n", o.PlayerId)
 			p.ToggleReady()
@@ -237,7 +250,7 @@ func sendLobbyMessage(c *websocket.Conn, players *[]*player.Player) {
 	}
 }
 
-func sendGameState(c *websocket.Conn, gameState *game.GameState, p1, p2 *player.Player) {
+func getGameStateMessage(gameState *game.GameState) messages.GameStateStateMessage {
 	var currentTurn int
 	var walls []utils.WallPosition
 
@@ -246,6 +259,9 @@ func sendGameState(c *websocket.Conn, gameState *game.GameState, p1, p2 *player.
 		currentTurn = int(gameState.GetCurrentTurnPlayer().ID)
 		walls = gameState.Board.GetWalls()
 	}
+
+	p1 := (*gameState.Players)[0]
+	p2 := (*gameState.Players)[1]
 
 	gameStateMessage := messages.GameStateStateMessage{
 		Type:                "gameState",
@@ -267,9 +283,7 @@ func sendGameState(c *websocket.Conn, gameState *game.GameState, p1, p2 *player.
 		Walls: walls,
 	}
 
-	if err := c.WriteJSON(gameStateMessage); err != nil {
-		fmt.Printf("[ERROR] error sending game state, %s\n", err)
-	}
+	return gameStateMessage
 }
 
 func sendErrorMessage(c *websocket.Conn, errorMessage string) {

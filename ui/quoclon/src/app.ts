@@ -1,3 +1,5 @@
+import type { Player } from "./game/player";
+import type { LobbyPlayer } from "./server/messages";
 
 
 export const generatePPID = () => {
@@ -8,4 +10,8 @@ export const generatePPID = () => {
         result += characters.charAt(Math.floor(Math.random() * charactersLength));
     }
     return result;
+}
+
+export function canDisplayStartButton(lobbyPlayers: LobbyPlayer[], player: Player) {
+    return (player.id === 1 && lobbyPlayers.every((lobbyPlayer) => lobbyPlayer.ready))
 }
