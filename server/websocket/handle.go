@@ -132,14 +132,14 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 
 		switch o.Type {
 		case "startGame":
-			fmt.Printf("Player %d wants to start the game\n", o.PlayerId)
+			fmt.Printf("Player %d wants to start the game\n", p.ID)
 
 			gameState.StartMatch(movementsChannel)
 
 			msg := getGameStateMessage(&gameState.GameState)
 			h.GamesManager.GetGame(id).BroadcastJSON(msg)
 		case "playerMove":
-			fmt.Printf("Player %d wants to move to row %d, col %d\n", o.PlayerId, o.Target.Row, o.Target.Col)
+			fmt.Printf("Player %d wants to move to row %d, col %d\n", p.ID, o.Target.Row, o.Target.Col)
 
 			err = p.OnPlayerPlay(player.PlayerID(p.ID), player.Play{PlayType: player.PlayerMove, Position: &utils.GridPosition{Row: o.Target.Row, Column: o.Target.Col}})
 			if err != nil {
@@ -151,7 +151,7 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 			msg := getGameStateMessage(&gameState.GameState)
 			h.GamesManager.GetGame(id).BroadcastJSON(msg)
 		case "wallPlacement":
-			fmt.Printf("Player %d wants to place a wall between [R%d-C%d] and [R%d-C%d] with orientation %s\n", o.PlayerId, o.WallTarget.CellA.Row, o.WallTarget.CellA.Col, o.WallTarget.CellB.Row, o.WallTarget.CellB.Col, o.WallTarget.Orientation)
+			fmt.Printf("Player %d wants to place a wall between [R%d-C%d] and [R%d-C%d] with orientation %s\n", p.ID, o.WallTarget.CellA.Row, o.WallTarget.CellA.Col, o.WallTarget.CellB.Row, o.WallTarget.CellB.Col, o.WallTarget.Orientation)
 
 			err = p.OnPlayerPlay(player.PlayerID(p.ID), player.Play{PlayType: player.WallPlacement, WallPlaced: &utils.WallPosition{CellA: utils.GridPosition{Row: o.WallTarget.CellA.Row, Column: o.WallTarget.CellA.Col}, CellB: utils.GridPosition{Row: o.WallTarget.CellB.Row, Column: o.WallTarget.CellB.Col}}})
 			if err != nil {
@@ -163,7 +163,7 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 			msg := getGameStateMessage(h.GamesManager.GetGame(id).Game)
 			h.GamesManager.GetGame(id).BroadcastJSON(msg)
 		case "playerReady":
-			fmt.Printf("Player %d toggled readiness\n", o.PlayerId)
+			fmt.Printf("Player %d toggled readiness\n", p.ID)
 			p.ToggleReady()
 			if gameState.AllPlayersReady() && gameState.GameState.PlayerCount == len(*gameState.GameState.Players) {
 				fmt.Println("All players are ready, starting the match")
