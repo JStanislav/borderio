@@ -19,24 +19,21 @@ const isVerticalCell = (cellId: number, totalBoardDim: number) => {
 
 
 export const onClick = (ev: React.MouseEvent<HTMLDivElement>,
-                        requestWallPlacement: (playerId: number, row: number, col: number, orientation: "horizontal" | "vertical") => void,
-                        playerId: number) => {
+                        requestWallPlacement: (ppid: string, row: number, col: number, orientation: "horizontal" | "vertical") => void,
+                        ppid: string) => {
     const cellId = Number(ev.currentTarget.id.split("-")[1]);
     if (!cellId) return;
     if (cellId % 2 === 0) return; // only allow clicking on wall placeable cells
     const isVertical = isVerticalCell(cellId, TOTAL_BOARD_DIM);
     
-    requestWallPlacement(playerId, 
+    requestWallPlacement(ppid, 
         Math.floor(cellId / TOTAL_BOARD_DIM),
         (cellId % TOTAL_BOARD_DIM), 
         isVertical ? "vertical" : "horizontal");
 }
 
-export const onDrop = (ev: React.DragEvent<HTMLDivElement>, rowEnd: number, colEnd: number, requestPlayerMove: (playerId: number, row: number, col: number) => void) => {
-    ev.preventDefault();
-    const playerId = ev.dataTransfer.getData("playerId");
-
-    requestPlayerMove(parseInt(playerId), rowEnd, colEnd);
+export const onDrop = (ppid:string , rowEnd: number, colEnd: number, requestPlayerMove: (ppid: string, row: number, col: number) => void) => {
+    requestPlayerMove(ppid, rowEnd, colEnd);
 }
 
 export const setActiveWalls = (board: Array<Row>, activeWalls: { row: number, col: number, orientation: "horizontal" | "vertical" }[]) => {

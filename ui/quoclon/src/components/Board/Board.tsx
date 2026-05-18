@@ -4,16 +4,19 @@ import playerTwo from  "../../assets/players/player_one.png"
 import playerOne from "../../assets/players/player_two.png"
 import type { Players } from "../game/player.type"
 import { isDraggable, isFinishLine, onClick, onDragOver, onDragStart, onDrop, setActiveWalls } from "./board.utils"
+import { useContext } from "react"
+import { PlayerContext } from "../../App.tsx"
 
 interface Props {
     players: Players,
-    requestPlayerMove: (playerId: number, row: number, col: number) => void,
-    requestWallPlacement: (playerId: number, row: number, col: number, orientation: "horizontal" | "vertical") => void,
+    requestPlayerMove: (ppid: string, row: number, col: number) => void,
+    requestWallPlacement: (ppid: string, row: number, col: number, orientation: "horizontal" | "vertical") => void,
     activeWalls: { row: number, col: number, orientation: "horizontal" | "vertical" }[],
     currentTurnPlayerId: number
 }
 
-export const Board = ({players, requestPlayerMove, requestWallPlacement, activeWalls, currentTurnPlayerId}: Props) => {
+export const Board = ({players, requestPlayerMove, requestWallPlacement, activeWalls}: Props) => {
+    const currentUser = useContext(PlayerContext)
 
     setActiveWalls(board, activeWalls);
 
@@ -31,9 +34,9 @@ export const Board = ({players, requestPlayerMove, requestWallPlacement, activeW
                                 ${isFinishLine(indexRow) ? "finish-line" : ""}
                             `}
 
-                            onClick={e => onClick(e, requestWallPlacement, currentTurnPlayerId)}
+                            onClick={e => onClick(e, requestWallPlacement, currentUser.ppid)}
                             
-                            onDrop={e => onDrop(e, indexRow, colIdx, requestPlayerMove)}
+                            onDrop={_ => onDrop(currentUser.ppid, indexRow, colIdx, requestPlayerMove)}
                             onDragOver={isDraggable(indexRow, colIdx) ? onDragOver : undefined}
                         >
                             {players.map(player => 

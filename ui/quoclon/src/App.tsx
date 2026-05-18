@@ -14,7 +14,7 @@ const getReadyText = (ready: boolean): string => {
 }
 
 const GameFrameContext = createContext<GameState>(getDefaultGameState());
-const PlayerContext = createContext<Player>(DefaultPlayer);
+export const PlayerContext = createContext<Player>(DefaultPlayer);
 
 function App() {
   const [gameState, setGameState] = useState<GameState>(getDefaultGameState())

@@ -53,18 +53,18 @@ export const startConnection = (hash: string,
     connect(hash, action, ppid, (ev: MessageEvent) => onMessage(ev, setGameState, setPlayerConfig, setLobbyPlayers));
 }
 
-export const requestPlayerMove = (playerId: number, row: number, col: number) => {
+export const requestPlayerMove = (ppid: string, row: number, col: number) => {
     const { s_row, s_col } = translateGridPositionToServer(row, col);
     const type = "playerMove";
     const target = { row: s_row,col: s_col };
-    send(type, { playerId, target });
+    send(type, { target, ppid });
 }
 
-export const requestWallPlacement = (playerId: number, row: number, col: number, orientation: "horizontal" | "vertical") => {
+export const requestWallPlacement = (ppid: string, row: number, col: number, orientation: "horizontal" | "vertical") => {
     let wallPositions = translateWallGridPositionToServer(row, col, orientation);
     const type = "wallPlacement";
     const wallTarget = { cellA: { row: wallPositions.cellA.row, col: wallPositions.cellA.column }, cellB: { row: wallPositions.cellB.row, col: wallPositions.cellB.column }, orientation };
-    send(type, { playerId, wallTarget: wallTarget });
+    send(type, { wallTarget: wallTarget, ppid });
 }
 
 export async function GameExist(hash: string) {

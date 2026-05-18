@@ -160,7 +160,7 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 
-			msg := getGameStateMessage(&gameState.GameState)
+			msg := getGameStateMessage(h.GamesManager.GetGame(id).Game)
 			h.GamesManager.GetGame(id).BroadcastJSON(msg)
 		case "playerReady":
 			fmt.Printf("Player %d toggled readiness\n", o.PlayerId)
@@ -168,14 +168,10 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 			if gameState.AllPlayersReady() && gameState.GameState.PlayerCount == len(*gameState.GameState.Players) {
 				fmt.Println("All players are ready, starting the match")
 			}
-			// sendLobbyMessage(c, gameState.GameState.Players)
 
 			h.GamesManager.GetGame(id).BroadcastJSON(getLobbyMessage(gameState.GameState.Players))
 			continue
 		}
-
-		// // err = c.WriteMessage(mt, []byte("pong"))
-		// sendGameState(c, &gameState.GameState, p1, p2)
 	}
 }
 
