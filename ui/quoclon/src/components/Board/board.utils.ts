@@ -9,7 +9,8 @@ export const onDragStart = (ev: React.DragEvent<HTMLImageElement>, playerId: num
     ev.dataTransfer.setData("playerId", playerId.toString());
 }
 
-export const isDraggable = (row: number, col: number) => {
+// If the cell provided by row and column is allow a player to be dragged over
+export const isDragOverable = (row: number, col: number) => {
     return (row % 2 !== 0) && (col % 2 !== 0);
 }
 

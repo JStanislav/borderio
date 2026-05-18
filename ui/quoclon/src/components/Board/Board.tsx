@@ -3,7 +3,7 @@ import "./board.css"
 import playerTwo from  "../../assets/players/player_one.png"
 import playerOne from "../../assets/players/player_two.png"
 import type { Players } from "../game/player.type"
-import { isDraggable, isFinishLine, onClick, onDragOver, onDragStart, onDrop, setActiveWalls } from "./board.utils"
+import { isDragOverable, isFinishLine, onClick, onDragOver, onDragStart, onDrop, setActiveWalls } from "./board.utils"
 import { useContext } from "react"
 import { PlayerContext } from "../../App.tsx"
 
@@ -37,7 +37,7 @@ export const Board = ({players, requestPlayerMove, requestWallPlacement, activeW
                             onClick={e => onClick(e, requestWallPlacement, currentUser.ppid)}
                             
                             onDrop={_ => onDrop(currentUser.ppid, indexRow, colIdx, requestPlayerMove)}
-                            onDragOver={isDraggable(indexRow, colIdx) ? onDragOver : undefined}
+                            onDragOver={isDragOverable(indexRow, colIdx) ? onDragOver : undefined}
                         >
                             {players.map(player => 
                                 (player.position.row === indexRow && player.position.col === colIdx) ? (
@@ -46,7 +46,7 @@ export const Board = ({players, requestPlayerMove, requestWallPlacement, activeW
                                         className="img-player"
                                         src={player.id === 1 ? playerOne : playerTwo} 
                                         alt={player.name}
-                                        draggable
+                                        draggable={player.id === currentUser.id}
                                         onDragStart={e => onDragStart(e, player.id)}
                                     />
                                 ) : null
