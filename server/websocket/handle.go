@@ -40,7 +40,8 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 	var currentPlayer *player.Player
 
 	if action == "create" {
-		err := h.GamesManager.AddGame(id, gamemanager.NewGameManager(&gameState.GameState))
+		cm := gamemanager.NewConnectionsManager()
+		err := h.GamesManager.AddGame(id, gamemanager.NewGameManager(&gameState.GameState, cm))
 		if err != nil {
 			fmt.Printf("[ERROR] error creating hash, %s\n", err)
 			return
@@ -80,16 +81,12 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer func() {
-		h.GamesManager.GetGame(id).Game.RemovePlayer(currentPlayer.ID)
-		h.GamesManager.GetGame(id).CleanUpConnection(ppid)
-		h.GamesManager.GetGame(id).BroadcastJSON(getPlayerLeftMessage(*currentPlayer))
-
-		// Broadcast lobby, what would happen if player left in middle of the game?
-		h.GamesManager.GetGame(id).BroadcastJSON(getLobbyMessage(gameState.GameState.Players))
-
+		h.GamesManager.GetGame(id).PlayerLeft(*currentPlayer)
 	}()
 
-	h.GamesManager.GetGame(id).AddConnection(ppid, c)
+	ioConn := GetConnectionAdapter(c)
+
+	h.GamesManager.GetGame(id).AddConnection(ppid, ioConn)
 
 	// This movements channel has to go away from here. It should be only one in the game, not one for every connection
 	movementsChannel := make(chan player.Play)
@@ -106,9 +103,7 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	sendPlayerConfiguration(c, currentPlayer)
-	h.GamesManager.GetGame(id).BroadcastExcept(getJoinedMessage(*currentPlayer), []string{ppid})
-	h.GamesManager.GetGame(id).BroadcastJSON(getLobbyMessage(gameState.GameState.Players))
+	h.GamesManager.GetGame(id).PlayerJoined(*currentPlayer)
 
 	for {
 		_, message, err := c.ReadMessage()
@@ -136,8 +131,7 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 
 			gameState.StartMatch(movementsChannel)
 
-			msg := getGameStateMessage(&gameState.GameState)
-			h.GamesManager.GetGame(id).BroadcastJSON(msg)
+			h.GamesManager.GetGame(id).BroadcastGameState()
 		case "playerMove":
 			fmt.Printf("Player %d wants to move to row %d, col %d\n", p.ID, o.Target.Row, o.Target.Col)
 
@@ -148,8 +142,7 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 
-			msg := getGameStateMessage(&gameState.GameState)
-			h.GamesManager.GetGame(id).BroadcastJSON(msg)
+			h.GamesManager.GetGame(id).BroadcastGameState()
 		case "wallPlacement":
 			fmt.Printf("Player %d wants to place a wall between [R%d-C%d] and [R%d-C%d] with orientation %s\n", p.ID, o.WallTarget.CellA.Row, o.WallTarget.CellA.Col, o.WallTarget.CellB.Row, o.WallTarget.CellB.Col, o.WallTarget.Orientation)
 
@@ -160,8 +153,7 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 
-			msg := getGameStateMessage(h.GamesManager.GetGame(id).Game)
-			h.GamesManager.GetGame(id).BroadcastJSON(msg)
+			h.GamesManager.GetGame(id).BroadcastGameState()
 		case "playerReady":
 			fmt.Printf("Player %d toggled readiness\n", p.ID)
 			p.ToggleReady()
@@ -169,7 +161,7 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 				fmt.Println("All players are ready, starting the match")
 			}
 
-			h.GamesManager.GetGame(id).BroadcastJSON(getLobbyMessage(gameState.GameState.Players))
+			h.GamesManager.GetGame(id).SyncLobbyState()
 			continue
 		}
 	}
@@ -191,95 +183,6 @@ func (h Handler) GamePing(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-}
-
-func getPlayerLeftMessage(player player.Player) messages.PlayerLeftMessage {
-	return messages.PlayerLeftMessage{
-		Type: "playerLeft",
-		Name: player.Name,
-		ID:   int(player.ID),
-	}
-}
-
-func sendPlayerConfiguration(c *websocket.Conn, player *player.Player) {
-	playerMessage := messages.PlayerConfigurationMessage{
-		Type:            "playerConfiguration",
-		ID:              int(player.ID),
-		Name:            player.Name,
-		PrivatePlayerId: player.PrivatePlayerID,
-	}
-
-	if err := c.WriteJSON(playerMessage); err != nil {
-		fmt.Printf("[ERROR] error sending player configuration, %s\n", err)
-	}
-}
-
-func getLobbyMessage(players *[]*player.Player) messages.LobbyMessage {
-	playersMsg := make([]messages.PlayerMessage, len(*players))
-	for i, p := range *players {
-		playersMsg[i] = messages.PlayerMessage{
-			ID:    int(p.ID),
-			Name:  p.Name,
-			Ready: p.Ready,
-		}
-	}
-	lobbyMessage := messages.LobbyMessage{
-		Type:    "lobby",
-		Players: playersMsg,
-	}
-
-	return lobbyMessage
-}
-
-func getJoinedMessage(player player.Player) messages.LobbyJoin {
-	return messages.LobbyJoin{
-		Type: "joined",
-		Name: player.Name,
-		ID:   int(player.ID),
-	}
-}
-
-func sendLobbyMessage(c *websocket.Conn, players *[]*player.Player) {
-	lobbyMessage := getLobbyMessage(players)
-	if err := c.WriteJSON(lobbyMessage); err != nil {
-		fmt.Printf("[ERROR] error sending lobby message, %s\n", err)
-	}
-}
-
-func getGameStateMessage(gameState *game.GameState) messages.GameStateStateMessage {
-	var currentTurn int
-	var walls []utils.WallPosition
-
-	// Match started
-	if gameState.StartTime != nil {
-		currentTurn = int(gameState.GetCurrentTurnPlayer().ID)
-		walls = gameState.Board.GetWalls()
-	}
-
-	p1 := (*gameState.Players)[0]
-	p2 := (*gameState.Players)[1]
-
-	gameStateMessage := messages.GameStateStateMessage{
-		Type:                "gameState",
-		CurrentTurnPlayerId: currentTurn,
-		PlayerOne: messages.PlayerMessage{
-			ID:             int(p1.ID),
-			Name:           p1.Name,
-			Position:       messages.PositionMessage{Row: p1.Position.Row, Col: p1.Position.Column},
-			WallsRemaining: p1.WallsRemaining,
-			Ready:          p1.Ready,
-		},
-		PlayerTwo: messages.PlayerMessage{
-			ID:             int(p2.ID),
-			Name:           p2.Name,
-			Position:       messages.PositionMessage{Row: p2.Position.Row, Col: p2.Position.Column},
-			WallsRemaining: p2.WallsRemaining,
-			Ready:          p2.Ready,
-		},
-		Walls: walls,
-	}
-
-	return gameStateMessage
 }
 
 func sendErrorMessage(c *websocket.Conn, errorMessage string) {

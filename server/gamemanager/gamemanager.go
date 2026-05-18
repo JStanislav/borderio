@@ -2,63 +2,116 @@ package gamemanager
 
 import (
 	"errors"
-	"slices"
+	"fmt"
 
 	"github.com/JStanislav/quoridor-clone/game"
-	"github.com/gorilla/websocket"
+	"github.com/JStanislav/quoridor-clone/player"
+	"github.com/JStanislav/quoridor-clone/websocket/messages"
 )
 
 type GameManager struct {
 	Game *game.GameState
 
 	// Every websocket connection, where key is private player id
-	Connections map[string]*websocket.Conn
+	IOManager IOManager
 }
 
-func NewGameManager(game *game.GameState) *GameManager {
+func NewGameManager(game *game.GameState, ioManager IOManager) *GameManager {
 	return &GameManager{
-		Game:        game,
-		Connections: make(map[string]*websocket.Conn),
+		Game:      game,
+		IOManager: ioManager,
 	}
 }
 
-func (gm *GameManager) AddConnection(ppid string, conn *websocket.Conn) {
-	gm.Connections[ppid] = conn
+func (gm *GameManager) AddConnection(ppid string, conn IOConnection) {
+	gm.IOManager.AddConnection(ppid, conn)
+
 }
 
 func (gm *GameManager) RemoveConnection(ppid string) {
-	delete(gm.Connections, ppid)
+	gm.IOManager.RemoveConnection(ppid)
 }
 
-func (gm *GameManager) GetConnection(ppid string) *websocket.Conn {
-	return gm.Connections[ppid]
-}
-
-func (gm *GameManager) Broadcast(msg string) {
-	for _, conn := range gm.Connections {
-		conn.WriteMessage(websocket.TextMessage, []byte(msg))
+func (gm *GameManager) Broadcast(msg string) error {
+	err := gm.IOManager.Broadcast(msg)
+	if err != nil {
+		fmt.Println("error broadcasting ", err)
+		errMessage := fmt.Sprintf("error sending %s", msg)
+		return errors.New(errMessage)
 	}
+	return nil
 }
 
-func (gm *GameManager) BroadcastJSON(msg any) {
-	for _, conn := range gm.Connections {
-		conn.WriteJSON(msg)
+func (gm *GameManager) BroadcastJSON(msg any) error {
+	err := gm.IOManager.BroadcastJSON(msg)
+	if err != nil {
+		fmt.Println("error broadcasting JSON", err)
+		errMessage := fmt.Sprintf("error sending %s", msg)
+		return errors.New(errMessage)
 	}
+	return nil
 }
 
 // Function to broadcast messages to every player except the specified in the parameter
-func (gm *GameManager) BroadcastExcept(msg any, ppids []string) {
-	for ppid, conn := range gm.Connections {
-		if !slices.Contains(ppids, ppid) {
-			conn.WriteJSON(msg)
-		}
+func (gm *GameManager) BroadcastExcept(msg any, ppids []string) error {
+	err := gm.IOManager.BroadcastJSONExcept(msg, ppids)
+	if err != nil {
+		fmt.Println("error broadcasting JSON Except", err)
+		errMessage := fmt.Sprintf("error sending %s", msg)
+		return errors.New(errMessage)
 	}
+	return nil
+}
+
+func (gm *GameManager) BroadcastGameState() error {
+	gameStateMesage := messages.GetGameStateMessage(gm.Game)
+	err := gm.BroadcastJSON(gameStateMesage)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (gm *GameManager) CleanUpConnection(ppid string) {
-	c := gm.Connections[ppid]
+	c := gm.IOManager.GetConnection(ppid)
 	c.Close()
 	gm.RemoveConnection(ppid)
+}
+
+func (gm *GameManager) PlayerLeft(player player.Player) {
+	gm.Game.RemovePlayer(player.ID)
+	gm.CleanUpConnection(player.PrivatePlayerID)
+	gm.BroadcastJSON(messages.GetPlayerLeftMessage(player))
+
+	// Broadcast lobby, what would happen if player left in middle of the game?
+	gm.BroadcastJSON(messages.GetLobbyMessage(gm.Game.Players))
+}
+
+func (gm *GameManager) PlayerJoined(player player.Player) {
+	message := messages.GetJoinedMessage(player)
+	gm.BroadcastExcept(message, []string{player.PrivatePlayerID})
+
+	gm.SyncLobbyState()
+	gm.SyncPlayerConfiguration(player)
+}
+
+func (gm *GameManager) SyncLobbyState() {
+	gm.BroadcastJSON(messages.GetLobbyMessage(gm.Game.Players))
+}
+
+func (gm *GameManager) SyncPlayerConfiguration(player player.Player) {
+	playerConn := gm.IOManager.GetConnection(player.PrivatePlayerID)
+
+	message := messages.PlayerConfigurationMessage{
+		Type:            "playerConfiguration",
+		ID:              int(player.ID),
+		Name:            player.Name,
+		PrivatePlayerId: player.PrivatePlayerID,
+	}
+
+	if err := playerConn.SendJSON(message); err != nil {
+		fmt.Printf("[ERROR] error sending player configuration, %s\n", err)
+	}
 }
 
 type Games map[string]*GameManager

@@ -1,6 +1,10 @@
 package messages
 
-import "github.com/JStanislav/quoridor-clone/utils"
+import (
+	"github.com/JStanislav/quoridor-clone/game"
+	"github.com/JStanislav/quoridor-clone/player"
+	"github.com/JStanislav/quoridor-clone/utils"
+)
 
 type Message[T any] struct {
 	Type       string            `json:"type"`
@@ -61,4 +65,73 @@ type GameStateStateMessage struct {
 	PlayerOne           PlayerMessage        `json:"playerOne"`
 	PlayerTwo           PlayerMessage        `json:"playerTwo"`
 	Walls               []utils.WallPosition `json:"walls"`
+}
+
+func GetPlayerLeftMessage(player player.Player) PlayerLeftMessage {
+	return PlayerLeftMessage{
+		Type: "playerLeft",
+		Name: player.Name,
+		ID:   int(player.ID),
+	}
+}
+
+func GetLobbyMessage(players *[]*player.Player) LobbyMessage {
+	playersMsg := make([]PlayerMessage, len(*players))
+	for i, p := range *players {
+		playersMsg[i] = PlayerMessage{
+			ID:    int(p.ID),
+			Name:  p.Name,
+			Ready: p.Ready,
+		}
+	}
+	lobbyMessage := LobbyMessage{
+		Type:    "lobby",
+		Players: playersMsg,
+	}
+
+	return lobbyMessage
+}
+
+func GetJoinedMessage(player player.Player) LobbyJoin {
+	return LobbyJoin{
+		Type: "joined",
+		Name: player.Name,
+		ID:   int(player.ID),
+	}
+}
+
+func GetGameStateMessage(gameState *game.GameState) GameStateStateMessage {
+	var currentTurn int
+	var walls []utils.WallPosition
+
+	// Match started
+	if gameState.StartTime != nil {
+		currentTurn = int(gameState.GetCurrentTurnPlayer().ID)
+		walls = gameState.Board.GetWalls()
+	}
+
+	p1 := (*gameState.Players)[0]
+	p2 := (*gameState.Players)[1]
+
+	gameStateMessage := GameStateStateMessage{
+		Type:                "gameState",
+		CurrentTurnPlayerId: currentTurn,
+		PlayerOne: PlayerMessage{
+			ID:             int(p1.ID),
+			Name:           p1.Name,
+			Position:       PositionMessage{Row: p1.Position.Row, Col: p1.Position.Column},
+			WallsRemaining: p1.WallsRemaining,
+			Ready:          p1.Ready,
+		},
+		PlayerTwo: PlayerMessage{
+			ID:             int(p2.ID),
+			Name:           p2.Name,
+			Position:       PositionMessage{Row: p2.Position.Row, Col: p2.Position.Column},
+			WallsRemaining: p2.WallsRemaining,
+			Ready:          p2.Ready,
+		},
+		Walls: walls,
+	}
+
+	return gameStateMessage
 }
