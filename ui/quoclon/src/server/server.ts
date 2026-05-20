@@ -5,13 +5,14 @@ import { translateGridPositionToServer, translateWallGridPositionToServer } from
 import type { LobbyMessage, LobbyPlayer, PlayerConfigurationMessage, PlayerJoinedMessage } from "./messages";
 import type { Player } from "../game/player";
 import { config } from "../../config/config";
+import type { Lobby } from "../game/lobby/lobby";
 
 const serverURL = `http://${config.serverUrl}`
 
 const onMessage = (ev: MessageEvent,
                     setGameState: (gameState: GameState) => void,
                     setPlayerConfig: (player: Player) => void,
-                    setLobbyPlayers: (players: LobbyPlayer[]) => void) => {
+                    setLobby: (lobby: Lobby) => void) => {
 
     console.log("message arrived");
     console.log("ev", ev.data)
@@ -30,7 +31,7 @@ const onMessage = (ev: MessageEvent,
     }
     if (data.type === "lobby") {
         const config = data as LobbyMessage;
-        setLobbyPlayers(config.players);
+        setLobby({ players: config.players, winnerPlayerId: config.winnerPlayerId });
     }
     if (data.type === "joined") { 
         const joined = data as PlayerJoinedMessage;
@@ -48,9 +49,9 @@ export const startConnection = (hash: string,
                                 ppid: string,
                                 setGameState: (gameState: GameState) => void,
                                 setPlayerConfig: (player: Player) => void,
-                                setLobbyPlayers: (players: LobbyPlayer[]) => void) => {
+                                setLobby: (lobby: Lobby) => void) => {
     // starts socket connection
-    connect(hash, action, ppid, (ev: MessageEvent) => onMessage(ev, setGameState, setPlayerConfig, setLobbyPlayers));
+    connect(hash, action, ppid, (ev: MessageEvent) => onMessage(ev, setGameState, setPlayerConfig, setLobby));
 }
 
 export const requestPlayerMove = (ppid: string, row: number, col: number) => {

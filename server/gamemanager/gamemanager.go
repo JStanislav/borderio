@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/JStanislav/quoridor-clone/external"
 	"github.com/JStanislav/quoridor-clone/game"
 	"github.com/JStanislav/quoridor-clone/player"
 	"github.com/JStanislav/quoridor-clone/websocket/messages"
@@ -14,12 +15,15 @@ type GameManager struct {
 
 	// Every websocket connection, where key is private player id
 	IOManager IOManager
+
+	UpdateStats external.UpdateStats
 }
 
-func NewGameManager(game *game.GameState, ioManager IOManager) *GameManager {
+func NewGameManager(game *game.GameState, ioManager IOManager, updateStats external.UpdateStats) *GameManager {
 	return &GameManager{
-		Game:      game,
-		IOManager: ioManager,
+		Game:        game,
+		IOManager:   ioManager,
+		UpdateStats: updateStats,
 	}
 }
 
@@ -93,6 +97,15 @@ func (gm *GameManager) PlayerJoined(player player.Player) {
 
 	gm.SyncLobbyState()
 	gm.SyncPlayerConfiguration(player)
+}
+
+func (gm *GameManager) GameOver() {
+	gm.BroadcastJSON(messages.GetLobbyMessage(gm.Game.Players))
+
+	err := gm.UpdateStats(gm.Game.GetGameStats())
+	if err != nil {
+		fmt.Printf("[ERROR] error updating stats, %s\n", err)
+	}
 }
 
 func (gm *GameManager) SyncLobbyState() {

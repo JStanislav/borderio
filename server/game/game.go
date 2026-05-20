@@ -91,10 +91,6 @@ func (g *GameState) StartMatch(movements chan player.Play) {
 					movements <- play
 					fmt.Println("Moved")
 
-					if p.IsWinner() {
-						fmt.Printf("Player %d wins!\n", p.ID)
-					}
-
 					return nil
 				} else {
 					return errors.New("illegal move")
@@ -229,4 +225,25 @@ func (g *GameState) GetPlayerPPID(ppid string) *player.Player {
 		}
 	}
 	return nil
+}
+
+func (g *GameState) GetGameStats() GameStats {
+	var winnerId int
+	if (*g.Players)[0].IsWinner() {
+		winnerId = int((*g.Players)[0].ID)
+	} else if (*g.Players)[1].IsWinner() {
+		winnerId = int((*g.Players)[1].ID)
+	}
+
+	return GameStats{
+		PlayerWinnerId:      winnerId,
+		TotalMoves:          0,
+		TotalWallPlacements: 0,
+		TotalWallsRemaining: 0,
+		StartTime:           &time.Time{},
+		EndTime:             &time.Time{},
+		Players:             &[]*player.Player{},
+		Points:              0,
+		Steps:               []player.Play{},
+	}
 }

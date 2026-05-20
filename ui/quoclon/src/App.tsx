@@ -7,20 +7,20 @@ import { useParams, useSearchParams } from 'react-router';
 import { canDisplayStartButton, generatePPID } from './app';
 import { send, closeConn } from './server/server-conn';
 import { DefaultPlayer, type Player } from './game/player';
-import type { LobbyPlayer } from './server/messages';
+import { DefaultLobby, type Lobby } from './game/lobby/lobby';
 
 const getReadyText = (ready: boolean): string => {
   return ready ? "Ready" : "Not Ready";
 }
 
-const GameFrameContext = createContext<GameState>(getDefaultGameState());
+export const LobbyContext = createContext<Lobby>(DefaultLobby);
 export const PlayerContext = createContext<Player>(DefaultPlayer);
 
 function App() {
-  const [gameState, setGameState] = useState<GameState>(getDefaultGameState())
+    const [gameState, setGameState] = useState<GameState>(getDefaultGameState())
     const [player, setPlayer] = useState<Player>(DefaultPlayer)
-    const [lobbyPlayers, setLobbyPlayers] = useState<LobbyPlayer[]>([])
-  
+    const [lobby, setLobby] = useState<Lobby>(DefaultLobby)
+
     const { id } = useParams()
     const [searchParams] = useSearchParams()
 
@@ -31,7 +31,7 @@ function App() {
       
       const action = searchParams.get("action") as "create" | "join"
 
-      startConnection(id, action, ppid, setGameState, setPlayer, setLobbyPlayers);
+      startConnection(id, action, ppid, setGameState, setPlayer, setLobby);
     }
 
     return () => {
@@ -53,7 +53,7 @@ function App() {
 
 
   return (
-    <GameFrameContext value={gameState}>
+    <LobbyContext value={lobby}>
       <PlayerContext value={player}>
       {
         allPlayersReady(gameState) ?
@@ -63,14 +63,14 @@ function App() {
         :
         <div>
           Waiting for others players to be ready...
-          {lobbyPlayers.map((lobbyPlayer, index) => <div key={index}>{lobbyPlayer.name + getReadyText(lobbyPlayer.ready)}</div>)}
+          {lobby.players.map((lobbyPlayer, index) => <div key={index}>{lobbyPlayer.name + getReadyText(lobbyPlayer.ready)}</div>)}
           <button onClick={toggleReady}>{player.ready ? "Unready" : "Ready"}</button>
-          {canDisplayStartButton(lobbyPlayers, player) && <button onClick={onClickStartGame}>Start</button>}
+          {canDisplayStartButton(lobby.players, player) && <button onClick={onClickStartGame}>Start</button>}
         </div>
       }
         <Toaster />
       </PlayerContext>
-    </GameFrameContext>
+    </LobbyContext>
   )
 }
 

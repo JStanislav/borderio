@@ -58,3 +58,13 @@ export const getDefaultGameState = (): GameState => {
 export const allPlayersReady = (gameState: GameState): boolean => {
   return gameState.playerOne.ready && gameState.playerTwo.ready;
 }
+
+export const getPlayerById = (gameState: GameState, playerId: number): Player | undefined => {
+  if (gameState.playerOne.id === playerId) {
+    return gameState.playerOne;
+  }
+  if (gameState.playerTwo.id === playerId) {
+    return gameState.playerTwo;
+  }
+  return undefined;
+}

@@ -8,6 +8,7 @@ export interface PlayerConfigurationMessage {
 export interface LobbyMessage {
     type: string,
     players: LobbyPlayer[]
+    winnerPlayerId?: number
 }
 
 export interface PlayerJoinedMessage {
@@ -20,4 +21,9 @@ export interface LobbyPlayer {
     id: number,
     name: string,
     ready: boolean
+}
+
+export interface GameOverMessage {
+    type: string,
+    winnerPlayerId: string
 }

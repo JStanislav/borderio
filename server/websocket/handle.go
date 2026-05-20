@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/JStanislav/quoridor-clone/external"
 	"github.com/JStanislav/quoridor-clone/game"
 	"github.com/JStanislav/quoridor-clone/gamemanager"
 	"github.com/JStanislav/quoridor-clone/player"
@@ -20,12 +21,14 @@ func init() {
 }
 
 type Handler struct {
-	GamesManager *gamemanager.Games
+	GamesManager       *gamemanager.Games
+	UpdateStatsService external.UpdateStatsService
 }
 
-func NewHandler(gamesManager *gamemanager.Games) Handler {
+func NewHandler(gamesManager *gamemanager.Games, updateStatsService external.UpdateStatsService) Handler {
 	return Handler{
-		GamesManager: gamesManager,
+		GamesManager:       gamesManager,
+		UpdateStatsService: updateStatsService,
 	}
 }
 
@@ -41,7 +44,7 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 
 	if action == "create" {
 		cm := gamemanager.NewConnectionsManager()
-		err := h.GamesManager.AddGame(id, gamemanager.NewGameManager(&gameState.GameState, cm))
+		err := h.GamesManager.AddGame(id, gamemanager.NewGameManager(&gameState.GameState, cm, h.UpdateStatsService.UpdateStats))
 		if err != nil {
 			fmt.Printf("[ERROR] error creating hash, %s\n", err)
 			return
@@ -143,6 +146,11 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 			}
 
 			h.GamesManager.GetGame(id).BroadcastGameState()
+
+			if p.IsWinner() {
+				fmt.Printf("Player %d wins!\n", p.ID)
+				h.GamesManager.GetGame(id).GameOver()
+			}
 		case "wallPlacement":
 			fmt.Printf("Player %d wants to place a wall between [R%d-C%d] and [R%d-C%d] with orientation %s\n", p.ID, o.WallTarget.CellA.Row, o.WallTarget.CellA.Col, o.WallTarget.CellB.Row, o.WallTarget.CellB.Col, o.WallTarget.Orientation)
 
