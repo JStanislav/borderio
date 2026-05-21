@@ -20,6 +20,8 @@ type IOManager interface {
 	Broadcast(message string) error
 	BroadcastJSON(message any) error
 	BroadcastJSONExcept(message any, ids []string) error
+
+	DisconnectAll() error
 }
 
 type ConnectionsManager struct {
@@ -80,6 +82,17 @@ func (cm *ConnectionsManager) BroadcastJSONExcept(message any, ids []string) err
 				errMessage := fmt.Sprintf("error sending message to id %s: %s, error: %s", id, message, err)
 				return errors.New(errMessage)
 			}
+		}
+	}
+	return nil
+}
+
+func (cm *ConnectionsManager) DisconnectAll() error {
+	for id, conn := range cm.Connections {
+		err := (*conn).Close()
+		if err != nil {
+			errMessage := fmt.Sprintf("error disconnecting id %s, error: %s", id, err)
+			return errors.New(errMessage)
 		}
 	}
 	return nil

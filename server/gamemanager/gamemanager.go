@@ -3,6 +3,7 @@ package gamemanager
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/JStanislav/quoridor-clone/external"
 	"github.com/JStanislav/quoridor-clone/game"
@@ -109,6 +110,18 @@ func (gm *GameManager) GameOver() {
 	err := gm.UpdateStats(gm.Game.GetGameStats())
 	if err != nil {
 		fmt.Printf("[ERROR] error updating stats, %s\n", err)
+	}
+
+	time.AfterFunc(3*time.Minute, func() {
+		fmt.Printf("closing all connections\n")
+		gm.DisconnectAll()
+	})
+}
+
+func (gm *GameManager) DisconnectAll() {
+	err := gm.IOManager.DisconnectAll()
+	if err != nil {
+		fmt.Printf("[ERROR] error disconnecting all connections, %s\n", err)
 	}
 }
 
