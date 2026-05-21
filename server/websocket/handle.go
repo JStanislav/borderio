@@ -138,6 +138,12 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 		case "playerMove":
 			fmt.Printf("Player %d wants to move to row %d, col %d\n", p.ID, o.Target.Row, o.Target.Col)
 
+			if h.GamesManager.GetGame(id).IsGameOver() {
+				fmt.Printf("[ERROR] game is already over, cannot make a move\n")
+				sendErrorMessage(c, "game is already over, cannot make a move")
+				continue
+			}
+
 			err = p.OnPlayerPlay(player.PlayerID(p.ID), player.Play{PlayType: player.PlayerMove, Position: &utils.GridPosition{Row: o.Target.Row, Column: o.Target.Col}})
 			if err != nil {
 				sendErrorMessage(c, err.Error())
@@ -153,6 +159,12 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 			}
 		case "wallPlacement":
 			fmt.Printf("Player %d wants to place a wall between [R%d-C%d] and [R%d-C%d] with orientation %s\n", p.ID, o.WallTarget.CellA.Row, o.WallTarget.CellA.Col, o.WallTarget.CellB.Row, o.WallTarget.CellB.Col, o.WallTarget.Orientation)
+
+			if h.GamesManager.GetGame(id).IsGameOver() {
+				fmt.Printf("[ERROR] game is already over, cannot make a move\n")
+				sendErrorMessage(c, "game is already over, cannot make a move")
+				continue
+			}
 
 			err = p.OnPlayerPlay(player.PlayerID(p.ID), player.Play{PlayType: player.WallPlacement, WallPlaced: &utils.WallPosition{CellA: utils.GridPosition{Row: o.WallTarget.CellA.Row, Column: o.WallTarget.CellA.Col}, CellB: utils.GridPosition{Row: o.WallTarget.CellB.Row, Column: o.WallTarget.CellB.Col}}})
 			if err != nil {

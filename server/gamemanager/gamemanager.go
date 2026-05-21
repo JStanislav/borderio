@@ -13,6 +13,8 @@ import (
 type GameManager struct {
 	Game *game.GameState
 
+	gameOver bool
+
 	// Every websocket connection, where key is private player id
 	IOManager IOManager
 
@@ -22,6 +24,7 @@ type GameManager struct {
 func NewGameManager(game *game.GameState, ioManager IOManager, updateStats external.UpdateStats) *GameManager {
 	return &GameManager{
 		Game:        game,
+		gameOver:    false,
 		IOManager:   ioManager,
 		UpdateStats: updateStats,
 	}
@@ -100,12 +103,17 @@ func (gm *GameManager) PlayerJoined(player player.Player) {
 }
 
 func (gm *GameManager) GameOver() {
+	gm.gameOver = true
 	gm.BroadcastJSON(messages.GetLobbyMessage(gm.Game.Players))
 
 	err := gm.UpdateStats(gm.Game.GetGameStats())
 	if err != nil {
 		fmt.Printf("[ERROR] error updating stats, %s\n", err)
 	}
+}
+
+func (gm *GameManager) IsGameOver() bool {
+	return gm.gameOver
 }
 
 func (gm *GameManager) SyncLobbyState() {
