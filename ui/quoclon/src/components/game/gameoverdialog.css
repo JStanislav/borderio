@@ -14,3 +14,8 @@
 .game-over-dialog::backdrop {
     background-color: rgba(161, 161, 161, 0.628);
 }
+
+.game-over-dialog-actions {
+    display: flex;
+    gap: 12px;
+}
