@@ -13,9 +13,10 @@ interface Props {
     requestWallPlacement: (ppid: string, row: number, col: number, orientation: "horizontal" | "vertical") => void,
     activeWalls: { row: number, col: number, orientation: "horizontal" | "vertical" }[],
     currentTurnPlayerId: number
+    gameOver: boolean
 }
 
-export const Board = ({players, requestPlayerMove, requestWallPlacement, activeWalls}: Props) => {
+export const Board = ({players, requestPlayerMove, requestWallPlacement, activeWalls, gameOver}: Props) => {
     const currentUser = useContext(PlayerContext)
 
     setActiveWalls(board, activeWalls);
@@ -34,7 +35,7 @@ export const Board = ({players, requestPlayerMove, requestWallPlacement, activeW
                                 ${isFinishLine(indexRow) ? "finish-line" : ""}
                             `}
 
-                            onClick={e => onClick(e, requestWallPlacement, currentUser.ppid)}
+                            onClick={e => !gameOver && onClick(e, requestWallPlacement, currentUser.ppid)}
                             
                             onDrop={_ => onDrop(currentUser.ppid, indexRow, colIdx, requestPlayerMove)}
                             onDragOver={isDragOverable(indexRow, colIdx) ? onDragOver : undefined}
@@ -46,7 +47,7 @@ export const Board = ({players, requestPlayerMove, requestWallPlacement, activeW
                                         className="img-player"
                                         src={player.id === 1 ? playerOne : playerTwo} 
                                         alt={player.name}
-                                        draggable={player.id === currentUser.id}
+                                        draggable={(player.id === currentUser.id) && !gameOver}
                                         onDragStart={e => onDragStart(e, player.id)}
                                     />
                                 ) : null

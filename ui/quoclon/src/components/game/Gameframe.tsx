@@ -38,6 +38,7 @@ export const GameFrame = ({ gameState }: { gameState: GameState }) => {
                     requestWallPlacement={requestWallPlacement}
                     activeWalls={activeWalls}
                     currentTurnPlayerId={gameState.currentTurnPlayerId}
+                    gameOver={lobbyContext.winnerPlayerId !== undefined}
             />
             <WallPicker walls={gameState.playerTwo.wallsRemaining} position="bottom"/>
             <GameOverDialog winnerPlayerName={winnerPlayerName}/>
