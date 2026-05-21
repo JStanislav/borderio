@@ -4,20 +4,3 @@
     padding: 70px;
     gap: 12px;
 }
-
-.game-over-dialog:open {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
-    border-radius: 8px;
-    border-width: 2px;    
-}
-
-.dialog-container {
-    margin: auto;
-}
-
-.game-over-dialog::backdrop {
-    background-color: rgba(161, 161, 161, 0.628);
-}
