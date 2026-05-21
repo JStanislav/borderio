@@ -5,12 +5,20 @@ import { requestPlayerMove, requestWallPlacement } from "../../server/server"
 import { translateGridPositionToClient, translateWallsToClient } from "../../server/utils"
 import { Board } from "../board/Board"
 import { GameOverDialog } from "./GameOverDialog.tsx"
-import { useContext } from "react"
+import { useContext, useEffect, useState } from "react"
 import { LobbyContext } from "../../App.tsx"
 
 
 export const GameFrame = ({ gameState }: { gameState: GameState }) => {
     const lobbyContext = useContext(LobbyContext);
+    const [winnerPlayerName, setWinnerPlayerName] = useState("Unknown");
+
+    useEffect(() => {
+        if (lobbyContext.winnerPlayerId !== undefined) {
+            const winnerPlayerName = getPlayerById(gameState, lobbyContext.winnerPlayerId || -1)?.name || "Unknown";
+            setWinnerPlayerName(winnerPlayerName);
+        }
+    }, [lobbyContext.winnerPlayerId])
 
     const p1Position = translateGridPositionToClient(gameState.playerOne.position.row, gameState.playerOne.position.col);
     const p2Position = translateGridPositionToClient(gameState.playerTwo.position.row, gameState.playerTwo.position.col);
@@ -28,7 +36,6 @@ export const GameFrame = ({ gameState }: { gameState: GameState }) => {
     ]
 
     const activeWalls = translateWallsToClient(gameState.walls || []);
-    const winnerPlayerName = getPlayerById(gameState, lobbyContext.winnerPlayerId || -1)?.name || "Unknown";
 
     return (
         <div className="game-frame">
