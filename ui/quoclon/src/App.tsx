@@ -8,6 +8,7 @@ import { canDisplayStartButton, generatePPID } from './app';
 import { send, closeConn } from './server/server-conn';
 import { DefaultPlayer, type Player } from './game/player';
 import { DefaultLobby, type Lobby } from './game/lobby/lobby';
+import type { MatchConfiguration } from './game/MatchConfiguration';
 
 const getReadyText = (ready: boolean): string => {
   return ready ? "Ready" : "Not Ready";
@@ -20,6 +21,7 @@ function App() {
     const [gameState, setGameState] = useState<GameState>(getDefaultGameState())
     const [player, setPlayer] = useState<Player>(DefaultPlayer)
     const [lobby, setLobby] = useState<Lobby>(DefaultLobby)
+    const [matchConfiguration, setMatchConfiguration] = useState<MatchConfiguration>({ playerAmount: 2 })
 
     const { id } = useParams()
     const [searchParams] = useSearchParams()
@@ -31,7 +33,7 @@ function App() {
       
       const action = searchParams.get("action") as "create" | "join"
 
-      startConnection(id, action, ppid, setGameState, setPlayer, setLobby);
+      startConnection(id, action, ppid, setGameState, setPlayer, setLobby, setMatchConfiguration);
     }
 
     return () => {
@@ -65,7 +67,7 @@ function App() {
           Waiting for others players to be ready...
           {lobby.players.map((lobbyPlayer, index) => <div key={index}>{lobbyPlayer.name + getReadyText(lobbyPlayer.ready)}</div>)}
           <button onClick={toggleReady}>{player.ready ? "Unready" : "Ready"}</button>
-          {canDisplayStartButton(lobby.players, player) && <button onClick={onClickStartGame}>Start</button>}
+          {canDisplayStartButton(lobby.players, matchConfiguration.playerAmount, player) && <button onClick={onClickStartGame}>Start</button>}
         </div>
       }
         <Toaster />

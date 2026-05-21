@@ -101,6 +101,15 @@ func (gm *GameManager) PlayerJoined(player player.Player) {
 
 	gm.SyncLobbyState()
 	gm.SyncPlayerConfiguration(player)
+	gm.SyncMatchConfiguration(player)
+}
+
+func (gm *GameManager) SyncMatchConfiguration(player player.Player) {
+	playerConn := gm.IOManager.GetConnection(player.PrivatePlayerID)
+	message := messages.GetMatchConfigurationMessage(gm.Game.PlayerCount)
+	if err := playerConn.SendJSON(message); err != nil {
+		fmt.Printf("[ERROR] error sending match configuration, %s\n", err)
+	}
 }
 
 func (gm *GameManager) GameOver() {

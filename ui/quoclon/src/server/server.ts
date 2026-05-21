@@ -6,13 +6,15 @@ import type { LobbyMessage, PlayerConfigurationMessage, PlayerJoinedMessage } fr
 import type { Player } from "../game/player";
 import { config } from "../../config/config";
 import type { Lobby } from "../game/lobby/lobby";
+import type { MatchConfiguration } from "../game/MatchConfiguration";
 
 const serverURL = `http://${config.serverUrl}`
 
 const onMessage = (ev: MessageEvent,
                     setGameState: (gameState: GameState) => void,
                     setPlayerConfig: (player: Player) => void,
-                    setLobby: (lobby: Lobby) => void) => {
+                    setLobby: (lobby: Lobby) => void,
+                    setMatchConfiguration: (matchConfiguration: MatchConfiguration) => void) => {
 
     console.log("message arrived");
     console.log("ev", ev.data)
@@ -29,9 +31,13 @@ const onMessage = (ev: MessageEvent,
         toast.success(`You are ${config.name} (id: ${config.id}) with ppid: ${config.ppid}`);
         setPlayerConfig({ id: config.id, name: config.name, ppid: config.ppid, ready: false });
     }
+    if (data.type === "matchConfiguration") {
+        const config = data as MatchConfiguration;
+        setMatchConfiguration(config);
+    }
     if (data.type === "lobby") {
         const config = data as LobbyMessage;
-        setLobby({ players: config.players, winnerPlayerId: config.winnerPlayerId });
+        setLobby({ players: config.players, winnerPlayerId: config.winnerPlayerId, playerAmount: 2 });
     }
     if (data.type === "joined") { 
         const joined = data as PlayerJoinedMessage;
@@ -49,9 +55,10 @@ export const startConnection = (hash: string,
                                 ppid: string,
                                 setGameState: (gameState: GameState) => void,
                                 setPlayerConfig: (player: Player) => void,
-                                setLobby: (lobby: Lobby) => void) => {
+                                setLobby: (lobby: Lobby) => void,
+                                setMatchConfiguration: (matchConfiguration: MatchConfiguration) => void) => {
     // starts socket connection
-    connect(hash, action, ppid, (ev: MessageEvent) => onMessage(ev, setGameState, setPlayerConfig, setLobby));
+    connect(hash, action, ppid, (ev: MessageEvent) => onMessage(ev, setGameState, setPlayerConfig, setLobby, setMatchConfiguration));
 }
 
 export const requestPlayerMove = (ppid: string, row: number, col: number) => {

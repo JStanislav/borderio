@@ -12,6 +12,6 @@ export const generatePPID = () => {
     return result;
 }
 
-export function canDisplayStartButton(lobbyPlayers: LobbyPlayer[], player: Player) {
-    return (player.id === 1 && lobbyPlayers.every((lobbyPlayer) => lobbyPlayer.ready))
+export function canDisplayStartButton(lobbyPlayers: LobbyPlayer[], amountOfPlayers: number, player: Player) {
+    return ((player.id === 1) && lobbyPlayers.length === amountOfPlayers && lobbyPlayers.every((lobbyPlayer) => lobbyPlayer.ready))
 }

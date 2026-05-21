@@ -142,3 +142,15 @@ func GetGameStateMessage(gameState *game.GameState) GameStateStateMessage {
 
 	return gameStateMessage
 }
+
+type MatchConfigurationMessage struct {
+	Type         string `json:"type"`
+	PlayerAmount int    `json:"playerAmount"`
+}
+
+func GetMatchConfigurationMessage(playerAmount int) MatchConfigurationMessage {
+	return MatchConfigurationMessage{
+		Type:         "matchConfiguration",
+		PlayerAmount: playerAmount,
+	}
+}
