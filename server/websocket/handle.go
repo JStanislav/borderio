@@ -85,6 +85,11 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer func() {
 		h.GamesManager.GetGame(id).PlayerLeft(*currentPlayer)
+
+		if len(*h.GamesManager.GetGame(id).Game.Players) < 1 {
+			fmt.Printf("No players left, cleaning up game %s\n", id)
+			h.GamesManager.RemoveGame(id)
+		}
 	}()
 
 	ioConn := GetConnectionAdapter(c)

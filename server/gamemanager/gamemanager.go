@@ -153,3 +153,7 @@ func (g *Games) AddGame(h string, gm *GameManager) error {
 func (g Games) GetGame(h string) *GameManager {
 	return g[h]
 }
+
+func (g *Games) RemoveGame(h string) {
+	delete(*g, h)
+}
