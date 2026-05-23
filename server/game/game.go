@@ -202,6 +202,10 @@ func (g *GameState) AllPlayersReady() bool {
 func (g *GameState) AddPlayer(p *player.Player) error {
 	if len(*g.Players) < g.PlayerCount {
 		*g.Players = append(*g.Players, p)
+
+		if len(*g.Players) == 1 {
+			p.Host = true
+		}
 		return nil
 	}
 
@@ -211,7 +215,14 @@ func (g *GameState) AddPlayer(p *player.Player) error {
 func (g *GameState) RemovePlayer(pid player.PlayerID) error {
 	for i, player := range *g.Players {
 		if player.ID == pid {
+			var wasHost bool
+			if player.Host {
+				wasHost = true
+			}
 			*g.Players = append((*g.Players)[:i], (*g.Players)[i+1:]...)
+			if wasHost && len(*g.Players) > 0 {
+				(*g.Players)[0].Host = true
+			}
 			return nil
 		}
 	}

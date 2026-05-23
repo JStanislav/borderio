@@ -24,6 +24,7 @@ type OnPlayerPlay func(playerID PlayerID, play Play) error
 type Player struct {
 	ID             PlayerID
 	Name           string
+	Host           bool
 	Position       *utils.GridPosition
 	WallsRemaining int
 

@@ -155,6 +155,26 @@ func TestMatch(t *testing.T) {
 	}
 }
 
+func TestGameHosts(t *testing.T) {
+	gs := NewTwoPlayerMatch()
+	p1 := player.New(1, "ppid1", "quoro", utils.GridPosition{Column: 4, Row: 0}, 9, utils.Line{Type: utils.HorizontalLine, Index: 0}, utils.Line{Type: utils.HorizontalLine, Index: 8})
+	p2 := player.New(2, "ppid2", "wally", utils.GridPosition{Column: 4, Row: 8}, 9, utils.Line{Type: utils.HorizontalLine, Index: 8}, utils.Line{Type: utils.HorizontalLine, Index: 0})
+
+	gs.AddPlayer(p1)
+	gs.AddPlayer(p2)
+
+	if p1.Host != true {
+		t.Errorf("expected player 1 to be host")
+	}
+
+	gs.RemovePlayer(1)
+
+	if p2.Host != true {
+		t.Errorf("expected player 2 to be host after player 1 leaves")
+	}
+
+}
+
 func receiveSelected(ch <-chan player.Play) {
 	for move := range ch {
 		fmt.Println("received", move)
