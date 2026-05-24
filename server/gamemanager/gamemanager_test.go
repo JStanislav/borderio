@@ -11,7 +11,7 @@ func TestAddGame(t *testing.T) {
 
 	gs := game.New(2, 2, 8, 8, game.Horizontal)
 
-	gm := NewGameManager(gs, nil)
+	gm := NewGameManager(gs, nil, nil)
 	games.AddGame("test", gm)
 
 	if games.GetGame("test") == nil {
