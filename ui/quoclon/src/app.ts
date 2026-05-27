@@ -1,5 +1,6 @@
 import type { Player } from "./game/player";
-import type { LobbyPlayer } from "./server/messages";
+import type { Lobby } from "./game/lobby/lobby.ts";
+import type { MatchConfiguration } from "./game/MatchConfiguration.ts"
 
 
 export const generatePPID = () => {
@@ -12,6 +13,16 @@ export const generatePPID = () => {
     return result;
 }
 
-export function canDisplayStartButton(lobbyPlayers: LobbyPlayer[], amountOfPlayers: number, player: Player) {
-    return ((player.id === 1) && lobbyPlayers.length === amountOfPlayers && lobbyPlayers.every((lobbyPlayer) => lobbyPlayer.ready))
+export function canDisplayStartButton(lobby: Lobby, matchConfiguration: MatchConfiguration, player: Player) {
+    let isHost = false;
+    let readyPlayers = 0;
+    lobby.players.forEach(p => {
+        if (p.host && p.id === player.id) {
+            isHost = true;
+        }
+        if (p.ready) {
+            readyPlayers++;
+        }
+    })
+    return (isHost && (readyPlayers === matchConfiguration.playerAmount))
 }

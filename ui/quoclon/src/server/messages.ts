@@ -21,6 +21,7 @@ export interface LobbyPlayer {
     id: number,
     name: string,
     ready: boolean
+    host: boolean
 }
 
 export interface GameOverMessage {

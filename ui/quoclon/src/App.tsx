@@ -59,15 +59,15 @@ function App() {
       <PlayerContext value={player}>
       {
         allPlayersReady(gameState) ?
-        <div style={{display: "flex", flexDirection: "column", alignItems: "center"}}>      
+        <div style={{display: "flex", flexDirection: "column", alignItems: "center"}}>
           <GameFrame gameState={gameState}/>
         </div>
         :
         <div>
           Waiting for others players to be ready...
-          {lobby.players.map((lobbyPlayer, index) => <div key={index}>{lobbyPlayer.name + getReadyText(lobbyPlayer.ready)}</div>)}
+          {lobby.players.map((lobbyPlayer, index) => <div key={index}>{`${lobbyPlayer.name}${lobbyPlayer.host ? "[H]" : ""}  ${getReadyText(lobbyPlayer.ready)}`}</div>)}
           <button onClick={toggleReady}>{player.ready ? "Unready" : "Ready"}</button>
-          {canDisplayStartButton(lobby.players, matchConfiguration.playerAmount, player) && <button onClick={onClickStartGame}>Start</button>}
+          {canDisplayStartButton(lobby, matchConfiguration, player) && <button onClick={onClickStartGame}>Start</button>}
         </div>
       }
         <Toaster />

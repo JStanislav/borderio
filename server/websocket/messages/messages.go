@@ -33,6 +33,7 @@ type PlayerMessage struct {
 	Position       PositionMessage `json:"position"`
 	WallsRemaining int             `json:"wallsRemaining"`
 	Ready          bool            `json:"ready"`
+	Host           bool            `json:"host"`
 }
 
 type PlayerConfigurationMessage struct {
@@ -88,6 +89,7 @@ func GetLobbyMessage(players *[]*player.Player) LobbyMessage {
 			ID:    int(p.ID),
 			Name:  p.Name,
 			Ready: p.Ready,
+			Host:  p.Host,
 		}
 	}
 	lobbyMessage := LobbyMessage{
