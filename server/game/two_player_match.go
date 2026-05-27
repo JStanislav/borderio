@@ -21,7 +21,9 @@ func NewTwoPlayerMatch() *TwoPlayerMatch {
 }
 
 func (m *TwoPlayerMatch) AddPlayer(p *player.Player) error {
-	if p.ID == 1 {
+	id := m.getIdForPlayer(*p)
+
+	if id == 1 {
 		p1StartPosition := utils.GridPosition{Column: 4, Row: 1}
 
 		p1StartLine := utils.Line{Type: utils.HorizontalLine, Index: 1}
@@ -33,7 +35,7 @@ func (m *TwoPlayerMatch) AddPlayer(p *player.Player) error {
 		return m.GameState.AddPlayer(p)
 	}
 
-	if p.ID == 2 {
+	if id == 2 {
 		p2StartPosition := utils.GridPosition{Column: 4, Row: m.Rows - 2}
 
 		p2StartLine := utils.Line{Type: utils.HorizontalLine, Index: m.Rows - 2}
@@ -47,4 +49,12 @@ func (m *TwoPlayerMatch) AddPlayer(p *player.Player) error {
 	}
 
 	return errors.New("invalid player ID")
+}
+
+func (m *TwoPlayerMatch) getIdForPlayer(p player.Player) int {
+	if p.Host {
+		return 1
+	} else {
+		return 2
+	}
 }

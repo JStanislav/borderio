@@ -22,8 +22,8 @@ func TestMain(t *testing.T) {
 	p2StartLine := utils.Line{Type: utils.HorizontalLine, Index: 8}
 	p1FinishLine := utils.Line{Type: utils.HorizontalLine, Index: 8}
 	p2FinishLine := utils.Line{Type: utils.HorizontalLine, Index: 0}
-	playerOne := player.New(1, "ppid1", "quoro", utils.GridPosition{Column: 4, Row: 0}, 9, p1StartLine, p1FinishLine)
-	playerTwo := player.New(2, "ppid2", "wally", utils.GridPosition{Column: 4, Row: 8}, 9, p2StartLine, p2FinishLine)
+	playerOne := player.New("ppid1", "quoro", utils.GridPosition{Column: 4, Row: 0}, 9, p1StartLine, p1FinishLine)
+	playerTwo := player.New("ppid2", "wally", utils.GridPosition{Column: 4, Row: 8}, 9, p2StartLine, p2FinishLine)
 
 	p1Move := utils.GridPosition{Column: 4, Row: 1}
 	p2Move := utils.GridPosition{Column: 4, Row: 7}
@@ -110,8 +110,8 @@ func TestMatch(t *testing.T) {
 	movesChannel := make(chan player.Play)
 
 	gs := NewTwoPlayerMatch()
-	p1 := player.New(1, "ppid1", "quoro", utils.GridPosition{Column: 4, Row: 0}, 9, utils.Line{Type: utils.HorizontalLine, Index: 0}, utils.Line{Type: utils.HorizontalLine, Index: 8})
-	p2 := player.New(2, "ppid2", "wally", utils.GridPosition{Column: 4, Row: 8}, 9, utils.Line{Type: utils.HorizontalLine, Index: 8}, utils.Line{Type: utils.HorizontalLine, Index: 0})
+	p1 := player.New("ppid1", "quoro", utils.GridPosition{Column: 4, Row: 0}, 9, utils.Line{Type: utils.HorizontalLine, Index: 0}, utils.Line{Type: utils.HorizontalLine, Index: 8})
+	p2 := player.New("ppid2", "wally", utils.GridPosition{Column: 4, Row: 8}, 9, utils.Line{Type: utils.HorizontalLine, Index: 8}, utils.Line{Type: utils.HorizontalLine, Index: 0})
 
 	gs.AddPlayer(p1)
 	gs.AddPlayer(p2)
@@ -157,8 +157,8 @@ func TestMatch(t *testing.T) {
 
 func TestGameHosts(t *testing.T) {
 	gs := NewTwoPlayerMatch()
-	p1 := player.New(1, "ppid1", "quoro", utils.GridPosition{Column: 4, Row: 0}, 9, utils.Line{Type: utils.HorizontalLine, Index: 0}, utils.Line{Type: utils.HorizontalLine, Index: 8})
-	p2 := player.New(2, "ppid2", "wally", utils.GridPosition{Column: 4, Row: 8}, 9, utils.Line{Type: utils.HorizontalLine, Index: 8}, utils.Line{Type: utils.HorizontalLine, Index: 0})
+	p1 := player.New("ppid1", "quoro", utils.GridPosition{Column: 4, Row: 0}, 9, utils.Line{Type: utils.HorizontalLine, Index: 0}, utils.Line{Type: utils.HorizontalLine, Index: 8})
+	p2 := player.New("ppid2", "wally", utils.GridPosition{Column: 4, Row: 8}, 9, utils.Line{Type: utils.HorizontalLine, Index: 8}, utils.Line{Type: utils.HorizontalLine, Index: 0})
 
 	gs.AddPlayer(p1)
 	gs.AddPlayer(p2)

@@ -38,9 +38,8 @@ type Player struct {
 	PrivatePlayerID string
 }
 
-func New(id PlayerID, privatePlayerID string, name string, position utils.GridPosition, walls int, startLine utils.Line, finishLine utils.Line) *Player {
+func New(privatePlayerID string, name string, position utils.GridPosition, walls int, startLine utils.Line, finishLine utils.Line) *Player {
 	return &Player{
-		ID:             id,
 		Name:           name,
 		Position:       &position,
 		WallsRemaining: walls,
