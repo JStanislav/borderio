@@ -50,7 +50,10 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		playerOne := player.New(ppid, "Player 1", utils.GridPosition{}, 8, utils.Line{}, utils.Line{})
+		name := fmt.Sprintf("[PPID: %s]", ppid)
+
+		playerOne := player.New(ppid, name, utils.GridPosition{}, 8, utils.Line{}, utils.Line{})
+		playerOne.Host = true
 		err = gameState.AddPlayer(playerOne)
 		if err != nil {
 			fmt.Printf("[ERROR] error adding player to game state, %s\n", err)
@@ -68,7 +71,8 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 
 		gameState.GameState = *gs
 
-		playerTwo := player.New(ppid, "Player 2", utils.GridPosition{}, 8, utils.Line{}, utils.Line{})
+		name := fmt.Sprintf("[PPID: %s]", ppid)
+		playerTwo := player.New(ppid, name, utils.GridPosition{}, 8, utils.Line{}, utils.Line{})
 		err := gameState.AddPlayer(playerTwo)
 		if err != nil {
 			fmt.Printf("[ERROR] error adding player to game state, %s\n", err)

@@ -22,6 +22,7 @@ func NewTwoPlayerMatch() *TwoPlayerMatch {
 
 func (m *TwoPlayerMatch) AddPlayer(p *player.Player) error {
 	id := m.getIdForPlayer(*p)
+	p.ID = player.PlayerID(id)
 
 	if id == 1 {
 		p1StartPosition := utils.GridPosition{Column: 4, Row: 1}

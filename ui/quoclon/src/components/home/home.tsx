@@ -6,7 +6,6 @@ import { Link, useNavigate } from "react-router";
 import { GameExist } from "../../server/server";
 import toast, { Toaster } from "react-hot-toast";
 
-
 export const Home = () => {
     const [gameCode, setGameCode] = useState<string | null>(null);
     const [joinCode, setJoinCode] = useState<string>("");

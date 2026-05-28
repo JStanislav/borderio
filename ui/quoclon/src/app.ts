@@ -17,7 +17,7 @@ export function canDisplayStartButton(lobby: Lobby, matchConfiguration: MatchCon
     let isHost = false;
     let readyPlayers = 0;
     lobby.players.forEach(p => {
-        if (p.host && p.id === player.id) {
+        if (p.host && (p.id === player.id)) {
             isHost = true;
         }
         if (p.ready) {
