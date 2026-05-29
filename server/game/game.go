@@ -258,3 +258,14 @@ func (g *GameState) GetGameStats() GameStats {
 		Steps:               []player.Play{},
 	}
 }
+
+func (g *GameState) GetUnusedPlayerID() int {
+	id := 1
+	for _, player := range *g.Players {
+		if int(player.ID) != id {
+			break
+		}
+		id++
+	}
+	return id
+}

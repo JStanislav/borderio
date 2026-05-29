@@ -175,6 +175,51 @@ func TestGameHosts(t *testing.T) {
 
 }
 
+func TestGetUnusedPlayerID(t *testing.T) {
+	gs := NewTwoPlayerMatch()
+	p1 := player.New("ppid1", "quoro", utils.GridPosition{Column: 4, Row: 0}, 9, utils.Line{Type: utils.HorizontalLine, Index: 0}, utils.Line{Type: utils.HorizontalLine, Index: 8})
+	p2 := player.New("ppid2", "wally", utils.GridPosition{Column: 4, Row: 8}, 9, utils.Line{Type: utils.HorizontalLine, Index: 8}, utils.Line{Type: utils.HorizontalLine, Index: 0})
+
+	gs.AddPlayer(p1)
+	gs.AddPlayer(p2)
+
+	expected := gs.GetUnusedPlayerID()
+
+	if expected != 3 {
+		t.Errorf("expected unused player ID to be 3, got %d", expected)
+	}
+}
+
+func TestGetUnusedPlayerIDSeveralTimes(t *testing.T) {
+	gs := NewTwoPlayerMatch()
+	p1 := player.New("ppid1", "quoro", utils.GridPosition{Column: 4, Row: 0}, 9, utils.Line{Type: utils.HorizontalLine, Index: 0}, utils.Line{Type: utils.HorizontalLine, Index: 8})
+	p2 := player.New("ppid2", "wally", utils.GridPosition{Column: 4, Row: 8}, 9, utils.Line{Type: utils.HorizontalLine, Index: 8}, utils.Line{Type: utils.HorizontalLine, Index: 0})
+
+	gs.AddPlayer(p1)
+	gs.AddPlayer(p2)
+	gs.RemovePlayer(1)
+
+	expected := gs.GetUnusedPlayerID()
+
+	if expected != 1 {
+		t.Errorf("expected unused player ID to be 1, got %d", expected)
+	}
+
+	gs2 := NewTwoPlayerMatch()
+	p3 := player.New("ppid3", "quoro", utils.GridPosition{Column: 4, Row: 0}, 9, utils.Line{Type: utils.HorizontalLine, Index: 0}, utils.Line{Type: utils.HorizontalLine, Index: 8})
+	p4 := player.New("ppid4", "wally", utils.GridPosition{Column: 4, Row: 8}, 9, utils.Line{Type: utils.HorizontalLine, Index: 8}, utils.Line{Type: utils.HorizontalLine, Index: 0})
+
+	gs2.AddPlayer(p3)
+	gs2.AddPlayer(p4)
+	gs2.RemovePlayer(2)
+
+	expected = gs2.GetUnusedPlayerID()
+
+	if expected != 2 {
+		t.Errorf("expected unused player ID to be 2, got %d", expected)
+	}
+}
+
 func receiveSelected(ch <-chan player.Play) {
 	for move := range ch {
 		fmt.Println("received", move)

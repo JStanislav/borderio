@@ -53,7 +53,6 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 		name := fmt.Sprintf("[PPID: %s]", ppid)
 
 		playerOne := player.New(ppid, name, utils.GridPosition{}, 8, utils.Line{}, utils.Line{})
-		playerOne.Host = true
 		err = gameState.AddPlayer(playerOne)
 		if err != nil {
 			fmt.Printf("[ERROR] error adding player to game state, %s\n", err)
@@ -186,9 +185,6 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 		case "playerReady":
 			fmt.Printf("Player %d toggled readiness\n", p.ID)
 			p.ToggleReady()
-			if gameState.AllPlayersReady() && gameState.GameState.PlayerCount == len(*gameState.GameState.Players) {
-				fmt.Println("All players are ready, starting the match")
-			}
 
 			h.GamesManager.GetGame(id).SyncLobbyState()
 			continue
