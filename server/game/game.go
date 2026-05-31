@@ -105,34 +105,9 @@ func (g *GameState) StartMatch(movements chan player.Play) {
 					return errors.New("illegal wall placement")
 				}
 
-				finishLinesFound := 0
-				for _, p := range *g.Players {
-					existsPathToFinishLine := false
-					if p.FinishLine.Type == utils.HorizontalLine {
-						for i := range boardDimension {
-							winCell := utils.GridPosition{Row: p.FinishLine.Index, Column: i}
-							if g.Board.ExistsPath(*p.Position, winCell) {
-								existsPathToFinishLine = true
-								break
-							}
-						}
-					} else {
-						for i := 1; i < actualBoardDimension-1; i++ {
-							winCell := utils.GridPosition{Row: i, Column: p.FinishLine.Index}
-							if g.Board.ExistsPath(*p.Position, winCell) {
-								existsPathToFinishLine = true
-								break
-							}
-						}
-					}
-					if existsPathToFinishLine {
-						finishLinesFound++
-					}
-				}
-
-				if finishLinesFound != len(*g.Players) {
+				if !g.PlayersCanReachFinishLine(boardDimension, actualBoardDimension) {
 					g.Board.RemoveWall(graph.Undefined, wallPosition)
-					return errors.New("illegal wall placement, no path to finish line")
+					return errors.New("illegal wall placement, prevents players from reaching finish line")
 				}
 
 				g.Turner = g.Turner.Next()
@@ -147,6 +122,38 @@ func (g *GameState) StartMatch(movements chan player.Play) {
 		}
 	}
 
+}
+
+// Checks if all players can reach their finish line. Should be called after every wall placement to ensure the game is still winnable.
+// Works for any number of players.
+// Works for both horizontal and vertical finish lines
+func (g *GameState) PlayersCanReachFinishLine(columns, rows int) bool {
+	finishLinesFound := 0
+	for _, p := range *g.Players {
+		existsPathToFinishLine := false
+		if p.FinishLine.Type == utils.HorizontalLine {
+			for i := range columns {
+				winCell := utils.GridPosition{Row: p.FinishLine.Index, Column: i}
+				if g.Board.ExistsPath(*p.Position, winCell) {
+					existsPathToFinishLine = true
+					break
+				}
+			}
+		} else {
+			for i := 1; i < rows-1; i++ {
+				winCell := utils.GridPosition{Row: i, Column: p.FinishLine.Index}
+				if g.Board.ExistsPath(*p.Position, winCell) {
+					existsPathToFinishLine = true
+					break
+				}
+			}
+		}
+		if existsPathToFinishLine {
+			finishLinesFound++
+		}
+	}
+
+	return finishLinesFound == len(*g.Players)
 }
 
 func RowOutOfBounds(p utils.GridPosition, row int) bool {
