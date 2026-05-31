@@ -15,7 +15,7 @@ func NewTwoPlayerMatch() *TwoPlayerMatch {
 	columns := 9
 	rows := 11
 
-	g := New(2, 2, columns, rows, Vertical)
+	g := New(2, 2, columns, rows, Horizontal)
 
 	return &TwoPlayerMatch{GameState: *g}
 }
