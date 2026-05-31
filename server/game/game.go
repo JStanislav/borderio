@@ -62,28 +62,24 @@ func (g *GameState) StartMatch(movements chan player.Play) {
 	}
 
 	for _, p := range *g.Players {
-		playersButNotCurrent := []*player.Player{}
-		for _, other := range *g.Players {
-			if other.ID != p.ID {
-				playersButNotCurrent = append(playersButNotCurrent, other)
-			}
-		}
+		playersButNotCurrent := g.GetPlayersExcept(p.ID)
+
 		p.OnPlayerPlay = func(playerID player.PlayerID, play player.Play) error {
 
 			if p.ID != g.GetCurrentTurnPlayer().ID {
-				fmt.Printf("Player %d attempted to place wall out of turn\n", p.ID)
+				fmt.Printf("Player %d attempted to play out of their turn\n", p.ID)
 				return errors.New("not your turn")
 			}
 
-			playersButNotCurrentPositions := player.GetPlayersPositions(playersButNotCurrent)
+			playersButNotCurrentPositions := player.GetPlayersPositions(*playersButNotCurrent)
+
+			if g.OutOfBounds(play, boardDimension, actualBoardDimension) && !p.IsFinishLine(play) {
+				return errors.New("move out of bounds")
+			}
 
 			switch play.PlayType {
 			case player.PlayerMove:
 				fmt.Printf("Moving P%d [R%d-C%d]->[R%d-C%d]\n", p.ID, p.Position.Row, p.Position.Column, play.Position.Row, play.Position.Column)
-
-				if g.OutOfBounds(play, boardDimension, actualBoardDimension) && !p.IsFinishLine(play) {
-					return errors.New("move out of bounds")
-				}
 
 				if g.Board.IsLegalMove(*p.Position, *play.Position, playersButNotCurrentPositions) {
 					p.Position = play.Position
@@ -103,10 +99,6 @@ func (g *GameState) StartMatch(movements chan player.Play) {
 				wallPosition := utils.WallPosition{CellA: play.WallPlaced.CellA, CellB: play.WallPlaced.CellB}
 
 				fmt.Printf("Placing wall p%d [R%d-C%d]||[R%d-C%d]\n", p.ID, play.WallPlaced.CellA.Row, play.WallPlaced.CellA.Column, play.WallPlaced.CellB.Row, play.WallPlaced.CellB.Column)
-
-				if g.OutOfBounds(play, boardDimension, actualBoardDimension) {
-					return errors.New("wall out of bounds")
-				}
 
 				err := g.Board.AddWall(graph.Undefined, wallPosition)
 				if err != nil {
@@ -268,4 +260,14 @@ func (g *GameState) GetUnusedPlayerID() int {
 		id++
 	}
 	return id
+}
+
+func (g *GameState) GetPlayersExcept(pid player.PlayerID) *[]*player.Player {
+	players := make([]*player.Player, 0)
+	for _, p := range *g.Players {
+		if p.ID != pid {
+			players = append(players, p)
+		}
+	}
+	return &players
 }
