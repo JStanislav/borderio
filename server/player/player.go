@@ -81,7 +81,11 @@ func (p *Player) IsWinner() bool {
 	}
 }
 
-func (p *Player) IsFinishLine(play Play) bool {
+func (p *Player) IsMovingToFinishLine(play Play) bool {
+	if play.PlayType != PlayerMove {
+		return false
+	}
+
 	if p.Position == nil {
 		return false
 	}

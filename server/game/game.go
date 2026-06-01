@@ -74,12 +74,13 @@ func (g *GameState) StartMatch(movements chan player.Play) {
 
 			playersButNotCurrentPositions := player.GetPlayersPositions(*playersButNotCurrent)
 
-			if g.OutOfBounds(play, boardDimension, actualBoardDimension) && !p.IsFinishLine(play) {
-				return errors.New("move out of bounds")
+			if g.OutOfBounds(play, boardDimension, actualBoardDimension) && !p.IsMovingToFinishLine(play) {
+				return errors.New("play out of bounds")
 			}
 
 			switch play.PlayType {
 			case player.PlayerMove:
+
 				fmt.Printf("Moving P%d [R%d-C%d]->[R%d-C%d]\n", p.ID, p.Position.Row, p.Position.Column, play.Position.Row, play.Position.Column)
 
 				if g.Board.IsLegalMove(*p.Position, *play.Position, playersButNotCurrentPositions) {
