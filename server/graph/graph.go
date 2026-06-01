@@ -35,7 +35,12 @@ type Graph struct {
 }
 
 func New(wallLength int, boardType BoardType) *Graph {
-	return &Graph{wallLength: wallLength, boardType: boardType}
+	return &Graph{
+		wallLength: wallLength,
+		boardType:  boardType,
+		Graph:      nil,
+		Walls:      *new([]utils.WallPosition),
+	}
 }
 
 type BoardType string

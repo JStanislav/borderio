@@ -39,10 +39,10 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Print("Received request with action: ", action, " and ppid: ", ppid, " and id: ", id, "\n")
 
-	gameState := game.NewTwoPlayerMatch()
 	var currentPlayer *player.Player
 
 	if action == "create" {
+		gameState := game.NewTwoPlayerMatch()
 		cm := gamemanager.NewConnectionsManager()
 		err := h.GamesManager.AddGame(id, gamemanager.NewGameManager(&gameState.GameState, cm, h.UpdateStatsService.UpdateStats))
 		if err != nil {
@@ -68,6 +68,7 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 		}
 		gs := gm.Game
 
+		var gameState game.TwoPlayerMatch
 		gameState.GameState = *gs
 
 		name := fmt.Sprintf("[PPID: %s]", ppid)
@@ -127,6 +128,11 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 		if err = json.Unmarshal(message, &o); err != nil {
 			fmt.Printf("[ERROR] error unmarshaling message, %s\n", err)
 			break
+		}
+
+		var gameState *game.TwoPlayerMatch
+		if gs := h.GamesManager.GetGame(id); gs != nil {
+			gameState = &game.TwoPlayerMatch{GameState: *gs.Game}
 		}
 
 		var p *player.Player

@@ -35,6 +35,7 @@ const (
 )
 
 func New(wallLength int, players int, columns, rows int, finishLineType FinishLineType) *GameState {
+	board := graph.New(2, graph.ExtraRows)
 	return &GameState{
 		PlayerCount:    players,
 		WallLength:     wallLength,
@@ -42,6 +43,9 @@ func New(wallLength int, players int, columns, rows int, finishLineType FinishLi
 		Columns:        columns,
 		Rows:           rows,
 		Players:        &[]*player.Player{},
+		StartTime:      new(time.Time),
+		Turner:         ring.New(players),
+		Board:          board,
 	}
 }
 
@@ -49,13 +53,10 @@ func (g *GameState) StartMatch(movements chan player.Play) {
 	boardDimension := 9
 	actualBoardDimension := boardDimension + 2
 
-	g.Board = graph.New(2, graph.ExtraRows)
 	g.Board.GenerateBoard(boardDimension, actualBoardDimension)
 
-	g.StartTime = new(time.Time)
 	*g.StartTime = time.Now()
 
-	g.Turner = ring.New(len(*g.Players))
 	for _, p := range *g.Players {
 		g.Turner.Value = p
 		g.Turner = g.Turner.Next()
