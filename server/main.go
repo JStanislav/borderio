@@ -14,7 +14,7 @@ import (
 func main() {
 	config := config.LoadConfig()
 
-	localhost := "127.0.0.1"
+	localhost := "0.0.0.0"
 	fmt.Printf("Server is running on %s:%s\n", localhost, config.Port)
 
 	mux := http.NewServeMux()

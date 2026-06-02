@@ -24,7 +24,7 @@ func (conn *IOConnection) Close() error {
 	deadline := time.Now().Add(1 * time.Second)
 	conn.Conn.WriteControl(
 		websocket.CloseMessage,
-		websocket.FormatCloseMessage(websocket.CloseMessage, ""),
+		websocket.FormatCloseMessage(websocket.CloseNormalClosure, "closing gracefully"),
 		deadline)
 
 	return nil

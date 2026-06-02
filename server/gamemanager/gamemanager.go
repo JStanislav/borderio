@@ -14,7 +14,8 @@ import (
 type GameManager struct {
 	Game *game.GameState
 
-	gameOver bool
+	gameOver     bool
+	GameTimedOut bool
 
 	// Every websocket connection, where key is private player id
 	IOManager IOManager
@@ -24,10 +25,11 @@ type GameManager struct {
 
 func NewGameManager(game *game.GameState, ioManager IOManager, updateStats external.UpdateStats) *GameManager {
 	return &GameManager{
-		Game:        game,
-		gameOver:    false,
-		IOManager:   ioManager,
-		UpdateStats: updateStats,
+		Game:         game,
+		gameOver:     false,
+		IOManager:    ioManager,
+		UpdateStats:  updateStats,
+		GameTimedOut: false,
 	}
 }
 
@@ -87,6 +89,9 @@ func (gm *GameManager) CleanUpConnection(ppid string) {
 }
 
 func (gm *GameManager) PlayerLeft(player player.Player) {
+	if gm.GameTimedOut {
+		return
+	}
 	gm.Game.RemovePlayer(player.ID)
 	gm.CleanUpConnection(player.PrivatePlayerID)
 	gm.BroadcastJSON(messages.GetPlayerLeftMessage(player))
@@ -128,6 +133,7 @@ func (gm *GameManager) GameOver() {
 }
 
 func (gm *GameManager) DisconnectAll() {
+	gm.GameTimedOut = true
 	err := gm.IOManager.DisconnectAll()
 	if err != nil {
 		fmt.Printf("[ERROR] error disconnecting all connections, %s\n", err)

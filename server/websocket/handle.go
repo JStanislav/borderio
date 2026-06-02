@@ -120,6 +120,9 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 	for {
 		_, message, err := c.ReadMessage()
 		if err != nil {
+			if websocket.IsCloseError(err, websocket.CloseNormalClosure) {
+				break
+			}
 			fmt.Printf("[ERROR] error reading message, %s\n", err)
 			break
 		}
