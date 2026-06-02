@@ -49,6 +49,20 @@ func New(wallLength int, players int, columns, rows int, finishLineType FinishLi
 	}
 }
 
+func (g *GameState) StartMatchWithMovementsChannel() chan player.Play {
+	movements := make(chan player.Play)
+
+	go func() {
+		for mov := range movements {
+			fmt.Printf("Received movement: %+v\n", mov)
+		}
+	}()
+
+	g.StartMatch(movements)
+
+	return movements
+}
+
 func (g *GameState) StartMatch(movements chan player.Play) {
 	boardDimension := 9
 	actualBoardDimension := boardDimension + 2

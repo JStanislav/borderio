@@ -100,21 +100,6 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 
 	h.GamesManager.GetGame(id).AddConnection(ppid, ioConn)
 
-	// This movements channel has to go away from here. It should be only one in the game, not one for every connection
-	movementsChannel := make(chan player.Play)
-	go func() {
-		for move := range movementsChannel {
-			fmt.Printf("Received move from game state: %+v\n", move)
-		}
-	}()
-
-	lobbyChannel := make(chan messages.LobbyMessage)
-	go func() {
-		for lobbyMessage := range lobbyChannel {
-			fmt.Printf("Received lobby message%+v\n", lobbyMessage)
-		}
-	}()
-
 	h.GamesManager.GetGame(id).PlayerJoined(*currentPlayer)
 
 	for {
@@ -149,7 +134,7 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 		case "startGame":
 			fmt.Printf("Player %d wants to start the game\n", p.ID)
 
-			gameState.StartMatch(movementsChannel)
+			gameState.StartMatchWithMovementsChannel()
 
 			h.GamesManager.GetGame(id).BroadcastGameState()
 		case "playerMove":
