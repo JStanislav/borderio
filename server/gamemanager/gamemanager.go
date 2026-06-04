@@ -126,7 +126,7 @@ func (gm *GameManager) GameOver() {
 		fmt.Printf("[ERROR] error updating stats, %s\n", err)
 	}
 
-	time.AfterFunc(3*time.Minute, func() {
+	time.AfterFunc(30*time.Second, func() {
 		fmt.Printf("closing all connections\n")
 		gm.DisconnectAll()
 	})
@@ -167,6 +167,10 @@ type Games map[string]*GameManager
 
 func NewGames() Games {
 	return make(map[string]*GameManager)
+}
+
+func (g *Games) GetGamesList() Games {
+	return *g
 }
 
 func (g *Games) AddGame(h string, gm *GameManager) error {
