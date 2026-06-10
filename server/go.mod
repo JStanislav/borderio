@@ -11,5 +11,8 @@ require (
 
 require (
 	github.com/go-resty/resty/v2 v2.17.2 // indirect
+	github.com/jfeliu007/goplantuml v1.6.3 // indirect
+	github.com/spf13/afero v1.8.2 // indirect
 	golang.org/x/net v0.43.0 // indirect
+	golang.org/x/text v0.28.0 // indirect
 )
