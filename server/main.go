@@ -1,9 +1,11 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/JStanislav/quoridor-clone/config"
 	"github.com/JStanislav/quoridor-clone/external"
@@ -22,7 +24,9 @@ func main() {
 	games := gamemanager.NewGames()
 	updateStatsServiceClient := external.NewUpdateStatsServiceHTTPClient("") // a NATS client can be used too, just for fun.
 
-	wsHandler := ws.NewHandler(&games, updateStatsServiceClient)
+	handlerContext := context.WithValue(context.Background(), "TimeoutAfterGameOver", time.Duration(config.TimeoutAfterGameOver)*time.Second)
+
+	wsHandler := ws.NewHandler(handlerContext, &games, updateStatsServiceClient)
 
 	mux.HandleFunc("/{id}", wsHandler.Handler)
 	mux.HandleFunc("/ping/{hash}", wsHandler.GamePing)

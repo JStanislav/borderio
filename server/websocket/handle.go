@@ -1,9 +1,11 @@
 package websocket
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/JStanislav/quoridor-clone/external"
 	"github.com/JStanislav/quoridor-clone/game"
@@ -21,12 +23,14 @@ func init() {
 }
 
 type Handler struct {
+	Context            context.Context
 	GamesManager       *gamemanager.Games
 	UpdateStatsService external.UpdateStatsService
 }
 
-func NewHandler(gamesManager *gamemanager.Games, updateStatsService external.UpdateStatsService) Handler {
+func NewHandler(ctx context.Context, gamesManager *gamemanager.Games, updateStatsService external.UpdateStatsService) Handler {
 	return Handler{
+		Context:            ctx,
 		GamesManager:       gamesManager,
 		UpdateStatsService: updateStatsService,
 	}
@@ -44,7 +48,10 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 	if action == "create" {
 		gameState := game.NewTwoPlayerMatch()
 		cm := gamemanager.NewConnectionsManager()
-		err := h.GamesManager.AddGame(id, gamemanager.NewGameManager(&gameState.GameState, cm, h.UpdateStatsService.UpdateStats))
+
+		timeoutAfterGameOver := h.Context.Value("TimeoutAfterGameOver").(time.Duration)
+
+		err := h.GamesManager.AddGame(id, gamemanager.NewGameManager(&gameState.GameState, cm, h.UpdateStatsService.UpdateStats, timeoutAfterGameOver))
 		if err != nil {
 			fmt.Printf("[ERROR] error creating hash, %s\n", err)
 			return
@@ -119,8 +126,8 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		var gameState *game.TwoPlayerMatch
-		if gs := h.GamesManager.GetGame(id); gs != nil {
-			gameState = &game.TwoPlayerMatch{GameState: *gs.Game}
+		if gm := h.GamesManager.GetGame(id); gm != nil {
+			gameState = &game.TwoPlayerMatch{GameState: *gm.Game}
 		}
 
 		var p *player.Player

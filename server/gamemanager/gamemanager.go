@@ -21,15 +21,18 @@ type GameManager struct {
 	IOManager IOManager
 
 	UpdateStats external.UpdateStats
+
+	TimeoutAfterGameOver time.Duration
 }
 
-func NewGameManager(game *game.GameState, ioManager IOManager, updateStats external.UpdateStats) *GameManager {
+func NewGameManager(game *game.GameState, ioManager IOManager, updateStats external.UpdateStats, timeoutAfterGameOver time.Duration) *GameManager {
 	return &GameManager{
-		Game:         game,
-		gameOver:     false,
-		IOManager:    ioManager,
-		UpdateStats:  updateStats,
-		GameTimedOut: false,
+		Game:                 game,
+		gameOver:             false,
+		IOManager:            ioManager,
+		UpdateStats:          updateStats,
+		GameTimedOut:         false,
+		TimeoutAfterGameOver: timeoutAfterGameOver,
 	}
 }
 
@@ -126,7 +129,7 @@ func (gm *GameManager) GameOver() {
 		fmt.Printf("[ERROR] error updating stats, %s\n", err)
 	}
 
-	time.AfterFunc(30*time.Second, func() {
+	time.AfterFunc(gm.TimeoutAfterGameOver, func() {
 		fmt.Printf("closing all connections\n")
 		gm.DisconnectAll()
 	})
