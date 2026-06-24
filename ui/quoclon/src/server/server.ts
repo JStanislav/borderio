@@ -56,9 +56,11 @@ export const startConnection = (hash: string,
                                 setGameState: (gameState: GameState) => void,
                                 setPlayerConfig: (player: Player) => void,
                                 setLobby: (lobby: Lobby) => void,
-                                setMatchConfiguration: (matchConfiguration: MatchConfiguration) => void) => {
+                                setMatchConfiguration: (matchConfiguration: MatchConfiguration) => void,
+                                redirectToHome: () => void) => {
+
     // starts socket connection
-    connect(hash, action, ppid, (ev: MessageEvent) => onMessage(ev, setGameState, setPlayerConfig, setLobby, setMatchConfiguration));
+   connect(hash, action, ppid, (ev: MessageEvent) => onMessage(ev, setGameState, setPlayerConfig, setLobby, setMatchConfiguration), redirectToHome);
 }
 
 export const requestPlayerMove = (ppid: string, row: number, col: number) => {

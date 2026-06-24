@@ -5,7 +5,7 @@ import { BrowserRouter, Route, Routes } from 'react-router'
 import { Home } from './components/home/home.tsx'
 
 createRoot(document.getElementById('root')!).render(
-  <StrictMode>
+  // <StrictMode>
     <BrowserRouter>
       <Routes>
         
@@ -15,5 +15,5 @@ createRoot(document.getElementById('root')!).render(
 
       </Routes>
     </BrowserRouter>
-  </StrictMode>,
+  // </StrictMode>,
 )

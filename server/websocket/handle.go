@@ -56,7 +56,9 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 		err := h.GamesManager.AddGame(id, gm)
 		if err != nil {
 			fmt.Printf("[ERROR] error creating hash, %s\n", err)
+
 			return
+
 		}
 
 		runGame = true

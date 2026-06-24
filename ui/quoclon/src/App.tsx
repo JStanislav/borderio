@@ -3,7 +3,7 @@ import { GameFrame } from './components/game/Gameframe';
 import { allPlayersReady, getDefaultGameState, type GameState } from './game/GameState';
 import { startConnection  } from './server/server';
 import { Toaster } from 'react-hot-toast';
-import { useParams, useSearchParams } from 'react-router';
+import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { canDisplayStartButton, generatePPID } from './app';
 import { send, closeConn } from './server/server-conn';
 import { DefaultPlayer, type Player } from './game/player';
@@ -22,6 +22,7 @@ function App() {
     const [player, setPlayer] = useState<Player>(DefaultPlayer)
     const [lobby, setLobby] = useState<Lobby>(DefaultLobby)
     const [matchConfiguration, setMatchConfiguration] = useState<MatchConfiguration>({ playerAmount: 2 })
+    const navigate = useNavigate();
 
     const { id } = useParams()
     const [searchParams] = useSearchParams()
@@ -33,13 +34,15 @@ function App() {
       
       const action = searchParams.get("action") as "create" | "join"
 
-      startConnection(id, action, ppid, setGameState, setPlayer, setLobby, setMatchConfiguration);
+      startConnection(id, action, ppid, setGameState, setPlayer, setLobby, setMatchConfiguration, redirectToHome);
     }
 
     return () => {
       closeConn()
     }
   }, [])
+
+  const redirectToHome = () => navigate("/");
 
   const toggleReady = () => {
       setPlayer({...player, ready: !player.ready});
