@@ -42,22 +42,14 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Print("Received request with action: ", action, " and ppid: ", ppid, " and id: ", id, "\n")
 
-	c, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		fmt.Printf("[ERROR] error upgrading, %s\n", err)
-		return
-	}
+	var gm *gamemanager.GameManager
 
 	if action == "create" {
 		gameState := game.NewTwoPlayerMatch()
 
 		timeoutAfterGameOver := h.Context.Value("TimeoutAfterGameOver").(time.Duration)
 
-		gm := gamemanager.NewGameManager(&gameState.GameState, h.UpdateStatsService.UpdateStats, timeoutAfterGameOver)
-
-		io := gamemanager.NewIO(ppid, c)
-		gm.AddPlayer(io)
-		go gm.Run()
+		gm = gamemanager.NewGameManager(&gameState.GameState, h.UpdateStatsService.UpdateStats, timeoutAfterGameOver)
 
 		err := h.GamesManager.AddGame(id, gm)
 		if err != nil {
@@ -73,10 +65,12 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 			fmt.Printf("[ERROR] error adding player to game state, %s\n", err)
 			return
 		}
+
+		go gm.Run()
 	}
 
 	if action == "join" {
-		gm := h.GamesManager.GetGame(id)
+		gm = h.GamesManager.GetGame(id)
 		if gm == nil {
 			fmt.Printf("[ERROR] game not found\n")
 			return
@@ -94,14 +88,16 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		io := gamemanager.NewIO(ppid, c)
-		gm.AddPlayer(io)
 	}
 
-	// defer func() {
-	// 	c.Close()
-	// 	fmt.Printf("Connection closed for ppid: %s\n", ppid)
-	// }()
+	c, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		fmt.Printf("[ERROR] error upgrading, %s\n", err)
+		return
+	}
+
+	io := gamemanager.NewIO(ppid, c)
+	gm.AddPlayer(io)
 }
 
 func (h Handler) GamePing(w http.ResponseWriter, r *http.Request) {
