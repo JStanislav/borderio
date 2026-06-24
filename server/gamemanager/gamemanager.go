@@ -100,7 +100,7 @@ func (gm *GameManager) handleJoin(io *IO) {
 	}
 
 	gm.IOs = append(gm.IOs, io)
-	fmt.Printf("[manager] %s joined (%d/%d)", io.ID, len(gm.IOs), gm.Game.PlayerCount)
+	fmt.Printf("[manager] %s joined (%d/%d)\n", io.ID, len(gm.IOs), gm.Game.PlayerCount)
 
 	p := gm.Game.GetPlayerByPPID(io.ID)
 
