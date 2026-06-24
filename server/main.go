@@ -11,9 +11,15 @@ import (
 	"github.com/JStanislav/quoridor-clone/external"
 	"github.com/JStanislav/quoridor-clone/gamemanager"
 	ws "github.com/JStanislav/quoridor-clone/websocket"
+
+	_ "net/http/pprof"
 )
 
 func main() {
+	go func() {
+		http.ListenAndServe("localhost:6060", nil)
+	}()
+
 	config := config.LoadConfig()
 
 	localhost := "0.0.0.0"
@@ -21,11 +27,12 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	games := gamemanager.NewGames()
+	gamesContainer := gamemanager.NewGamesContainer(1)
 	updateStatsServiceClient := external.NewUpdateStatsServiceHTTPClient("") // a NATS client can be used too, just for fun.
 
 	handlerContext := context.WithValue(context.Background(), "TimeoutAfterGameOver", time.Duration(config.TimeoutAfterGameOver)*time.Second)
 
+	games := gamemanager.Games(gamesContainer.Games)
 	wsHandler := ws.NewHandler(handlerContext, &games, updateStatsServiceClient)
 
 	mux.HandleFunc("/{id}", wsHandler.Handler)

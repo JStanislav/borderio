@@ -13,7 +13,8 @@
             "program": "${workspaceFolder}/server",
             "showGlobalVariables": true,
             "env": {
-                "TIMEOUT_AFTER_GAME_OVER": "15" // in seconds
+                "TIMEOUT_AFTER_GAME_OVER": "15", // in seconds
+                "PORT": "8080",
             }
         }
     ]

@@ -12,7 +12,6 @@ import (
 	"github.com/JStanislav/quoridor-clone/gamemanager"
 	"github.com/JStanislav/quoridor-clone/player"
 	"github.com/JStanislav/quoridor-clone/utils"
-	"github.com/JStanislav/quoridor-clone/websocket/messages"
 	"github.com/gorilla/websocket"
 )
 
@@ -43,153 +42,57 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Print("Received request with action: ", action, " and ppid: ", ppid, " and id: ", id, "\n")
 
-	var currentPlayer *player.Player
+	var gm *gamemanager.GameManager
+	var gameState game.TwoPlayerMatch
+	var runGame bool
 
 	if action == "create" {
-		gameState := game.NewTwoPlayerMatch()
-		cm := gamemanager.NewConnectionsManager()
+		gameState = *game.NewTwoPlayerMatch()
 
 		timeoutAfterGameOver := h.Context.Value("TimeoutAfterGameOver").(time.Duration)
 
-		err := h.GamesManager.AddGame(id, gamemanager.NewGameManager(&gameState.GameState, cm, h.UpdateStatsService.UpdateStats, timeoutAfterGameOver))
+		gm = gamemanager.NewGameManager(&gameState.GameState, h.UpdateStatsService.UpdateStats, timeoutAfterGameOver)
+
+		err := h.GamesManager.AddGame(id, gm)
 		if err != nil {
 			fmt.Printf("[ERROR] error creating hash, %s\n", err)
 			return
 		}
 
-		name := fmt.Sprintf("[PPID: %s]", ppid)
-
-		playerOne := player.New(ppid, name, utils.GridPosition{}, 8, utils.Line{}, utils.Line{})
-		err = gameState.AddPlayer(playerOne)
-		if err != nil {
-			fmt.Printf("[ERROR] error adding player to game state, %s\n", err)
-			return
-		}
+		runGame = true
 	}
 
 	if action == "join" {
-		gm := h.GamesManager.GetGame(id)
+		gm = h.GamesManager.GetGame(id)
 		if gm == nil {
 			fmt.Printf("[ERROR] game not found\n")
 			return
 		}
+
 		gs := gm.Game
 
-		var gameState game.TwoPlayerMatch
 		gameState.GameState = *gs
-
-		name := fmt.Sprintf("[PPID: %s]", ppid)
-		playerTwo := player.New(ppid, name, utils.GridPosition{}, 8, utils.Line{}, utils.Line{})
-		err := gameState.AddPlayer(playerTwo)
-		if err != nil {
-			fmt.Printf("[ERROR] error adding player to game state, %s\n", err)
-			return
-		}
 	}
 
-	currentPlayer = h.GamesManager.GetGame(id).Game.GetPlayerPPID(ppid)
+	name := fmt.Sprintf("[PPID: %s]", ppid)
+	p := player.New(ppid, name, utils.GridPosition{}, 8, utils.Line{}, utils.Line{})
+	err := gameState.AddPlayer(p)
+	if err != nil {
+		fmt.Printf("[ERROR] error adding player to game state, %s\n", err)
+		return
+	}
 
 	c, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		fmt.Printf("[ERROR] error upgrading, %s\n", err)
 		return
 	}
-	defer func() {
-		h.GamesManager.GetGame(id).PlayerLeft(*currentPlayer)
 
-		if len(*h.GamesManager.GetGame(id).Game.Players) < 1 {
-			fmt.Printf("No players left, cleaning up game %s\n", id)
-			h.GamesManager.RemoveGame(id)
-		}
-	}()
+	io := gamemanager.NewIO(ppid, c)
+	gm.AddPlayer(io)
 
-	ioConn := GetConnectionAdapter(c)
-
-	h.GamesManager.GetGame(id).AddConnection(ppid, ioConn)
-
-	h.GamesManager.GetGame(id).PlayerJoined(*currentPlayer)
-
-	for {
-		_, message, err := c.ReadMessage()
-		if err != nil {
-			if websocket.IsCloseError(err, websocket.CloseNormalClosure) {
-				break
-			}
-			fmt.Printf("[ERROR] error reading message, %s\n", err)
-			break
-		}
-
-		var o messages.Message[any]
-		if err = json.Unmarshal(message, &o); err != nil {
-			fmt.Printf("[ERROR] error unmarshaling message, %s\n", err)
-			break
-		}
-
-		var gameState *game.TwoPlayerMatch
-		if gm := h.GamesManager.GetGame(id); gm != nil {
-			gameState = &game.TwoPlayerMatch{GameState: *gm.Game}
-		}
-
-		var p *player.Player
-		p = gameState.GetPlayerPPID(o.PrivatePlayerId)
-		if p == nil {
-			fmt.Printf("[ERROR] player with ppid %s not found\n", o.PrivatePlayerId)
-			continue
-		}
-
-		switch o.Type {
-		case "startGame":
-			fmt.Printf("Player %d wants to start the game\n", p.ID)
-
-			gameState.StartMatchWithMovementsChannel()
-
-			h.GamesManager.GetGame(id).BroadcastGameState()
-		case "playerMove":
-			fmt.Printf("Player %d wants to move to row %d, col %d\n", p.ID, o.Target.Row, o.Target.Col)
-
-			if h.GamesManager.GetGame(id).IsGameOver() {
-				fmt.Printf("[ERROR] game is already over, cannot make a move\n")
-				sendErrorMessage(c, "game is already over, cannot make a move")
-				continue
-			}
-
-			err = p.OnPlayerPlay(player.PlayerID(p.ID), player.Play{PlayType: player.PlayerMove, Position: &utils.GridPosition{Row: o.Target.Row, Column: o.Target.Col}})
-			if err != nil {
-				sendErrorMessage(c, err.Error())
-				fmt.Printf("[ERROR] error processing player move, %s\n", err)
-				continue
-			}
-
-			h.GamesManager.GetGame(id).BroadcastGameState()
-
-			if p.IsWinner() {
-				fmt.Printf("Player %d wins!\n", p.ID)
-				h.GamesManager.GetGame(id).GameOver()
-			}
-		case "wallPlacement":
-			fmt.Printf("Player %d wants to place a wall between [R%d-C%d] and [R%d-C%d] with orientation %s\n", p.ID, o.WallTarget.CellA.Row, o.WallTarget.CellA.Col, o.WallTarget.CellB.Row, o.WallTarget.CellB.Col, o.WallTarget.Orientation)
-
-			if h.GamesManager.GetGame(id).IsGameOver() {
-				fmt.Printf("[ERROR] game is already over, cannot make a move\n")
-				sendErrorMessage(c, "game is already over, cannot make a move")
-				continue
-			}
-
-			err = p.OnPlayerPlay(player.PlayerID(p.ID), player.Play{PlayType: player.WallPlacement, WallPlaced: &utils.WallPosition{CellA: utils.GridPosition{Row: o.WallTarget.CellA.Row, Column: o.WallTarget.CellA.Col}, CellB: utils.GridPosition{Row: o.WallTarget.CellB.Row, Column: o.WallTarget.CellB.Col}}})
-			if err != nil {
-				sendErrorMessage(c, err.Error())
-				fmt.Printf("[ERROR] error processing wall placement, %s\n", err)
-				continue
-			}
-
-			h.GamesManager.GetGame(id).BroadcastGameState()
-		case "playerReady":
-			fmt.Printf("Player %d toggled readiness\n", p.ID)
-			p.ToggleReady()
-
-			h.GamesManager.GetGame(id).SyncLobbyState()
-			continue
-		}
+	if runGame {
+		go gm.Run()
 	}
 }
 
@@ -226,15 +129,5 @@ func (h Handler) GamesList(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("[ERROR] error encoding games list, %s\n", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
-	}
-}
-
-func sendErrorMessage(c *websocket.Conn, errorMessage string) {
-	errorMessageStruct := messages.ErrorMessage{
-		Type:    "error",
-		Message: errorMessage,
-	}
-	if err := c.WriteJSON(errorMessageStruct); err != nil {
-		fmt.Printf("[ERROR] error sending error message, %s\n", err)
 	}
 }

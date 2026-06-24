@@ -22,29 +22,29 @@ const onMessage = (ev: MessageEvent,
     const data = JSON.parse(ev.data);
     
     if (data.type === "gameState") {
-        setGameState(data);
+        setGameState(data.payload);
     } else if (data.type === "error") {
-        toast.error(`Error: ${data.message}`);
+        toast.error(`Error: ${data.payload}`);
     }
     if (data.type === "playerConfiguration") {
-        const config = data as PlayerConfigurationMessage;
+        const config = data.payload as PlayerConfigurationMessage;
         toast.success(`You are ${config.name} (id: ${config.id}) with ppid: ${config.ppid}`);
         setPlayerConfig({ id: config.id, name: config.name, ppid: config.ppid, ready: false });
     }
     if (data.type === "matchConfiguration") {
-        const config = data as MatchConfiguration;
+        const config = data.payload as MatchConfiguration;
         setMatchConfiguration(config);
     }
     if (data.type === "lobby") {
-        const config = data as LobbyMessage;
+        const config = data.payload as LobbyMessage;
         setLobby({ players: config.players, winnerPlayerId: config.winnerPlayerId, playerAmount: 2 });
     }
     if (data.type === "joined") { 
-        const joined = data as PlayerJoinedMessage;
+        const joined = data.payload as PlayerJoinedMessage;
         toast.success(`${joined.name}[${joined.id}] has joined game!`);
     }
     if (data.type === "playerLeft") {
-        const left = data as PlayerJoinedMessage;
+        const left = data.payload as PlayerJoinedMessage;
         toast.success(`${left.name} has left game!`);
     }
 }
@@ -65,14 +65,14 @@ export const requestPlayerMove = (ppid: string, row: number, col: number) => {
     const { s_row, s_col } = translateGridPositionToServer(row, col);
     const type = "playerMove";
     const target = { row: s_row,col: s_col };
-    send(type, { target, ppid });
+    send(type, { payload: { target }, ppid});
 }
 
 export const requestWallPlacement = (ppid: string, row: number, col: number, orientation: "horizontal" | "vertical") => {
     let wallPositions = translateWallGridPositionToServer(row, col, orientation);
     const type = "wallPlacement";
     const wallTarget = { cellA: { row: wallPositions.cellA.row, col: wallPositions.cellA.column }, cellB: { row: wallPositions.cellB.row, col: wallPositions.cellB.column }, orientation };
-    send(type, { wallTarget: wallTarget, ppid });
+    send(type, { payload: { wallTarget: wallTarget }, ppid});
 }
 
 export async function GameExist(hash: string) {
