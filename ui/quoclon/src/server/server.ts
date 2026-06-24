@@ -2,7 +2,7 @@ import toast from "react-hot-toast";
 import { type GameState } from "../game/GameState";
 import { connect,send, type actionType } from "./server-conn";
 import { translateGridPositionToServer, translateWallGridPositionToServer } from "./utils";
-import type { LobbyMessage, PlayerConfigurationMessage, PlayerJoinedMessage } from "./messages";
+import type { IMessage, LobbyMessage, PlayerConfigurationMessage, PlayerJoinedMessage } from "./messages";
 import type { Player } from "../game/player";
 import { config } from "../../config/config";
 import type { Lobby } from "../game/lobby/lobby";
@@ -19,7 +19,7 @@ const onMessage = (ev: MessageEvent,
     console.log("message arrived");
     console.log("ev", ev.data)
 
-    const data = JSON.parse(ev.data);
+    const data = JSON.parse(ev.data) as IMessage<any>;
     
     if (data.type === "gameState") {
         setGameState(data.payload);
