@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"sync"
 	"time"
 
 	"github.com/JStanislav/quoridor-clone/external"
@@ -53,6 +54,7 @@ func (gm *GameManager) AddPlayer(p *IO) {
 }
 
 func (gm *GameManager) Stop() {
+	gm.GameTimedOut = true
 	close(gm.quit)
 }
 
@@ -293,6 +295,18 @@ func (gm *GameManager) indexOf(target *IO) int {
 	return -1
 }
 
+type GamesContainer struct {
+	Games map[string]*GameManager
+	Lock  sync.RWMutex
+
+	GC *EndedGamesCollector
+}
+
+func NewGamesContainer(GCThreshold int) *GamesContainer {
+	games := NewGames()
+	return &GamesContainer{Games: games, GC: NewGC(&games, GCThreshold)}
+}
+
 type Games map[string]*GameManager
 
 func NewGames() Games {
@@ -318,4 +332,13 @@ func (g Games) GetGame(h string) *GameManager {
 
 func (g *Games) RemoveGame(h string) {
 	delete(*g, h)
+}
+
+func (g *Games) DeleteOldGames() {
+	for h, gm := range g.GetGamesList() {
+		if gm.IsGameOver() && (gm.GameTimedOut || len(gm.IOs) == 0) {
+			fmt.Printf("deleting game %s\n", h)
+			g.RemoveGame(h)
+		}
+	}
 }

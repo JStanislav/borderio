@@ -27,11 +27,12 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	games := gamemanager.NewGames()
+	gamesContainer := gamemanager.NewGamesContainer(1)
 	updateStatsServiceClient := external.NewUpdateStatsServiceHTTPClient("") // a NATS client can be used too, just for fun.
 
 	handlerContext := context.WithValue(context.Background(), "TimeoutAfterGameOver", time.Duration(config.TimeoutAfterGameOver)*time.Second)
 
+	games := gamemanager.Games(gamesContainer.Games)
 	wsHandler := ws.NewHandler(handlerContext, &games, updateStatsServiceClient)
 
 	mux.HandleFunc("/{id}", wsHandler.Handler)
