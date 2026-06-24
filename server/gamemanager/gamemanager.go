@@ -241,17 +241,6 @@ func (gm *GameManager) broadcastGameState() error {
 	return nil
 }
 
-func (gm *GameManager) PlayerLeft(player player.Player) {
-	if gm.GameTimedOut {
-		return
-	}
-	gm.Game.RemovePlayer(player.ID)
-	gm.broadcastJSON(messages.GetPlayerLeftMessage(player))
-
-	// Broadcast lobby, what would happen if player left in middle of the game?
-	gm.broadcastJSON(messages.GetLobbyMessage(gm.Game.Players))
-}
-
 func (gm *GameManager) syncMatchConfiguration(io *IO) {
 	message := messages.GetMatchConfigurationMessage(gm.Game.PlayerCount)
 	io.Send(message)
@@ -268,7 +257,7 @@ func (gm *GameManager) endGame(reason string) {
 
 	time.AfterFunc(gm.TimeoutAfterGameOver, func() {
 		fmt.Printf("closing all connections\n")
-		// TODO: implement
+		gm.Stop()
 	})
 }
 
