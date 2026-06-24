@@ -244,7 +244,7 @@ func (g *GameState) RemovePlayer(pid player.PlayerID) error {
 	return errors.New("player not found")
 }
 
-func (g *GameState) GetPlayerPPID(ppid string) *player.Player {
+func (g *GameState) GetPlayerByPPID(ppid string) *player.Player {
 	for _, p := range *g.Players {
 		if p.PrivatePlayerID == ppid {
 			return p

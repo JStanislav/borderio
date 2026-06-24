@@ -3,11 +3,13 @@ package gamemanager
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/JStanislav/quoridor-clone/external"
 	"github.com/JStanislav/quoridor-clone/game"
 	"github.com/JStanislav/quoridor-clone/player"
+	"github.com/JStanislav/quoridor-clone/utils"
 	"github.com/JStanislav/quoridor-clone/websocket/messages"
 )
 
@@ -17,78 +19,226 @@ type GameManager struct {
 	gameOver     bool
 	GameTimedOut bool
 
-	// Every websocket connection, where key is private player id
-	IOManager IOManager
-
 	UpdateStats external.UpdateStats
 
 	TimeoutAfterGameOver time.Duration
+
+	IOs []*IO
+
+	inbound chan PlayerMessage
+	join    chan *IO
+	leave   chan *IO
+	quit    chan struct{}
 }
 
-func NewGameManager(game *game.GameState, ioManager IOManager, updateStats external.UpdateStats, timeoutAfterGameOver time.Duration) *GameManager {
+func NewGameManager(game *game.GameState, updateStats external.UpdateStats, timeoutAfterGameOver time.Duration) *GameManager {
 	return &GameManager{
 		Game:                 game,
 		gameOver:             false,
-		IOManager:            ioManager,
 		UpdateStats:          updateStats,
 		GameTimedOut:         false,
 		TimeoutAfterGameOver: timeoutAfterGameOver,
+
+		inbound: make(chan PlayerMessage),
+		join:    make(chan *IO, 8),
+		leave:   make(chan *IO, 8),
+		quit:    make(chan struct{}),
 	}
 }
 
-func (gm *GameManager) AddConnection(ppid string, conn IOConnection) {
-	gm.IOManager.AddConnection(ppid, conn)
-
+func (gm *GameManager) AddPlayer(p *IO) {
+	gm.join <- p
+	go p.readPump(gm.inbound, gm.leave)
+	go p.writePump()
 }
 
-func (gm *GameManager) RemoveConnection(ppid string) {
-	gm.IOManager.RemoveConnection(ppid)
+func (gm *GameManager) Stop() {
+	close(gm.quit)
 }
 
-func (gm *GameManager) Broadcast(msg string) error {
-	err := gm.IOManager.Broadcast(msg)
-	if err != nil {
-		fmt.Println("error broadcasting ", err)
-		errMessage := fmt.Sprintf("error sending %s", msg)
-		return errors.New(errMessage)
+func (gm *GameManager) Run() {
+	fmt.Printf("game manager starting\n")
+	defer fmt.Printf("game manager stopped\n")
+
+	for {
+		select {
+		case <-gm.quit:
+			gm.shutDownAll()
+			return
+
+		case p := <-gm.join:
+			gm.handleJoin(p)
+
+		case p := <-gm.leave:
+			gm.handleLeave(p)
+
+		case msg := <-gm.inbound:
+			gm.handleMessage(msg)
+		}
 	}
-	return nil
 }
 
-func (gm *GameManager) BroadcastJSON(msg any) error {
-	err := gm.IOManager.BroadcastJSON(msg)
-	if err != nil {
-		fmt.Println("error broadcasting JSON", err)
-		errMessage := fmt.Sprintf("error sending %s", msg)
-		return errors.New(errMessage)
+func (gm *GameManager) shutDownAll() {
+	for _, p := range gm.IOs {
+		close(p.send)
 	}
+}
+
+func (gm *GameManager) handleJoin(io *IO) {
+	// if gm.Game.StartTime != nil {
+	// 	io.Send(messages.GetAlreadyStartedMessage())
+	// 	close(io.send)
+	// 	return
+	// }
+
+	if len(*gm.Game.Players) > gm.Game.PlayerCount {
+		io.Send(messages.GetGameFullMessage())
+		close(io.send)
+		return
+	}
+
+	gm.IOs = append(gm.IOs, io)
+	fmt.Printf("[manager] %s joined (%d/%d)", io.ID, len(gm.IOs), gm.Game.PlayerCount)
+
+	p := gm.Game.GetPlayerByPPID(io.ID)
+
+	message := messages.GetJoinedMessage(*p)
+	gm.broadcastExcept(message, []string{io.ID})
+
+	gm.syncLobbyState()
+	gm.syncPlayerConfiguration(io)
+	gm.syncMatchConfiguration(io)
+}
+
+func (gm *GameManager) handleLeave(io *IO) {
+	idx := gm.indexOf(io)
+	if idx == -1 {
+		return
+	}
+
+	fmt.Printf("[manager] %s left\n", io.ID)
+	gm.IOs = append(gm.IOs[:idx], gm.IOs[idx+1:]...)
+	close(io.send)
+
+	p := gm.Game.GetPlayerByPPID(io.ID)
+	gm.Game.RemovePlayer(p.ID)
+
+	gm.broadcastJSON(messages.GetPlayerLeftMessage(*p))
+	gm.syncLobbyState()
+
+	// TODO: implement when player abandons in the middle of the game
+	// if gm.Game.StartTime != nil && !gm.gameOver {
+	// 	if len(gm.IOs) < gm.Game.PlayerCount {
+	// 		gm.endGame(fmt.Sprintf("player %s abandoned", p.Name))
+	// 		return
+	// 	}
+	// 	gm.broadcastGameState()
+	// }
+}
+
+func (gm *GameManager) handleMessage(msg PlayerMessage) {
+	var p *player.Player
+	p = gm.Game.GetPlayerByPPID(msg.Message.PrivatePlayerId)
+	if p == nil {
+		fmt.Printf("[ERROR] player with ppid %s not found\n", msg.Message.PrivatePlayerId)
+		return
+	}
+
+	switch msg.Message.Type {
+	case "startGame":
+		fmt.Printf("Player %d wants to start the game\n", p.ID)
+
+		gm.Game.StartMatchWithMovementsChannel()
+
+		gm.broadcastGameState()
+	case "playerMove":
+		mov := msg.Message.Payload
+
+		fmt.Printf("Player %d wants to move to row %d, col %d\n", p.ID, mov.Target.Row, mov.Target.Col)
+
+		if gm.IsGameOver() {
+			fmt.Printf("[ERROR] game is already over, cannot make a move\n")
+			msg.IO.Send(messages.OMessage{
+				Type:    "error",
+				Payload: "game is already over",
+			})
+			return
+		}
+
+		err := p.OnPlayerPlay(player.PlayerID(p.ID), player.Play{PlayType: player.PlayerMove, Position: &utils.GridPosition{Row: mov.Target.Row, Column: mov.Target.Col}})
+		if err != nil {
+			msg.IO.Send(messages.OMessage{
+				Type:    "error",
+				Payload: err.Error(),
+			})
+			fmt.Printf("[ERROR] error processing player move, %s\n", err)
+			return
+		}
+
+		gm.broadcastGameState()
+
+		if p.IsWinner() {
+			fmt.Printf("Player %d wins!\n", p.ID)
+			gm.endGame(fmt.Sprintf("player %s wins", p.Name))
+		}
+	case "wallPlacement":
+		wallMsg := msg.Message.Payload
+		fmt.Printf("Player %d wants to place a wall between [R%d-C%d] and [R%d-C%d] with orientation %s\n", p.ID, wallMsg.WallTarget.CellA.Row, wallMsg.WallTarget.CellA.Col, wallMsg.WallTarget.CellB.Row, wallMsg.WallTarget.CellB.Col, wallMsg.WallTarget.Orientation)
+
+		if gm.IsGameOver() {
+			fmt.Printf("[ERROR] game is already over, cannot make a move\n")
+			msg.IO.Send(messages.OMessage{
+				Type:    "error",
+				Payload: "game is already over, cannot make a move",
+			})
+			return
+		}
+
+		err := p.OnPlayerPlay(player.PlayerID(p.ID), player.Play{PlayType: player.WallPlacement, WallPlaced: &utils.WallPosition{CellA: utils.GridPosition{Row: wallMsg.WallTarget.CellA.Row, Column: wallMsg.WallTarget.CellA.Col}, CellB: utils.GridPosition{Row: wallMsg.WallTarget.CellB.Row, Column: wallMsg.WallTarget.CellB.Col}}})
+		if err != nil {
+			msg.IO.Send(messages.OMessage{
+				Type:    "error",
+				Payload: err.Error(),
+			})
+			fmt.Printf("[ERROR] error processing wall placement, %s\n", err)
+			return
+		}
+
+		gm.broadcastGameState()
+	case "playerReady":
+		fmt.Printf("Player %d toggled readiness\n", p.ID)
+		p.ToggleReady()
+
+		gm.syncLobbyState()
+		return
+	}
+}
+
+func (gm *GameManager) broadcastJSON(msg messages.OMessage) error {
+	for _, io := range gm.IOs {
+		io.Send(msg)
+	}
+
 	return nil
 }
 
 // Function to broadcast messages to every player except the specified in the parameter
-func (gm *GameManager) BroadcastExcept(msg any, ppids []string) error {
-	err := gm.IOManager.BroadcastJSONExcept(msg, ppids)
-	if err != nil {
-		fmt.Println("error broadcasting JSON Except", err)
-		errMessage := fmt.Sprintf("error sending %s", msg)
-		return errors.New(errMessage)
+func (gm *GameManager) broadcastExcept(msg messages.OMessage, ppids []string) error {
+	for _, io := range gm.IOs {
+		if !slices.Contains(ppids, io.ID) {
+			io.Send(msg)
+		}
 	}
 	return nil
 }
 
-func (gm *GameManager) BroadcastGameState() error {
+func (gm *GameManager) broadcastGameState() error {
 	gameStateMesage := messages.GetGameStateMessage(gm.Game)
-	err := gm.BroadcastJSON(gameStateMesage)
+	err := gm.broadcastJSON(gameStateMesage)
 	if err != nil {
 		return err
 	}
 	return nil
-}
-
-func (gm *GameManager) CleanUpConnection(ppid string) {
-	c := gm.IOManager.GetConnection(ppid)
-	c.Close()
-	gm.RemoveConnection(ppid)
 }
 
 func (gm *GameManager) PlayerLeft(player player.Player) {
@@ -96,33 +246,20 @@ func (gm *GameManager) PlayerLeft(player player.Player) {
 		return
 	}
 	gm.Game.RemovePlayer(player.ID)
-	gm.CleanUpConnection(player.PrivatePlayerID)
-	gm.BroadcastJSON(messages.GetPlayerLeftMessage(player))
+	gm.broadcastJSON(messages.GetPlayerLeftMessage(player))
 
 	// Broadcast lobby, what would happen if player left in middle of the game?
-	gm.BroadcastJSON(messages.GetLobbyMessage(gm.Game.Players))
+	gm.broadcastJSON(messages.GetLobbyMessage(gm.Game.Players))
 }
 
-func (gm *GameManager) PlayerJoined(player player.Player) {
-	message := messages.GetJoinedMessage(player)
-	gm.BroadcastExcept(message, []string{player.PrivatePlayerID})
-
-	gm.SyncLobbyState()
-	gm.SyncPlayerConfiguration(player)
-	gm.SyncMatchConfiguration(player)
-}
-
-func (gm *GameManager) SyncMatchConfiguration(player player.Player) {
-	playerConn := gm.IOManager.GetConnection(player.PrivatePlayerID)
+func (gm *GameManager) syncMatchConfiguration(io *IO) {
 	message := messages.GetMatchConfigurationMessage(gm.Game.PlayerCount)
-	if err := playerConn.SendJSON(message); err != nil {
-		fmt.Printf("[ERROR] error sending match configuration, %s\n", err)
-	}
+	io.Send(message)
 }
 
-func (gm *GameManager) GameOver() {
+func (gm *GameManager) endGame(reason string) {
 	gm.gameOver = true
-	gm.BroadcastJSON(messages.GetLobbyMessage(gm.Game.Players))
+	gm.syncLobbyState()
 
 	err := gm.UpdateStats(gm.Game.GetGameStats())
 	if err != nil {
@@ -131,39 +268,40 @@ func (gm *GameManager) GameOver() {
 
 	time.AfterFunc(gm.TimeoutAfterGameOver, func() {
 		fmt.Printf("closing all connections\n")
-		gm.DisconnectAll()
+		// TODO: implement
 	})
-}
-
-func (gm *GameManager) DisconnectAll() {
-	gm.GameTimedOut = true
-	err := gm.IOManager.DisconnectAll()
-	if err != nil {
-		fmt.Printf("[ERROR] error disconnecting all connections, %s\n", err)
-	}
 }
 
 func (gm *GameManager) IsGameOver() bool {
 	return gm.gameOver
 }
 
-func (gm *GameManager) SyncLobbyState() {
-	gm.BroadcastJSON(messages.GetLobbyMessage(gm.Game.Players))
+func (gm *GameManager) syncLobbyState() {
+	gm.broadcastJSON(messages.GetLobbyMessage(gm.Game.Players))
 }
 
-func (gm *GameManager) SyncPlayerConfiguration(player player.Player) {
-	playerConn := gm.IOManager.GetConnection(player.PrivatePlayerID)
+func (gm *GameManager) syncPlayerConfiguration(io *IO) {
+	player := gm.Game.GetPlayerByPPID(io.ID)
 
-	message := messages.PlayerConfigurationMessage{
-		Type:            "playerConfiguration",
-		ID:              int(player.ID),
-		Name:            player.Name,
-		PrivatePlayerId: player.PrivatePlayerID,
+	message := messages.OMessage{
+		Type: "playerConfiguration",
+		Payload: messages.PlayerConfigurationMessage{
+			ID:              int(player.ID),
+			Name:            player.Name,
+			PrivatePlayerId: player.PrivatePlayerID,
+		},
 	}
 
-	if err := playerConn.SendJSON(message); err != nil {
-		fmt.Printf("[ERROR] error sending player configuration, %s\n", err)
+	io.Send(message)
+}
+
+func (gm *GameManager) indexOf(target *IO) int {
+	for i, p := range gm.IOs {
+		if p.ID == target.ID {
+			return i
+		}
 	}
+	return -1
 }
 
 type Games map[string]*GameManager

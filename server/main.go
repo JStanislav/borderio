@@ -11,9 +11,15 @@ import (
 	"github.com/JStanislav/quoridor-clone/external"
 	"github.com/JStanislav/quoridor-clone/gamemanager"
 	ws "github.com/JStanislav/quoridor-clone/websocket"
+
+	_ "net/http/pprof"
 )
 
 func main() {
+	go func() {
+		http.ListenAndServe("localhost:6060", nil)
+	}()
+
 	config := config.LoadConfig()
 
 	localhost := "0.0.0.0"
