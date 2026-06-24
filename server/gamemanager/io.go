@@ -3,6 +3,7 @@ package gamemanager
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/JStanislav/quoridor-clone/websocket/messages"
 	"github.com/gorilla/websocket"
@@ -60,7 +61,8 @@ func (io *IO) readPump(inbound chan<- PlayerMessage, done chan<- *IO) {
 func (io *IO) writePump() {
 	defer func() {
 		fmt.Printf("Closing connection for ppid: %s\n", io.ID)
-		io.conn.Close()
+		now := time.Now().Add(time.Second * 1)
+		io.conn.WriteControl(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""), now)
 	}()
 
 	for msg := range io.send {
