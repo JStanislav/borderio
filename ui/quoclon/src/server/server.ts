@@ -2,7 +2,7 @@ import toast from "react-hot-toast";
 import { type GameState } from "../game/GameState";
 import { connect,send, type actionType } from "./server-conn";
 import { translateGridPositionToServer, translateWallGridPositionToServer } from "./utils";
-import type { IMessage, LobbyMessage, PlayerConfigurationMessage, PlayerJoinedMessage } from "./messages";
+import type { IMessage, LobbyMessage, PlayerConfigurationMessage, PlayerJoinedMessage, WillTimeoutMessage } from "./messages";
 import type { Player } from "../game/player";
 import { config } from "../../config/config";
 import type { Lobby } from "../game/lobby/lobby";
@@ -46,6 +46,10 @@ const onMessage = (ev: MessageEvent,
     if (data.type === "playerLeft") {
         const left = data.payload as PlayerJoinedMessage;
         toast.success(`${left.name} has left game!`);
+    }
+    if (data.type === "willTimeOut") {
+        const willTimeOut = data.payload as WillTimeoutMessage
+        toast(`The lobby will be closed in ${willTimeOut.span}`, {icon: "⌛"});
     }
 }
 

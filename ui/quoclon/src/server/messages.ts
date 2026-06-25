@@ -29,3 +29,7 @@ export interface LobbyPlayer {
 export interface GameOverMessage {
     winnerPlayerId: string
 }
+
+export interface WillTimeoutMessage {
+    span: string,
+}

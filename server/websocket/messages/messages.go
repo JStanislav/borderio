@@ -181,3 +181,16 @@ func GetGameFullMessage() OMessage {
 		Type: "gameFull",
 	}
 }
+
+type WillTimeOutMessage struct {
+	Span string `json:"span"`
+}
+
+func GetWillTimeOutMessage() OMessage {
+	return OMessage{
+		Type: "willTimeOut",
+		Payload: WillTimeOutMessage{
+			Span: "10 seconds",
+		},
+	}
+}

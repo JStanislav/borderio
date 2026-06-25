@@ -261,6 +261,10 @@ func (gm *GameManager) endGame(reason string) {
 		fmt.Printf("closing all connections\n")
 		gm.Stop()
 	})
+
+	time.AfterFunc(gm.TimeoutAfterGameOver-10*time.Second, func() {
+		gm.broadcastJSON(messages.GetWillTimeOutMessage())
+	})
 }
 
 func (gm *GameManager) IsGameOver() bool {
