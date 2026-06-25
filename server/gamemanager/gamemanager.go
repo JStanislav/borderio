@@ -54,6 +54,7 @@ func (gm *GameManager) AddPlayer(p *IO) {
 }
 
 func (gm *GameManager) Stop() {
+	gm.broadcastJSON(messages.OMessage{Type: "gameTimedOut"})
 	gm.GameTimedOut = true
 	close(gm.quit)
 }

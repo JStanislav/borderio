@@ -51,6 +51,9 @@ const onMessage = (ev: MessageEvent,
         const willTimeOut = data.payload as WillTimeoutMessage
         toast(`The lobby will be closed in ${willTimeOut.span}`, {icon: "⌛"});
     }
+    if (data.type === "gameTimedOut") {
+        toast("The connection has been closed.", {icon: "👋"});
+    }
 }
 
 

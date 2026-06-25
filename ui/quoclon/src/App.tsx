@@ -73,6 +73,7 @@ function App() {
           {canDisplayStartButton(lobby, matchConfiguration, player) && <button onClick={onClickStartGame}>Start</button>}
         </div>
       }
+      <button onClick={redirectToHome}>Leave Game</button>
         <Toaster />
       </PlayerContext>
     </LobbyContext>
