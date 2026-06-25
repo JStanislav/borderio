@@ -263,8 +263,10 @@ func (gm *GameManager) endGame(reason string) {
 		gm.Stop()
 	})
 
-	time.AfterFunc(gm.TimeoutAfterGameOver-10*time.Second, func() {
-		gm.broadcastJSON(messages.GetWillTimeOutMessage())
+	notificationTimeSpan := 10 // in seconds
+
+	time.AfterFunc(gm.TimeoutAfterGameOver-time.Duration(notificationTimeSpan)*time.Second, func() {
+		gm.broadcastJSON(messages.GetWillTimeOutMessage(notificationTimeSpan))
 	})
 }
 

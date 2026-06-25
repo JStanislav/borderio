@@ -1,6 +1,8 @@
 package messages
 
 import (
+	"fmt"
+
 	"github.com/JStanislav/quoridor-clone/game"
 	"github.com/JStanislav/quoridor-clone/player"
 	"github.com/JStanislav/quoridor-clone/utils"
@@ -186,11 +188,11 @@ type WillTimeOutMessage struct {
 	Span string `json:"span"`
 }
 
-func GetWillTimeOutMessage() OMessage {
+func GetWillTimeOutMessage(timeout int) OMessage {
 	return OMessage{
 		Type: "willTimeOut",
 		Payload: WillTimeOutMessage{
-			Span: "10 seconds",
+			Span: fmt.Sprintf("%d seconds", timeout),
 		},
 	}
 }
