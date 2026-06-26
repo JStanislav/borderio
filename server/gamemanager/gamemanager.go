@@ -343,7 +343,18 @@ func (g *Games) RemoveGame(h string) {
 
 func (g *Games) DeleteOldGames() {
 	for h, gm := range g.GetGamesList() {
+		remove := false
 		if gm.IsGameOver() && (gm.GameTimedOut || len(gm.IOs) == 0) {
+			fmt.Printf("game timed out%s\n", h)
+			remove = true
+		}
+
+		if gm.Game.StartTime != nil && len(gm.IOs) == 0 {
+			fmt.Printf("game didn't start and no players in lobby %s\n", h)
+			remove = true
+		}
+
+		if remove {
 			fmt.Printf("deleting game %s\n", h)
 			g.RemoveGame(h)
 		}
