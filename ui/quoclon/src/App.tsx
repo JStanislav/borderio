@@ -5,7 +5,7 @@ import { startConnection  } from './server/server';
 import { Toaster } from 'react-hot-toast';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { canDisplayStartButton, generatePPID } from './app';
-import { send, closeConn } from './server/server-conn';
+import { send, gracefullyCloseConnection } from './server/server-conn';
 import { DefaultPlayer, type Player } from './game/player';
 import { DefaultLobby, type Lobby } from './game/lobby/lobby';
 import type { MatchConfiguration } from './game/MatchConfiguration';
@@ -38,7 +38,7 @@ function App() {
     }
 
     return () => {
-      closeConn()
+      gracefullyCloseConnection("going away");
     }
   }, [])
 

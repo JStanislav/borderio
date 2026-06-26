@@ -48,3 +48,8 @@ export const closeConn = () => {
     }
 }
 
+export const gracefullyCloseConnection = (reason: string) => {
+    if (websocket != null) {
+        websocket.close(1000, reason);
+    }
+}
