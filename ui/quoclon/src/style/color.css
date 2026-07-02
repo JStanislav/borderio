@@ -1,0 +1,16 @@
+:root {
+    --main-dark-brown1: #1E1702;
+    --main-dark-brown2: #342005;
+    --main-soft-gray1: #8C886B;
+    --main-soft-gray2: #E5E3E4;
+    --main-emerald: #047C58;
+}
+
+body {
+    background-color: var(--main-soft-gray1);
+    color: var(--main-dark-brown1);
+}
+
+.body-container {
+    background-color: var(--main-soft-gray1);
+}
