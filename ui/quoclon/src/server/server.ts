@@ -10,6 +10,8 @@ import type { MatchConfiguration } from "../game/MatchConfiguration";
 
 const serverURL = `http://${config.serverUrl}`
 
+export const gameTimedOutId = "gameTimedOut"
+
 const onMessage = (ev: MessageEvent,
                     setGameState: (gameState: GameState) => void,
                     setPlayerConfig: (player: Player) => void,
@@ -52,7 +54,7 @@ const onMessage = (ev: MessageEvent,
         toast(`The lobby will be closed in ${willTimeOut.span}`, {icon: "⌛"});
     }
     if (data.type === "gameTimedOut") {
-        toast("The connection has been closed.", {icon: "👋"});
+        toast("The connection has been closed.", {icon: "👋", duration: Infinity, id: gameTimedOutId});
     }
 }
 

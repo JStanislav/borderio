@@ -1,8 +1,8 @@
 import { createContext, useEffect, useState } from 'react';
 import { GameFrame } from './components/game/Gameframe';
 import { allPlayersReady, getDefaultGameState, type GameState } from './game/GameState';
-import { startConnection  } from './server/server';
-import { Toaster } from 'react-hot-toast';
+import { gameTimedOutId, startConnection  } from './server/server';
+import toast, { Toaster } from 'react-hot-toast';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { canDisplayStartButton, generatePPID } from './app';
 import { send, gracefullyCloseConnection } from './server/server-conn';
@@ -42,7 +42,10 @@ function App() {
     }
   }, [])
 
-  const redirectToHome = () => navigate("/");
+  const redirectToHome = () => {
+    toast.dismiss(gameTimedOutId)
+    navigate("/");
+  };
 
   const toggleReady = () => {
       setPlayer({...player, ready: !player.ready});
