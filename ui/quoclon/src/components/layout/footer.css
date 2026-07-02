@@ -1,0 +1,56 @@
+.footer {
+    --footer-text-color: #6c757d;
+
+    background-color: var(--main-soft-gray2);
+    color: var(--footer-text-color);
+    font-size: 0.875rem;
+    border-top: 1px solid #e7e7e7;
+}
+
+.footer-content {
+    max-width: 1140px;
+    margin: 0 auto;
+    padding: 1rem 1.5rem;
+
+    /* Mobile-first: stack items vertically and center them */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+/* Media query for medium screens and up (tablets, desktops) */
+@media (min-width: 576px) {
+    .footer-content {
+        /* On these screens, arrange items in a row */
+        flex-direction: row;
+        justify-content: space-between;
+    }
+}
+
+.footer-copyright {
+    text-align: center;
+}
+
+.footer nav ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    gap: 1.5rem; /* Space between icons */
+}
+
+.footer nav a {
+    color: var(--footer-text-color);
+    transition: color 0.2s ease-in-out;
+}
+
+.footer nav a:hover {
+    color: var(--footer-link-hover-color);
+}
+
+.footer nav svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor; /* Inherits the color of the parent link */
+}
