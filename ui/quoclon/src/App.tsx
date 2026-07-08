@@ -4,15 +4,13 @@ import { allPlayersReady, getDefaultGameState, type GameState } from './game/Gam
 import { gameTimedOutId, startConnection  } from './server/server';
 import toast, { Toaster } from 'react-hot-toast';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
-import { canDisplayStartButton, generatePPID } from './app';
+import { generatePPID } from './app';
 import { send, gracefullyCloseConnection } from './server/server-conn';
 import { DefaultPlayer, type Player } from './game/player';
 import { DefaultLobby, type Lobby } from './game/lobby/lobby';
 import type { MatchConfiguration } from './game/MatchConfiguration';
+import { Lobby as LobbyComponent } from './components/lobby/Lobby.tsx';
 
-const getReadyText = (ready: boolean): string => {
-  return ready ? "Ready" : "Not Ready";
-}
 
 export const LobbyContext = createContext<Lobby>(DefaultLobby);
 export const PlayerContext = createContext<Player>(DefaultPlayer);
@@ -69,12 +67,7 @@ function App() {
           <GameFrame gameState={gameState}/>
         </div>
         :
-        <div>
-          Waiting for others players to be ready...
-          {lobby.players.map((lobbyPlayer, index) => <div key={index}>{`${lobbyPlayer.name}${lobbyPlayer.host ? "[H]" : ""}  ${getReadyText(lobbyPlayer.ready)}`}</div>)}
-          <button onClick={toggleReady}>{player.ready ? "Unready" : "Ready"}</button>
-          {canDisplayStartButton(lobby, matchConfiguration, player) && <button onClick={onClickStartGame}>Start</button>}
-        </div>
+        <LobbyComponent players={lobby.players} matchConfiguration={matchConfiguration} actions={{toggleReady, onPlayerClickStartGame: onClickStartGame}} />
       }
       <button onClick={redirectToHome}>Leave Game</button>
         <Toaster />

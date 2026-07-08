@@ -18,9 +18,6 @@ const onMessage = (ev: MessageEvent,
                     setLobby: (lobby: Lobby) => void,
                     setMatchConfiguration: (matchConfiguration: MatchConfiguration) => void) => {
 
-    console.log("message arrived");
-    console.log("ev", ev.data)
-
     const data = JSON.parse(ev.data) as IMessage<any>;
     
     if (data.type === "gameState") {
@@ -39,7 +36,7 @@ const onMessage = (ev: MessageEvent,
     }
     if (data.type === "lobby") {
         const config = data.payload as LobbyMessage;
-        setLobby({ players: config.players, winnerPlayerId: config.winnerPlayerId, playerAmount: 2 });
+        setLobby({ players: config.players, winnerPlayerId: config.winnerPlayerId, playerAmount: 2, id: "CHNGM"});
     }
     if (data.type === "joined") { 
         const joined = data.payload as PlayerJoinedMessage;

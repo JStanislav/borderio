@@ -1,0 +1,72 @@
+.lobby-container {
+    height: 533px;
+    width: 500px;
+}
+
+.lobby-content {
+    display: grid;
+    width: 100%;
+    grid-template-areas:
+        "players info"
+        "actions info";
+
+    grid-template-columns: 1fr 200px;
+    grid-template-rows: 1fr 50px;
+}
+
+.lobby-players {
+    min-height: 483px;
+    background-color: #634141;
+    grid-area: players;
+}
+
+.lobby-info {
+    color: var(--main-soft-gray2);
+    background-color: #000000;
+    grid-area: info;
+}
+
+.lobby-actions {
+    background-color: #7c7a7a;
+    grid-area: actions;
+}
+
+
+
+/* PlayerCard styles */
+
+.player-card-container {
+    background-color: #D9D9D9;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px;
+    border-bottom: 1px solid #ccc;
+}
+
+.player-card-leftside {
+    display: flex;
+    gap: 10px;
+    justify-content: space-between;
+}
+
+.player-card-name {
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.player-card-host {
+    font-size: 14px;
+    color: blue;
+}
+
+.player-card-ready {
+    font-size: 14px;
+    color: green;
+}
+
+.player-card-not-ready {
+    font-size: 14px;
+    color: red;
+}
