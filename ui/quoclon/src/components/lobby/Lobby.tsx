@@ -27,7 +27,7 @@ export const Lobby = (props: Props) => {
         <div className="lobby-container">
             <div className="lobby-content">
                 <div className="lobby-players">
-                    {props.players.map((lobbyPlayer) => <PlayerCard name={lobbyPlayer.name} isReady={lobbyPlayer.ready} isHost={lobbyPlayer.host} />)}
+                    {props.players.map((lobbyPlayer) => <PlayerCard key={`player-${lobbyPlayer.id}-card`} name={lobbyPlayer.name} isReady={lobbyPlayer.ready} isHost={lobbyPlayer.host} />)}
                 </div>
                 <div className="lobby-actions">
                     <button className="action-button" onClick={props.actions.toggleReady}>{player.ready ? "Unready" : "Ready"}</button>
