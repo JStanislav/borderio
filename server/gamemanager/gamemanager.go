@@ -17,6 +17,7 @@ import (
 type GameManager struct {
 	Game *game.GameState
 
+	Started      bool
 	gameOver     bool
 	GameTimedOut bool
 
@@ -151,7 +152,36 @@ func (gm *GameManager) handleMessage(msg PlayerMessage) {
 	case "startGame":
 		fmt.Printf("Player %d wants to start the game\n", p.ID)
 
+		if gm.Started {
+			fmt.Printf("[ERROR] game is already started\n")
+			msg.IO.Send(messages.OMessage{
+				Type:    "error",
+				Payload: "game is already started",
+			})
+			return
+		}
+
+		if !p.Host {
+			fmt.Printf("[ERROR] only the host can start the game\n")
+			msg.IO.Send(messages.OMessage{
+				Type:    "error",
+				Payload: "only the host can start the game",
+			})
+			return
+		}
+
+		if !gm.Game.AllPlayersReady() {
+			fmt.Printf("[ERROR] not all players are ready\n")
+			msg.IO.Send(messages.OMessage{
+				Type:    "error",
+				Payload: "not all players are ready",
+			})
+			return
+		}
+
 		gm.Game.StartMatchWithMovementsChannel()
+
+		gm.Started = true
 
 		gm.broadcastGameState()
 	case "playerMove":
