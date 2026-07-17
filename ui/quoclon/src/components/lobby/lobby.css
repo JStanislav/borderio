@@ -27,10 +27,29 @@
 }
 
 .lobby-actions {
+    padding: 10px;
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
     background-color: #7c7a7a;
     grid-area: actions;
 }
 
+.action-button {
+    background-color: var(--main-emerald);
+    border-radius: 8px;
+    border: 1px solid var(--main-dark-brown1);
+    width: 50%;
+}
+
+.no-visible {
+    visibility: hidden;
+}
+
+.action-button:hover {
+    background-color: rgb(91, 207, 131);
+    box-shadow: 0px 0px 10px 2px rgba(191, 226, 127, 0.523);
+}
 
 
 /* PlayerCard styles */

@@ -30,8 +30,8 @@ export const Lobby = (props: Props) => {
                     {props.players.map((lobbyPlayer) => <PlayerCard name={lobbyPlayer.name} isReady={lobbyPlayer.ready} isHost={lobbyPlayer.host} />)}
                 </div>
                 <div className="lobby-actions">
-                    <button onClick={props.actions.toggleReady}>{player.ready ? "Unready" : "Ready"}</button>
-                    {canDisplayStartButton(lobby, props.matchConfiguration, player) && <button onClick={props.actions.onPlayerClickStartGame}>Start</button>}
+                    <button className="action-button" onClick={props.actions.toggleReady}>{player.ready ? "Unready" : "Ready"}</button>
+                    <button className={`action-button ${!canDisplayStartButton(lobby, props.matchConfiguration, player) ? "no-visible" : ""}`} onClick={props.actions.onPlayerClickStartGame}>Start</button>
                 </div>
                 <div className="lobby-info">
                     <div>Game ID: {lobby.id}</div>
