@@ -1,8 +1,9 @@
 import { useContext, useEffect, useRef } from "react";
 import { getGameOverText } from "./player.type";
-import { LobbyContext, PlayerContext } from "../../App.tsx";
+import { LobbyContext } from "../../App.tsx";
 import "./gameoverdialog.css"
 import { useNavigate } from "react-router";
+import { useAuth } from "../../contexts/auth-provider.tsx";
 
 interface Props {
     winnerPlayerName: string,
@@ -11,7 +12,7 @@ interface Props {
 export const GameOverDialog = ({winnerPlayerName}: Props) => {
     const dialogRef = useRef<HTMLDialogElement>(null);
     const lobbyContext = useContext(LobbyContext);
-    const playerContext = useContext(PlayerContext);
+    const { user } = useAuth();
 
     const navigate = useNavigate();
 
@@ -38,7 +39,7 @@ export const GameOverDialog = ({winnerPlayerName}: Props) => {
     return (
         <div className="dialog-container">
             <dialog ref={dialogRef} className="game-over-dialog" closedby="any">
-                <p>{getGameOverText(winnerPlayerName, lobbyContext.winnerPlayerId === playerContext.id)}</p>
+                <p>{getGameOverText(winnerPlayerName, lobbyContext.winnerPlayerId === user?.id)}</p>
                 <div className="game-over-dialog-actions">
                     <button onClick={leaveGame}>Go back to home</button>
                     <button onClick={onCloseModal}>Close</button>

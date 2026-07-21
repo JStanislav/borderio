@@ -4,8 +4,7 @@ import playerTwo from  "../../assets/players/player_one.png"
 import playerOne from "../../assets/players/player_two.png"
 import type { Players } from "../game/player.type"
 import { isDragOverable, isFinishLine, onClick, onDragOver, onDragStart, onDrop, setActiveWalls } from "./board.utils"
-import { useContext } from "react"
-import { PlayerContext } from "../../App.tsx"
+import { useAuth } from "../../contexts/auth-provider"
 
 interface Props {
     players: Players,
@@ -17,7 +16,7 @@ interface Props {
 }
 
 export const Board = ({players, requestPlayerMove, requestWallPlacement, activeWalls, gameOver}: Props) => {
-    const currentUser = useContext(PlayerContext)
+    const {user} = useAuth()
 
     setActiveWalls(board, activeWalls);
 
@@ -35,9 +34,9 @@ export const Board = ({players, requestPlayerMove, requestWallPlacement, activeW
                                 ${isFinishLine(indexRow) ? "finish-line" : ""}
                             `}
 
-                            onClick={e => !gameOver && onClick(e, requestWallPlacement, currentUser.ppid)}
+                            onClick={e => !gameOver && onClick(e, requestWallPlacement, user.ppid)}
                             
-                            onDrop={_ => onDrop(currentUser.ppid, indexRow, colIdx, requestPlayerMove)}
+                            onDrop={_ => onDrop(user.ppid, indexRow, colIdx, requestPlayerMove)}
                             onDragOver={isDragOverable(indexRow, colIdx) ? onDragOver : undefined}
                         >
                             {players.map(player => 
@@ -47,7 +46,7 @@ export const Board = ({players, requestPlayerMove, requestWallPlacement, activeW
                                         className="img-player"
                                         src={player.id === 1 ? playerOne : playerTwo} 
                                         alt={player.name}
-                                        draggable={(player.id === currentUser.id) && !gameOver}
+                                        draggable={(player.id === user.id) && !gameOver}
                                         onDragStart={e => onDragStart(e, player.id)}
                                     />
                                 ) : null

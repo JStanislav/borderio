@@ -2,10 +2,10 @@ import { useContext } from "react"
 import { LobbyContext } from "../../App.tsx"
 import type { LobbyPlayer } from "../../game/lobby/lobby"
 import type { MatchConfiguration } from "../../game/MatchConfiguration"
-import { PlayerContext } from "../../App.tsx"
 import { canDisplayStartButton } from "./lobby.ts"
 import "./lobby.css"
 import { PlayerCard } from "./PlayerCard.tsx"
+import { useAuth } from "../../contexts/auth-provider.tsx"
 
 interface Props {
     matchConfiguration: MatchConfiguration
@@ -21,7 +21,16 @@ interface Actions {
 
 export const Lobby = (props: Props) => {
     const lobby = useContext(LobbyContext);
-    const player = useContext(PlayerContext); 
+    const { user } = useAuth();
+
+    if (!user) {
+        return null;
+    }
+
+    const player = props.players.find(p => p.id === user.id);
+    if (player === undefined) {
+        return null;
+    }
 
     return ( 
         <div className="lobby-container">

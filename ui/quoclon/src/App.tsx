@@ -4,35 +4,35 @@ import { allPlayersReady, getDefaultGameState, type GameState } from './game/Gam
 import { gameTimedOutId, startConnection  } from './server/server';
 import toast, { Toaster } from 'react-hot-toast';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
-import { generatePPID } from './app';
 import { send, gracefullyCloseConnection } from './server/server-conn';
-import { DefaultPlayer, type Player } from './game/player';
 import { DefaultLobby, type Lobby } from './game/lobby/lobby';
 import type { MatchConfiguration } from './game/MatchConfiguration';
 import { Lobby as LobbyComponent } from './components/lobby/Lobby.tsx';
+import { useAuth } from './contexts/auth-provider.tsx';
 
 
 export const LobbyContext = createContext<Lobby>(DefaultLobby);
-export const PlayerContext = createContext<Player>(DefaultPlayer);
 
 function App() {
-    const [gameState, setGameState] = useState<GameState>(getDefaultGameState())
-    const [player, setPlayer] = useState<Player>(DefaultPlayer)
-    const [lobby, setLobby] = useState<Lobby>(DefaultLobby)
-    const [matchConfiguration, setMatchConfiguration] = useState<MatchConfiguration>({ playerAmount: 2 })
-    const navigate = useNavigate();
+  const [gameState, setGameState] = useState<GameState>(getDefaultGameState())
+  const [lobby, setLobby] = useState<Lobby>(DefaultLobby)
+  const [matchConfiguration, setMatchConfiguration] = useState<MatchConfiguration>({ playerAmount: 2 })
+  const navigate = useNavigate();
 
-    const { id } = useParams()
-    const [searchParams] = useSearchParams()
+  const { id } = useParams()
+  const [searchParams] = useSearchParams()
+
+  const {user, setUser} = useAuth()
+  
+  if (!user) {
+    return null;
+  }
 
   useEffect(() => {
-    if (id !== undefined && searchParams.get("action") !== null) {
-      const ppid = generatePPID();
-      setPlayer({...player, ppid: ppid});
-      
+    if (id !== undefined && searchParams.get("action") !== null) {      
       const action = searchParams.get("action") as "create" | "join"
 
-      startConnection(id, action, ppid, setGameState, setPlayer, setLobby, setMatchConfiguration, redirectToHome);
+      startConnection(id, action, user.ppid, setGameState, setUser, setLobby, setMatchConfiguration, redirectToHome);
     }
 
     return () => {
@@ -46,21 +46,25 @@ function App() {
   };
 
   const toggleReady = () => {
-      setPlayer({...player, ready: !player.ready});
-      const type = "playerReady";
-      const data = {playerId: player.id, ppid: player.ppid, ready: !player.ready };
-      send(type, data);
+    const player = lobby.players.find(p => p.id === user.id);
+    if (player === undefined) {
+      console.error("Player not found in lobby");
+      return;
+    }
+    const type = "playerReady";
+    const data = {playerId: player.id, ppid: user.ppid, ready: !player.ready };
+    send(type, data);
   }
+
   const onClickStartGame = () => {
     const type = "startGame";
-    const data = {ppid: player.ppid};
+    const data = {ppid: user.ppid};
     send(type, data);
   }
 
 
   return (
     <LobbyContext value={lobby}>
-      <PlayerContext value={player}>
       {
         allPlayersReady(gameState) ?
         <div style={{display: "flex", flexDirection: "column", alignItems: "center"}}>
@@ -70,8 +74,7 @@ function App() {
         <LobbyComponent players={lobby.players} matchConfiguration={matchConfiguration} actions={{toggleReady, onPlayerClickStartGame: onClickStartGame}} />
       }
       <button onClick={redirectToHome}>Leave Game</button>
-        <Toaster />
-      </PlayerContext>
+      <Toaster />
     </LobbyContext>
   )
 }
