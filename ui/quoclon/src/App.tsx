@@ -24,26 +24,28 @@ function App() {
 
   const {user, setUser} = useAuth()
   
-  if (!user) {
-    return null;
-  }
-
   useEffect(() => {
     if (id !== undefined && searchParams.get("action") !== null) {      
       const action = searchParams.get("action") as "create" | "join"
 
-      startConnection(id, action, user.ppid, setGameState, setUser, setLobby, setMatchConfiguration, redirectToHome);
+      if (user) {
+        startConnection(id, action, user.ppid, setGameState, setUser, setLobby, setMatchConfiguration, redirectToHome);
+      }
     }
 
     return () => {
       gracefullyCloseConnection("going away");
     }
-  }, [])
+  }, [user?.ppid])
 
   const redirectToHome = () => {
     toast.dismiss(gameTimedOutId)
     navigate("/");
   };
+
+  if (!user) {
+    return null
+  }
 
   const toggleReady = () => {
     const player = lobby.players.find(p => p.id === user.id);
