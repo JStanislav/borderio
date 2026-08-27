@@ -6,6 +6,7 @@ import { Home } from './components/home/home.tsx'
 import './style/color.css'
 import './style/index.css'
 import { Layout } from './components/layout/Layout.tsx'
+import { Settings } from './components/settings/Settings.tsx'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -14,7 +15,8 @@ createRoot(document.getElementById('root')!).render(
           <Route element={<Layout />}>
             <Route index path="/" element={<Home />} />
             <Route path="game/:id" element={<App />} />
-            <Route path="about" element={<div>About!!!</div>} />    
+            <Route path="about" element={<div>About!!!</div>} /> 
+            <Route path="settings" element={<Settings />} />   
           </Route>
         </Routes>
       </BrowserRouter>

@@ -13,8 +13,19 @@
     height: 65px;
 }
 
-.header-nav {
+.header-nav ul {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    height: 100%;
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
 
+.header-nav ul li {
+    margin: 0 10px;
 }
 
 .page-content {
