@@ -29,7 +29,7 @@ function App() {
       const action = searchParams.get("action") as "create" | "join"
 
       if (user) {
-        startConnection(id, action, user.ppid, setGameState, setUser, setLobby, setMatchConfiguration, redirectToHome);
+        startConnection(id, action, user.ppid, user.name, setGameState, setUser, setLobby, setMatchConfiguration, redirectToHome);
       }
     }
 

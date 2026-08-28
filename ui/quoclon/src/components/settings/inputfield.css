@@ -1,0 +1,11 @@
+.text-field-container {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.text-field-and-button {
+    display: flex;
+    gap: 5px;
+    flex-direction: row;
+}

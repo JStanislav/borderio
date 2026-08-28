@@ -39,6 +39,7 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 	action := r.URL.Query().Get("action")
 	ppid := r.URL.Query().Get("ppid")
 	id := r.PathValue("id")
+	name := r.URL.Query().Get("name")
 
 	fmt.Print("Received request with action: ", action, " and ppid: ", ppid, " and id: ", id, "\n")
 
@@ -76,7 +77,6 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 		gameState.GameState = *gs
 	}
 
-	name := fmt.Sprintf("[PPID: %s]", ppid)
 	p := player.New(ppid, name, utils.GridPosition{}, 8, utils.Line{}, utils.Line{})
 	err := gameState.AddPlayer(p)
 	if err != nil {

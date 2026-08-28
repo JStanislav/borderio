@@ -8,11 +8,12 @@ export const connect = (
                 hash: string,
                 actionType: actionType,
                 ppid: string,
+                name: string,
                 onMessage: (ev: MessageEvent) => void,
                 redirectToHome: () => void,
             ) => {
     let wasConnected = false;
-    websocket = new WebSocket(`${wsURI}/${hash}?action=${actionType}&ppid=${ppid}`);
+    websocket = new WebSocket(`${wsURI}/${hash}?action=${actionType}&ppid=${ppid}&name=${name}`);
     
     websocket.addEventListener("open", () => {
         console.log("connected");
