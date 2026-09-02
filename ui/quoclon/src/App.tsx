@@ -50,7 +50,10 @@ function App() {
           onGameOver();
       }
       return () => {
-        onGameOver();
+        // set again to default, covering the case of leaving the game even if it wasn't game over
+        if (user) {
+          setUser({...user, inGame: false})
+        }
       }
   }, [lobby.winnerPlayerId])
 
