@@ -49,6 +49,9 @@ function App() {
           setWinnerPlayerName(winnerPlayerName);
           onGameOver();
       }
+      return () => {
+        onGameOver();
+      }
   }, [lobby.winnerPlayerId])
 
   const redirectToHome = () => {
