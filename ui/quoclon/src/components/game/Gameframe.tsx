@@ -1,24 +1,15 @@
 import { WallPicker } from "../board/WallPicker"
 import "./gameframe.css"
-import { getPlayerById, type GameState } from "../../game/GameState"
+import { type GameState } from "../../game/GameState"
 import { requestPlayerMove, requestWallPlacement } from "../../server/server"
 import { translateGridPositionToClient, translateWallsToClient } from "../../server/utils"
 import { Board } from "../board/Board"
-import { GameOverDialog } from "./GameOverDialog.tsx"
-import { useContext, useEffect, useState } from "react"
+import { useContext } from "react"
 import { LobbyContext } from "../../App.tsx"
 
 
 export const GameFrame = ({ gameState }: { gameState: GameState }) => {
     const lobbyContext = useContext(LobbyContext);
-    const [winnerPlayerName, setWinnerPlayerName] = useState("Unknown");
-
-    useEffect(() => {
-        if (lobbyContext.winnerPlayerId !== undefined) {
-            const winnerPlayerName = getPlayerById(gameState, lobbyContext.winnerPlayerId || -1)?.name || "Unknown";
-            setWinnerPlayerName(winnerPlayerName);
-        }
-    }, [lobbyContext.winnerPlayerId])
 
     const p1Position = translateGridPositionToClient(gameState.playerOne.position.row, gameState.playerOne.position.col);
     const p2Position = translateGridPositionToClient(gameState.playerTwo.position.row, gameState.playerTwo.position.col);
@@ -48,7 +39,6 @@ export const GameFrame = ({ gameState }: { gameState: GameState }) => {
                     gameOver={lobbyContext.winnerPlayerId !== undefined}
             />
             <WallPicker walls={gameState.playerTwo.wallsRemaining} position="bottom"/>
-            <GameOverDialog winnerPlayerName={winnerPlayerName}/>
         </div>
     )
 }

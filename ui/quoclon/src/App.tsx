@@ -1,6 +1,6 @@
 import { createContext, useEffect, useState } from 'react';
 import { GameFrame } from './components/game/Gameframe';
-import { allPlayersReady, getDefaultGameState, type GameState } from './game/GameState';
+import { allPlayersReady, getDefaultGameState, getPlayerById, type GameState } from './game/GameState';
 import { gameTimedOutId, startConnection  } from './server/server';
 import toast, { Toaster } from 'react-hot-toast';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
@@ -9,6 +9,7 @@ import { DefaultLobby, type Lobby } from './game/lobby/lobby';
 import type { MatchConfiguration } from './game/MatchConfiguration';
 import { Lobby as LobbyComponent } from './components/lobby/Lobby.tsx';
 import { useAuth } from './contexts/auth-provider.tsx';
+import { GameOverDialog } from './components/game/GameOverDialog.tsx';
 
 
 export const LobbyContext = createContext<Lobby>(DefaultLobby);
@@ -17,6 +18,8 @@ function App() {
   const [gameState, setGameState] = useState<GameState>(getDefaultGameState())
   const [lobby, setLobby] = useState<Lobby>(DefaultLobby)
   const [matchConfiguration, setMatchConfiguration] = useState<MatchConfiguration>({ playerAmount: 2 })
+  const [winnerPlayerName, setWinnerPlayerName] = useState("Unknown");
+  
   const navigate = useNavigate();
 
   const { id } = useParams()
@@ -37,6 +40,16 @@ function App() {
       gracefullyCloseConnection("going away");
     }
   }, [user?.ppid])
+
+  
+  useEffect(() => {
+      // Is there a winner?
+      if (lobby.winnerPlayerId !== undefined) {
+          const winnerPlayerName = getPlayerById(gameState, lobby.winnerPlayerId)?.name || "Unknown";
+          setWinnerPlayerName(winnerPlayerName);
+          onGameOver();
+      }
+  }, [lobby.winnerPlayerId])
 
   const redirectToHome = () => {
     toast.dismiss(gameTimedOutId)
@@ -64,6 +77,9 @@ function App() {
     send(type, data);
   }
 
+  const onGameOver = () => {
+    setUser({...user, inGame: false})
+  }
 
   return (
     <LobbyContext value={lobby}>
@@ -76,6 +92,7 @@ function App() {
         <LobbyComponent players={lobby.players} matchConfiguration={matchConfiguration} actions={{toggleReady, onPlayerClickStartGame: onClickStartGame}} />
       }
       <button onClick={redirectToHome}>Leave Game</button>
+      <GameOverDialog winnerPlayerName={winnerPlayerName}/>
       <Toaster />
     </LobbyContext>
   )

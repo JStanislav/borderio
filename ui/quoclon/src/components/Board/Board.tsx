@@ -20,6 +20,11 @@ export const Board = ({players, requestPlayerMove, requestWallPlacement, activeW
 
     setActiveWalls(board, activeWalls);
 
+    if (!user) {
+        console.error("unexpected error: undefined user")
+        return null
+    }
+
     return (
         <div className="board">
             {board.map((row, indexRow) => 

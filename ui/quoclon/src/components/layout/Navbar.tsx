@@ -1,6 +1,6 @@
-import { Link } from "react-router";
 import { useAuth } from "../../contexts/auth-provider";
 import { NameDisplayer } from "./NameDisplayer";
+import { GameAwareLink } from "../GameAwareLink";
 
 
 export const Navbar = () => {
@@ -11,10 +11,10 @@ export const Navbar = () => {
         <nav className="header-nav">
             <ul>
                 <li><NameDisplayer name={user?.name ?? ""} /></li>
-                <li><Link to="/">Home</Link></li>
-                <li><Link to="/about">About</Link></li>
+                <li><GameAwareLink to="/">Home</GameAwareLink></li>
+                <li><GameAwareLink to="/about">About</GameAwareLink></li>
                 <li>
-                    <Link to="/settings">
+                    <GameAwareLink to="/settings">
                         <svg fill="#000" role="img" viewBox="0 0 124 124" width="16px" height="16px" xmlns="http://www.w3.org/2000/svg">
                             <title>Settings</title>
                                 <path d="M9.3,47H6c-3.3,0-6,2.9-6,6.2v18C0,74.6,2.7,77,6,77h3.4c5.4,0,8.7,7.9,4.8,11.8L12,91c-2.4,2.3-2.4,6.2,0,8.5l12.6,12.7
@@ -25,7 +25,7 @@ export const Navbar = () => {
                                     l-2.3-2.3c-2.3-2.4-6.2-2.4-8.5,0L11.9,24.4c-2.3,2.3-2.3,6.1,0,8.5l2.4,2.2C18.1,38.9,14.7,47,9.3,47z M62.2,38.2
                                     c13.3,0,24,10.7,24,24c0,13.3-10.7,24-24,24c-13.3,0-24-10.7-24-24C38.2,48.9,49,38.2,62.2,38.2z"/>
                         </svg>
-                    </Link>
+                    </GameAwareLink>
                 </li>
             </ul>
         </nav>

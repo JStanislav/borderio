@@ -28,7 +28,7 @@ const onMessage = (ev: MessageEvent,
     if (data.type === "playerConfiguration") {
         const config = data.payload as PlayerConfigurationMessage;
         toast.success(`You are ${config.name} (id: ${config.id}) with ppid: ${config.ppid}`);
-        setPlayerConfig({ id: config.id, name: config.name, ppid: config.ppid });
+        setPlayerConfig({ id: config.id, name: config.name, ppid: config.ppid, inGame: true });
     }
     if (data.type === "matchConfiguration") {
         const config = data.payload as MatchConfiguration;
