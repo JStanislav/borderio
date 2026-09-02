@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { type Player } from "../game/player";
 import { generatePPID } from "../app";
+import { generateRandomName } from "../utils/names-generator";
 
 interface AuthPlayerContext {
     user: Player | null;
@@ -21,7 +22,8 @@ export const AuthProvider = ({ children, user: initialUser }: AuthProviderProps)
         async function fetchUser() {
             await new Promise(resolve => setTimeout(resolve, 1000));
             const ppid = generatePPID();
-            setUser({name: ppid, id: -1, ppid: ppid});
+            const name = getPlayerName();
+            setUser({name: name, id: -1, ppid: ppid});
         }
 
         if (!initialUser) {
@@ -29,6 +31,14 @@ export const AuthProvider = ({ children, user: initialUser }: AuthProviderProps)
         }
 
     }, [initialUser]);
+
+    const getPlayerName = () => {
+        const name = localStorage.getItem("playerName");
+        if (name) {
+            return name;
+        }
+        return generateRandomName();
+    }
 
     return (
         <AuthPlayerContext value={{ user: user, setUser: setUser }}>
