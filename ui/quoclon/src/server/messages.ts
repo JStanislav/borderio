@@ -10,6 +10,7 @@ export interface PlayerConfigurationMessage {
 }
 
 export interface LobbyMessage {
+    id: string,
     players: LobbyPlayer[]
     winnerPlayerId?: number
 }

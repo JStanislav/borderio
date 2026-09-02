@@ -54,6 +54,7 @@ type PlayerConfigurationMessage struct {
 type LobbyMessage struct {
 	Players        []PlayerMessage `json:"players"`
 	WinnerPlayerId *int            `json:"winnerPlayerId,omitempty"`
+	Id             string          `json:"id"`
 }
 
 type LobbyJoin struct {
@@ -83,7 +84,7 @@ func GetPlayerLeftMessage(player player.Player) OMessage {
 	}
 }
 
-func GetLobbyMessage(players *[]*player.Player) OMessage {
+func GetLobbyMessage(players *[]*player.Player, lobbyId string) OMessage {
 	playersMsg := make([]PlayerMessage, len(*players))
 	var winnerPlayerId *int
 	for i, p := range *players {
@@ -103,6 +104,7 @@ func GetLobbyMessage(players *[]*player.Player) OMessage {
 		Payload: LobbyMessage{
 			Players:        playersMsg,
 			WinnerPlayerId: winnerPlayerId,
+			Id:             lobbyId,
 		},
 	}
 

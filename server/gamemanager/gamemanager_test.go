@@ -12,7 +12,7 @@ func TestAddGame(t *testing.T) {
 
 	gs := game.New(2, 2, 8, 8, game.Horizontal)
 
-	gm := NewGameManager(gs, nil, 30*time.Second)
+	gm := NewGameManager("id-test", gs, nil, 30*time.Second)
 	games.AddGame("test", gm)
 
 	if games.GetGame("test") == nil {

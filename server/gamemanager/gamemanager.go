@@ -15,6 +15,7 @@ import (
 )
 
 type GameManager struct {
+	ID   string
 	Game *game.GameState
 
 	Started      bool
@@ -33,8 +34,9 @@ type GameManager struct {
 	quit    chan struct{}
 }
 
-func NewGameManager(game *game.GameState, updateStats external.UpdateStats, timeoutAfterGameOver time.Duration) *GameManager {
+func NewGameManager(id string, game *game.GameState, updateStats external.UpdateStats, timeoutAfterGameOver time.Duration) *GameManager {
 	return &GameManager{
+		ID:                   id,
 		Game:                 game,
 		gameOver:             false,
 		UpdateStats:          updateStats,
@@ -305,7 +307,7 @@ func (gm *GameManager) IsGameOver() bool {
 }
 
 func (gm *GameManager) syncLobbyState() {
-	gm.broadcastJSON(messages.GetLobbyMessage(gm.Game.Players))
+	gm.broadcastJSON(messages.GetLobbyMessage(gm.Game.Players, gm.ID))
 }
 
 func (gm *GameManager) syncPlayerConfiguration(io *IO) {

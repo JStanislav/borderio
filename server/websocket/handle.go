@@ -52,7 +52,7 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 
 		timeoutAfterGameOver := h.Context.Value("TimeoutAfterGameOver").(time.Duration)
 
-		gm = gamemanager.NewGameManager(&gameState.GameState, h.UpdateStatsService.UpdateStats, timeoutAfterGameOver)
+		gm = gamemanager.NewGameManager(id, &gameState.GameState, h.UpdateStatsService.UpdateStats, timeoutAfterGameOver)
 
 		err := h.GamesManager.AddGame(id, gm)
 		if err != nil {
