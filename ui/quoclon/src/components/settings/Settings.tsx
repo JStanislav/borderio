@@ -1,4 +1,5 @@
 import { useAuth } from "../../contexts/auth-provider";
+import { saveName } from "../../services/auth-service";
 import { InputField } from "./InputField";
 
 
@@ -8,6 +9,7 @@ export const Settings = () => {
     const onSubmit = (value: string) => {
         if (user) {
             setUser({...user, name: value});
+            saveName(value);
         }
     }
 
