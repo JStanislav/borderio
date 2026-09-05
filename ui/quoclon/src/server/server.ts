@@ -83,6 +83,18 @@ export const requestWallPlacement = (ppid: string, row: number, col: number, ori
     send(type, { payload: { wallTarget: wallTarget }, ppid});
 }
 
+export const requestClickStartGame = (ppid: string) => {
+    const type = "startGame";
+    const data = {ppid};
+    send(type, data);
+}
+
+export const requestToggleReady = (ppid: string) => {
+    const type = "playerReady";
+    const data = {ppid };
+    send(type, data);
+}
+
 export async function GameExist(hash: string) {
     if (hash === "") return false;
 
@@ -90,5 +102,4 @@ export async function GameExist(hash: string) {
 
     if (res.status !== 200) return false
     return true
-
 }

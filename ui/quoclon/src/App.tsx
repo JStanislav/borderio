@@ -1,10 +1,10 @@
 import { createContext, useEffect, useState } from 'react';
 import { GameFrame } from './components/game/Gameframe';
 import { allPlayersReady, getDefaultGameState, getPlayerById, type GameState } from './game/GameState';
-import { gameTimedOutId, startConnection  } from './server/server';
+import { gameTimedOutId, requestClickStartGame, requestToggleReady, startConnection  } from './server/server';
 import toast, { Toaster } from 'react-hot-toast';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
-import { send, gracefullyCloseConnection } from './server/server-conn';
+import { gracefullyCloseConnection } from './server/server-conn';
 import { DefaultLobby, type Lobby } from './game/lobby/lobby';
 import type { MatchConfiguration } from './game/MatchConfiguration';
 import { Lobby as LobbyComponent } from './components/lobby/Lobby.tsx';
@@ -66,23 +66,6 @@ function App() {
     return null
   }
 
-  const toggleReady = () => {
-    const player = lobby.players.find(p => p.id === user.id);
-    if (player === undefined) {
-      console.error("Player not found in lobby");
-      return;
-    }
-    const type = "playerReady";
-    const data = {playerId: player.id, ppid: user.ppid, ready: !player.ready };
-    send(type, data);
-  }
-
-  const onClickStartGame = () => {
-    const type = "startGame";
-    const data = {ppid: user.ppid};
-    send(type, data);
-  }
-
   const onGameOver = () => {
     setUser({...user, inGame: false})
   }
@@ -95,7 +78,7 @@ function App() {
           <GameFrame gameState={gameState}/>
         </div>
         :
-        <LobbyComponent players={lobby.players} matchConfiguration={matchConfiguration} actions={{toggleReady, onPlayerClickStartGame: onClickStartGame}} />
+        <LobbyComponent players={lobby.players} matchConfiguration={matchConfiguration} actions={{toggleReady: requestToggleReady, onPlayerClickStartGame: requestClickStartGame}} />
       }
       <button onClick={redirectToHome}>Leave Game</button>
       <GameOverDialog winnerPlayerName={winnerPlayerName}/>

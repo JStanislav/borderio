@@ -15,8 +15,8 @@ interface Props {
 }
 
 interface Actions {
-    onPlayerClickStartGame: () => void
-    toggleReady: () => void
+    onPlayerClickStartGame: (ppid: string) => void
+    toggleReady: (ppid: string) => void
 }
 
 export const Lobby = (props: Props) => {
@@ -39,8 +39,8 @@ export const Lobby = (props: Props) => {
                     {props.players.map((lobbyPlayer) => <PlayerCard key={`player-${lobbyPlayer.id}-card`} name={lobbyPlayer.name} isReady={lobbyPlayer.ready} isHost={lobbyPlayer.host} />)}
                 </div>
                 <div className="lobby-actions">
-                    <button className="action-button" onClick={props.actions.toggleReady}>{player.ready ? "Unready" : "Ready"}</button>
-                    <button className={`action-button ${!canDisplayStartButton(lobby, props.matchConfiguration, player) ? "no-visible" : ""}`} onClick={props.actions.onPlayerClickStartGame}>Start</button>
+                    <button className="action-button" onClick={() => props.actions.toggleReady(user.ppid)}>{player.ready ? "Unready" : "Ready"}</button>
+                    <button className={`action-button ${!canDisplayStartButton(lobby, props.matchConfiguration, player) ? "no-visible" : ""}`} onClick={() => props.actions.onPlayerClickStartGame(user.ppid)}>Start</button>
                 </div>
                 <div className="lobby-info">
                     <div>Game ID: {lobby.id}</div>
