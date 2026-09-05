@@ -10,6 +10,7 @@ import (
 	"github.com/JStanislav/quoridor-clone/config"
 	"github.com/JStanislav/quoridor-clone/external"
 	"github.com/JStanislav/quoridor-clone/gamemanager"
+	middleware "github.com/JStanislav/quoridor-clone/middlewares"
 	ws "github.com/JStanislav/quoridor-clone/websocket"
 
 	_ "net/http/pprof"
@@ -21,6 +22,8 @@ func main() {
 	}()
 
 	config := config.LoadConfig()
+
+	configMiddleware := middleware.DefaultCORSConfig()
 
 	localhost := "0.0.0.0"
 	fmt.Printf("Server is running on %s:%s\n", localhost, config.Port)
@@ -38,5 +41,8 @@ func main() {
 	mux.HandleFunc("/{id}", wsHandler.Handler)
 	mux.HandleFunc("/ping/{hash}", wsHandler.GamePing)
 	mux.HandleFunc("/game_stats", wsHandler.GamesList)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf("%s:%s", localhost, config.Port), mux))
+
+	handler := middleware.CORS(configMiddleware)(mux)
+
+	log.Fatal(http.ListenAndServe(fmt.Sprintf("%s:%s", localhost, config.Port), handler))
 }

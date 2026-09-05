@@ -99,11 +99,6 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h Handler) GamePing(w http.ResponseWriter, r *http.Request) {
-
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-	w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Authorization")
-
 	hash := r.PathValue("hash")
 
 	fmt.Printf("Pinged for game %s\n", hash)
@@ -117,11 +112,6 @@ func (h Handler) GamePing(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h Handler) GamesList(w http.ResponseWriter, r *http.Request) {
-
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-	w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Authorization")
-
 	games := make([]GameDTO, 0)
 	for hash, gm := range h.GamesManager.GetGamesList() {
 		games = append(games, GetGameDTO(hash, gm))
