@@ -23,8 +23,6 @@ func main() {
 
 	config := config.LoadConfig()
 
-	configMiddleware := middleware.DefaultCORSConfig()
-
 	localhost := "0.0.0.0"
 	fmt.Printf("Server is running on %s:%s\n", localhost, config.Port)
 
@@ -42,6 +40,7 @@ func main() {
 	mux.HandleFunc("/ping/{hash}", wsHandler.GamePing)
 	mux.HandleFunc("/game_stats", wsHandler.GamesList)
 
+	configMiddleware := middleware.NewCORSConfig(config.Cors.AllowedOrigins, config.Cors.AllowedMethods)
 	handler := middleware.CORS(configMiddleware)(mux)
 
 	log.Fatal(http.ListenAndServe(fmt.Sprintf("%s:%s", localhost, config.Port), handler))

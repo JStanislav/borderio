@@ -25,6 +25,14 @@ func DefaultCORSConfig() CORSConfig {
 	}
 }
 
+func NewCORSConfig(allowedOrigins []string, allowedMethods []string) CORSConfig {
+	def := DefaultCORSConfig()
+	def.AllowedOrigins = allowedOrigins
+	def.AllowedMethods = allowedMethods
+
+	return def
+}
+
 func CORS(cfg CORSConfig) func(http.Handler) http.Handler {
 	// lookup O(1) for better performance
 	originSet := make(map[string]struct{}, len(cfg.AllowedOrigins))
