@@ -17,8 +17,7 @@ import (
 func main() {
 	config := config.LoadConfig()
 
-	localhost := "0.0.0.0"
-	fmt.Printf("Server is running on %s:%s\n", localhost, config.Port)
+	fmt.Printf("Server is running on port: %s\n", config.Port)
 
 	mux := http.NewServeMux()
 
@@ -37,5 +36,5 @@ func main() {
 	configMiddleware := middleware.NewCORSConfig(config.Cors.AllowedOrigins, config.Cors.AllowedMethods)
 	handler := middleware.CORS(configMiddleware)(mux)
 
-	log.Fatal(http.ListenAndServe(fmt.Sprintf("%s:%s", localhost, config.Port), handler))
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", config.Port), handler))
 }
