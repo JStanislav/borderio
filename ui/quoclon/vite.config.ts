@@ -10,6 +10,7 @@ export const config = {
 export default defineConfig({
   plugins: [react()],
   server: {
+    host: true,
     port: config.port
   }
 })
