@@ -4,9 +4,10 @@ interface Config {
 }
 
 const LoadOrDefaultValue = (key: string, defaultValue: string): string => {
-    const envProcess = (globalThis as any).process
-    const value = (envProcess && envProcess.env && envProcess.env[key] !== undefined)
-        ? envProcess.env[key]
+    const envProcess = import.meta.env
+
+    const value = (envProcess && envProcess[key] !== undefined)
+        ? envProcess[key]
         : defaultValue;
     
         console.log(`Config: ${key} = ${value}`);
