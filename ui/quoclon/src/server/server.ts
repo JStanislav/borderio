@@ -8,7 +8,7 @@ import { config } from "../../config/config";
 import type { Lobby } from "../game/lobby/lobby";
 import type { MatchConfiguration } from "../game/MatchConfiguration";
 
-const serverURL = `http://${config.serverUrl}`
+const serverURL = `${config.protocol}${config.serverUrl}`
 
 export const gameTimedOutId = "gameTimedOut"
 

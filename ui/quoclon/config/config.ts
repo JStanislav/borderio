@@ -1,4 +1,5 @@
 interface Config {
+    protocol: string;
     serverUrl: string;
     port: number;
 }
@@ -15,6 +16,7 @@ const LoadOrDefaultValue = (key: string, defaultValue: string): string => {
 };
 
 export const config: Config = {
+    protocol: LoadOrDefaultValue("NODE_ENV", "development") === "production" ? "https://" : "http://",
     serverUrl: LoadOrDefaultValue("VITE_SERVER_URL", "localhost:8080"),
     port: parseInt(LoadOrDefaultValue("VITE_APP_PORT", "5173"))
 }

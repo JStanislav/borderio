@@ -10,6 +10,8 @@ ENV VITE_SERVER_URL=${VITE_SERVER_URL}
 ARG APP_PORT
 ENV VITE_APP_PORT=${APP_PORT}
 
+ENV NODE_ENV=production
+
 COPY package*.json ./
 
 RUN npm i
