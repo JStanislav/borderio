@@ -14,7 +14,7 @@ ENV NODE_ENV=production
 
 COPY package*.json ./
 
-RUN npm i --include-dev
+RUN npm i --include=dev
 
 COPY --exclude=node_modules . .
 
