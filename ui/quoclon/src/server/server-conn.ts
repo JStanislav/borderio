@@ -1,5 +1,5 @@
 import {config} from "../../config/config"
-const wsURI = `ws://${config.serverUrl}`;
+const wsURI = `${config.wsProtocol}${config.serverUrl}`;
 let websocket: WebSocket
 
 export type actionType = "create" | "join"

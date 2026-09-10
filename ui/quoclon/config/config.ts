@@ -1,5 +1,7 @@
 interface Config {
-    protocol: string;
+    httpProtocol: string;
+    wsProtocol: string; 
+
     serverUrl: string;
     port: number;
 }
@@ -16,7 +18,8 @@ const LoadOrDefaultValue = (key: string, defaultValue: string): string => {
 };
 
 export const config: Config = {
-    protocol: LoadOrDefaultValue("VITE_NODE_ENV", "development") === "production" ? "https://" : "http://",
+    httpProtocol: LoadOrDefaultValue("VITE_NODE_ENV", "development") === "production" ? "https://" : "http://",
+    wsProtocol: LoadOrDefaultValue("VITE_NODE_ENV", "development") === "production" ? "wss://" : "ws://",
     serverUrl: LoadOrDefaultValue("VITE_SERVER_URL", "localhost:8080"),
     port: parseInt(LoadOrDefaultValue("VITE_APP_PORT", "5173"))
 }
