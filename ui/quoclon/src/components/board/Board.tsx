@@ -1,10 +1,11 @@
-import { board, classes } from "./board.type"
+import { board, classes, resetBoard } from "./board.type"
 import "./board.css"
 import playerTwo from  "../../assets/players/player_one.png"
 import playerOne from "../../assets/players/player_two.png"
 import type { Players } from "../game/player.type"
 import { isDragOverable, isFinishLine, onClick, onDragOver, onDragStart, onDrop, setActiveWalls } from "./board.utils"
 import { useAuth } from "../../contexts/auth-provider"
+import { useEffect } from "react"
 
 interface Props {
     players: Players,
@@ -17,6 +18,13 @@ interface Props {
 
 export const Board = ({players, requestPlayerMove, requestWallPlacement, activeWalls, gameOver}: Props) => {
     const {user} = useAuth()
+
+    useEffect(() => {
+        setActiveWalls(board, activeWalls);
+        return () => {
+            resetBoard(board);
+        }
+    }, []);
 
     setActiveWalls(board, activeWalls);
 
