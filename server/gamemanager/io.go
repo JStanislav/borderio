@@ -2,7 +2,7 @@ package gamemanager
 
 import (
 	"encoding/json"
-	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/JStanislav/quoridor-clone/websocket/messages"
@@ -30,7 +30,7 @@ func (io *IO) Send(msg messages.OMessage) {
 	select {
 	case io.send <- msg:
 	default:
-		fmt.Printf("[player %s] send buffer full, discarding message\n (type=%s)", io.ID, msg.Type)
+		slog.Warn("send buffer full, discarding message", "player_id", io.ID, "message_type", msg.Type)
 	}
 }
 
@@ -45,13 +45,13 @@ func (io *IO) readPump(inbound chan<- PlayerMessage, done chan<- *IO) {
 			if websocket.IsCloseError(err, websocket.CloseNormalClosure) {
 				break
 			}
-			fmt.Printf("[ERROR] error reading message, %s\n", err)
+			slog.Error("[io] error reading message", "player_id", io.ID, "error", err)
 			break
 		}
 
 		var o messages.IMessage[messages.IncomingMessage]
 		if err = json.Unmarshal(message, &o); err != nil {
-			fmt.Printf("[ERROR] error unmarshaling message, %s\n", err)
+			slog.Error("[io] error unmarshaling message", "player_id", io.ID, "error", err)
 			break
 		}
 		inbound <- PlayerMessage{Message: o, IO: io}
@@ -60,14 +60,14 @@ func (io *IO) readPump(inbound chan<- PlayerMessage, done chan<- *IO) {
 
 func (io *IO) writePump() {
 	defer func() {
-		fmt.Printf("Closing connection for ppid: %s\n", io.ID)
+		slog.Info("Closing connection for ppid", "player_id", io.ID)
 		now := time.Now().Add(time.Second * 1)
 		io.conn.WriteControl(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""), now)
 	}()
 
 	for msg := range io.send {
 		if err := io.conn.WriteJSON(msg); err != nil {
-			fmt.Printf("[ERROR] error writing message, %s\n", err)
+			slog.Error("[io] error writing message", "player_id", io.ID, "error", err)
 			break
 		}
 	}

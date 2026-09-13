@@ -2,6 +2,7 @@ package gamemanager
 
 import (
 	"fmt"
+	"log/slog"
 	"time"
 )
 
@@ -10,7 +11,9 @@ type EndedGamesCollector struct {
 }
 
 func NewGC(games *Games, threshold int) *EndedGamesCollector {
-	fmt.Printf("GC started with threshold %d minute/s\n", threshold)
+	thresholdStr := fmt.Sprintf("%d minute/s", threshold)
+	slog.Info("GC Started", "threshold", thresholdStr)
+
 	ticker := time.NewTicker(time.Duration(threshold) * 60 * time.Second)
 
 	go func() {

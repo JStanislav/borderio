@@ -4,6 +4,7 @@ import (
 	"container/ring"
 	"errors"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/JStanislav/quoridor-clone/graph"
@@ -54,7 +55,7 @@ func (g *GameState) StartMatchWithMovementsChannel() chan player.Play {
 
 	go func() {
 		for mov := range movements {
-			fmt.Printf("Received movement: %+v\n", mov)
+			slog.Debug("Received movement", "mov", mov)
 		}
 	}()
 
@@ -82,7 +83,6 @@ func (g *GameState) StartMatch(movements chan player.Play) {
 		p.OnPlayerPlay = func(playerID player.PlayerID, play player.Play) error {
 
 			if p.ID != g.GetCurrentTurnPlayer().ID {
-				fmt.Printf("Player %d attempted to play out of their turn\n", p.ID)
 				return errors.New("not your turn")
 			}
 
@@ -95,13 +95,12 @@ func (g *GameState) StartMatch(movements chan player.Play) {
 			switch play.PlayType {
 			case player.PlayerMove:
 
-				fmt.Printf("Moving P%d [R%d-C%d]->[R%d-C%d]\n", p.ID, p.Position.Row, p.Position.Column, play.Position.Row, play.Position.Column)
+				slog.Debug(fmt.Sprintf("Moving P%d [R%d-C%d]->[R%d-C%d]\n", p.ID, p.Position.Row, p.Position.Column, play.Position.Row, play.Position.Column))
 
 				if g.Board.IsLegalMove(*p.Position, *play.Position, playersButNotCurrentPositions) {
 					p.Position = play.Position
 					g.Turner = g.Turner.Next()
 					movements <- play
-					fmt.Println("Moved")
 
 					return nil
 				} else {
@@ -114,7 +113,7 @@ func (g *GameState) StartMatch(movements chan player.Play) {
 				}
 				wallPosition := utils.WallPosition{CellA: play.WallPlaced.CellA, CellB: play.WallPlaced.CellB}
 
-				fmt.Printf("Placing wall p%d [R%d-C%d]||[R%d-C%d]\n", p.ID, play.WallPlaced.CellA.Row, play.WallPlaced.CellA.Column, play.WallPlaced.CellB.Row, play.WallPlaced.CellB.Column)
+				slog.Debug(fmt.Sprintf("Placing wall p%d [R%d-C%d]||[R%d-C%d]\n", p.ID, play.WallPlaced.CellA.Row, play.WallPlaced.CellA.Column, play.WallPlaced.CellB.Row, play.WallPlaced.CellB.Column))
 
 				err := g.Board.AddWall(graph.Undefined, wallPosition)
 				if err != nil {
@@ -129,7 +128,6 @@ func (g *GameState) StartMatch(movements chan player.Play) {
 				g.Turner = g.Turner.Next()
 				movements <- play
 				p.WallsRemaining -= 1
-				fmt.Println("Placed wall")
 
 				return nil
 			}

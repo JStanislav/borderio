@@ -1,8 +1,10 @@
 package gamemanager
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"slices"
 	"sync"
 	"time"
@@ -34,7 +36,7 @@ type GameManager struct {
 	quit    chan struct{}
 }
 
-func NewGameManager(id string, game *game.GameState, updateStats external.UpdateStats, timeoutAfterGameOver time.Duration) *GameManager {
+func NewGameManager(context context.Context, id string, game *game.GameState, updateStats external.UpdateStats, timeoutAfterGameOver time.Duration) *GameManager {
 	return &GameManager{
 		ID:                   id,
 		Game:                 game,
@@ -63,8 +65,8 @@ func (gm *GameManager) Stop() {
 }
 
 func (gm *GameManager) Run() {
-	fmt.Printf("game manager starting\n")
-	defer fmt.Printf("game manager stopped\n")
+	slog.Info("game manager started", "game_id", gm.ID)
+	defer slog.Info("game manager stopped", "game_id", gm.ID)
 
 	for {
 		select {
@@ -104,7 +106,7 @@ func (gm *GameManager) handleJoin(io *IO) {
 	}
 
 	gm.IOs = append(gm.IOs, io)
-	fmt.Printf("[manager] %s joined (%d/%d)\n", io.ID, len(gm.IOs), gm.Game.PlayerCount)
+	slog.Info("[manager] player joined", "game_id", gm.ID, "player_count", len(gm.IOs), "player_id", io.ID)
 
 	p := gm.Game.GetPlayerByPPID(io.ID)
 
@@ -122,7 +124,7 @@ func (gm *GameManager) handleLeave(io *IO) {
 		return
 	}
 
-	fmt.Printf("[manager] %s left\n", io.ID)
+	slog.Info("[manager] player left", "game_id", gm.ID, "player_id", io.ID)
 	gm.IOs = append(gm.IOs[:idx], gm.IOs[idx+1:]...)
 	close(io.send)
 
@@ -145,17 +147,17 @@ func (gm *GameManager) handleLeave(io *IO) {
 func (gm *GameManager) handleMessage(msg PlayerMessage) {
 	var p *player.Player
 	p = gm.Game.GetPlayerByPPID(msg.Message.PrivatePlayerId)
+	name := fmt.Sprintf("%s [%s]", p.Name, p.PrivatePlayerID)
+
 	if p == nil {
-		fmt.Printf("[ERROR] player with ppid %s not found\n", msg.Message.PrivatePlayerId)
+		slog.Error("[manager] player not found", "game_id", gm.ID, "player", name)
 		return
 	}
 
 	switch msg.Message.Type {
 	case "startGame":
-		fmt.Printf("Player %d wants to start the game\n", p.ID)
-
 		if gm.Started {
-			fmt.Printf("[ERROR] game is already started\n")
+			slog.Error("[manager] game is already started", "game_id", gm.ID, "player", name)
 			msg.IO.Send(messages.OMessage{
 				Type:    "error",
 				Payload: "game is already started",
@@ -164,7 +166,7 @@ func (gm *GameManager) handleMessage(msg PlayerMessage) {
 		}
 
 		if !p.Host {
-			fmt.Printf("[ERROR] only the host can start the game\n")
+			slog.Error("[manager] only the host can start the game", "game_id", gm.ID, "player", name)
 			msg.IO.Send(messages.OMessage{
 				Type:    "error",
 				Payload: "only the host can start the game",
@@ -173,7 +175,7 @@ func (gm *GameManager) handleMessage(msg PlayerMessage) {
 		}
 
 		if !gm.Game.AllPlayersReady() {
-			fmt.Printf("[ERROR] not all players are ready\n")
+			slog.Error("[manager] not all players are ready", "game_id", gm.ID, "player", name)
 			msg.IO.Send(messages.OMessage{
 				Type:    "error",
 				Payload: "not all players are ready",
@@ -189,10 +191,8 @@ func (gm *GameManager) handleMessage(msg PlayerMessage) {
 	case "playerMove":
 		mov := msg.Message.Payload
 
-		fmt.Printf("Player %d wants to move to row %d, col %d\n", p.ID, mov.Target.Row, mov.Target.Col)
-
 		if gm.IsGameOver() {
-			fmt.Printf("[ERROR] game is already over, cannot make a move\n")
+			slog.Error("[manager] game is already over, cannot make a move", "game_id", gm.ID, "player", name)
 			msg.IO.Send(messages.OMessage{
 				Type:    "error",
 				Payload: "game is already over",
@@ -206,22 +206,21 @@ func (gm *GameManager) handleMessage(msg PlayerMessage) {
 				Type:    "error",
 				Payload: err.Error(),
 			})
-			fmt.Printf("[ERROR] error processing player move, %s\n", err)
+			slog.Warn("[manager] error processing player move", "game_id", gm.ID, "player", name, "error", err)
 			return
 		}
 
 		gm.broadcastGameState()
 
 		if p.IsWinner() {
-			fmt.Printf("Player %d wins!\n", p.ID)
+			slog.Info("[manager] player wins", "game_id", gm.ID, "player", name)
 			gm.endGame(fmt.Sprintf("player %s wins", p.Name))
 		}
 	case "wallPlacement":
 		wallMsg := msg.Message.Payload
-		fmt.Printf("Player %d wants to place a wall between [R%d-C%d] and [R%d-C%d] with orientation %s\n", p.ID, wallMsg.WallTarget.CellA.Row, wallMsg.WallTarget.CellA.Col, wallMsg.WallTarget.CellB.Row, wallMsg.WallTarget.CellB.Col, wallMsg.WallTarget.Orientation)
 
 		if gm.IsGameOver() {
-			fmt.Printf("[ERROR] game is already over, cannot make a move\n")
+			slog.Error("[manager] game is already over, cannot make a move", "game_id", gm.ID, "player", name)
 			msg.IO.Send(messages.OMessage{
 				Type:    "error",
 				Payload: "game is already over, cannot make a move",
@@ -235,13 +234,13 @@ func (gm *GameManager) handleMessage(msg PlayerMessage) {
 				Type:    "error",
 				Payload: err.Error(),
 			})
-			fmt.Printf("[ERROR] error processing wall placement, %s\n", err)
+			slog.Warn("[manager] error processing wall placement", "game_id", gm.ID, "player", name, "error", err)
 			return
 		}
 
 		gm.broadcastGameState()
 	case "playerReady":
-		fmt.Printf("Player %d toggled readiness\n", p.ID)
+		slog.Info("[manager] player readiness toggled", "game_id", gm.ID, "player", name)
 		p.ToggleReady()
 
 		gm.syncLobbyState()
@@ -287,11 +286,11 @@ func (gm *GameManager) endGame(reason string) {
 
 	err := gm.UpdateStats(gm.Game.GetGameStats())
 	if err != nil {
-		fmt.Printf("[ERROR] error updating stats, %s\n", err)
+		slog.Error("[manager] error updating stats", "game_id", gm.ID, "error", err)
 	}
 
 	time.AfterFunc(gm.TimeoutAfterGameOver, func() {
-		fmt.Printf("closing all connections\n")
+		slog.Info("[manager] closing all connections", "game_id", gm.ID, "reason", reason)
 		gm.Stop()
 	})
 
@@ -377,17 +376,18 @@ func (g *Games) DeleteOldGames() {
 	for h, gm := range g.GetGamesList() {
 		remove := false
 		if gm.IsGameOver() && (gm.GameTimedOut || len(gm.IOs) == 0) {
-			fmt.Printf("game timed out%s\n", h)
+			slog.Info("[manager] game timed out", "game_id", h)
 			remove = true
 		}
 
 		if gm.Game.StartTime != nil && len(gm.IOs) == 0 {
-			fmt.Printf("game didn't start and no players in lobby %s\n", h)
+			slog.Info("[manager] game didn't start and no players in lobby", "game_id", h)
 			remove = true
 		}
 
 		if remove {
-			fmt.Printf("deleting game %s\n", h)
+			slog.Info("[manager] deleting game", "game_id", h)
+			gm.Stop()
 			g.RemoveGame(h)
 		}
 	}

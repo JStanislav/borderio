@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -17,7 +17,7 @@ import (
 func main() {
 	config := config.LoadConfig()
 
-	fmt.Printf("Server is running on port: %s\n", config.Port)
+	slog.Info("Server is running", "port", config.Port)
 
 	mux := http.NewServeMux()
 
@@ -36,5 +36,8 @@ func main() {
 	configMiddleware := middleware.NewCORSConfig(config.Cors.AllowedOrigins, config.Cors.AllowedMethods)
 	handler := middleware.CORS(configMiddleware)(mux)
 
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", config.Port), handler))
+	err := http.ListenAndServe(fmt.Sprintf(":%s", config.Port), handler)
+	if err != nil {
+		slog.Error("closing server", "error", err)
+	}
 }

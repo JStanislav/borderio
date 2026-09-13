@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -38,10 +39,14 @@ func NewHandler(ctx context.Context, gamesManager *gamemanager.Games, updateStat
 func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 	action := r.URL.Query().Get("action")
 	ppid := r.URL.Query().Get("ppid")
-	id := r.PathValue("id")
+	gameHash := r.PathValue("id")
 	name := r.URL.Query().Get("name")
 
-	fmt.Print("Received request with action: ", action, " and ppid: ", ppid, " and id: ", id, "\n")
+	ctx := context.WithValue(context.Background(), "game", gameHash)
+	ctx = context.WithValue(ctx, "player_name", fmt.Sprintf("%s [%s]", name, ppid))
+
+	nameWithID := fmt.Sprintf("%s [%s]", name, ppid)
+	slog.Info("Received request", "action", action, "game", gameHash, "player", nameWithID)
 
 	var gm *gamemanager.GameManager
 	var gameState game.TwoPlayerMatch
@@ -52,23 +57,21 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 
 		timeoutAfterGameOver := h.Context.Value("TimeoutAfterGameOver").(time.Duration)
 
-		gm = gamemanager.NewGameManager(id, &gameState.GameState, h.UpdateStatsService.UpdateStats, timeoutAfterGameOver)
+		gm = gamemanager.NewGameManager(ctx, gameHash, &gameState.GameState, h.UpdateStatsService.UpdateStats, timeoutAfterGameOver)
 
-		err := h.GamesManager.AddGame(id, gm)
+		err := h.GamesManager.AddGame(gameHash, gm)
 		if err != nil {
-			fmt.Printf("[ERROR] error creating hash, %s\n", err)
-
+			slog.Error("error creating game", "error", err, "game", gameHash, "player", nameWithID)
 			return
-
 		}
 
 		runGame = true
 	}
 
 	if action == "join" {
-		gm = h.GamesManager.GetGame(id)
+		gm = h.GamesManager.GetGame(gameHash)
 		if gm == nil {
-			fmt.Printf("[ERROR] game not found\n")
+			slog.Warn("game not found", "game", gameHash, "player", nameWithID)
 			return
 		}
 
@@ -80,13 +83,13 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 	p := player.New(ppid, name, utils.GridPosition{}, 8, utils.Line{}, utils.Line{})
 	err := gameState.AddPlayer(p)
 	if err != nil {
-		fmt.Printf("[ERROR] error adding player to game state, %s\n", err)
+		slog.Error("error adding player to game state", "error", err, "game", gameHash, "player", nameWithID)
 		return
 	}
 
 	c, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		fmt.Printf("[ERROR] error upgrading, %s\n", err)
+		slog.Error("error upgrading connection", "error", err, "game", gameHash, "player", nameWithID)
 		return
 	}
 
@@ -101,7 +104,7 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 func (h Handler) GamePing(w http.ResponseWriter, r *http.Request) {
 	hash := r.PathValue("hash")
 
-	fmt.Printf("Pinged for game %s\n", hash)
+	slog.Info("Received ping request", "game", hash)
 
 	if h.GamesManager.GetGame(hash) == nil {
 		w.WriteHeader(http.StatusNotFound)
@@ -112,13 +115,15 @@ func (h Handler) GamePing(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h Handler) GamesList(w http.ResponseWriter, r *http.Request) {
+	slog.Info("Received games list request")
+
 	games := make([]GameDTO, 0)
 	for hash, gm := range h.GamesManager.GetGamesList() {
 		games = append(games, GetGameDTO(hash, gm))
 	}
 
 	if err := json.NewEncoder(w).Encode(games); err != nil {
-		fmt.Printf("[ERROR] error encoding games list, %s\n", err)
+		slog.Error("error encoding games list", "error", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

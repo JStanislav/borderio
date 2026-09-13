@@ -11,6 +11,27 @@ import (
 	"github.com/JStanislav/quoridor-clone/utils"
 )
 
+func PrintGrid(g *g.Graph, columns, rows int, playerOne, playerTwo *player.Player) {
+	for i := range rows {
+		for j := range columns {
+			vertex, err := g.Graph.Vertex(graph.CellHash(graph.Cell{Row: i, Column: j}))
+
+			if err != nil {
+				fmt.Printf("Vertex not found: %+v\n", err)
+			}
+			line := fmt.Sprintf("|%+v|", vertex.Id)
+			if playerOne.Position.Row == i && playerOne.Position.Column == j {
+				fmt.Printf("\x1b[37;40;%dm%-0s\x1b[37;9;m", 96, line)
+			} else if playerTwo.Position.Row == i && playerTwo.Position.Column == j {
+				fmt.Printf("\x1b[37;40;%dm%-0s\x1b[37;9;m", 91, line)
+			} else {
+				fmt.Printf("\x1b[37;40;%dm%-0s\x1b[37;9;m", 97, line)
+			}
+		}
+		fmt.Println()
+	}
+}
+
 func TestMain(t *testing.T) {
 	graph := g.New(2, graph.Square)
 	err := graph.GenerateBoard(9, 9)
@@ -45,63 +66,63 @@ func TestMain(t *testing.T) {
 	if graph.IsLegalMove(*playerTwo.Position, p2Move, []*utils.GridPosition{playerOne.Position}) {
 		playerTwo.Position = &p2Move
 	}
-	graph.PrintGrid(9, 9, playerOne, playerTwo)
+	PrintGrid(graph, 9, 9, playerOne, playerTwo)
 	fmt.Println("---------------------------------")
 
 	p2Move = utils.GridPosition{Row: 5, Column: 4}
 	if graph.IsLegalMove(*playerTwo.Position, p2Move, []*utils.GridPosition{playerOne.Position}) {
 		playerTwo.Position = &p2Move
 	}
-	graph.PrintGrid(9, 9, playerOne, playerTwo)
+	PrintGrid(graph, 9, 9, playerOne, playerTwo)
 	fmt.Println("---------------------------------")
 
 	p2Move = utils.GridPosition{Row: 4, Column: 4}
 	if graph.IsLegalMove(*playerTwo.Position, p2Move, []*utils.GridPosition{playerOne.Position}) {
 		playerTwo.Position = &p2Move
 	}
-	graph.PrintGrid(9, 9, playerOne, playerTwo)
+	PrintGrid(graph, 9, 9, playerOne, playerTwo)
 	fmt.Println("---------------------------------")
 
 	p2Move = utils.GridPosition{Row: 3, Column: 4}
 	if graph.IsLegalMove(*playerTwo.Position, p2Move, []*utils.GridPosition{playerOne.Position}) {
 		playerTwo.Position = &p2Move
 	}
-	graph.PrintGrid(9, 9, playerOne, playerTwo)
+	PrintGrid(graph, 9, 9, playerOne, playerTwo)
 	fmt.Println("---------------------------------")
 
 	p2Move = utils.GridPosition{Row: 2, Column: 4}
 	if graph.IsLegalMove(*playerTwo.Position, p2Move, []*utils.GridPosition{playerOne.Position}) {
 		playerTwo.Position = &p2Move
 	}
-	graph.PrintGrid(9, 9, playerOne, playerTwo)
+	PrintGrid(graph, 9, 9, playerOne, playerTwo)
 	fmt.Println("---------------------------------")
 
 	p2Move = utils.GridPosition{Row: 2, Column: 3}
 	if graph.IsLegalMove(*playerTwo.Position, p2Move, []*utils.GridPosition{playerOne.Position}) {
 		playerTwo.Position = &p2Move
 	}
-	graph.PrintGrid(9, 9, playerOne, playerTwo)
+	PrintGrid(graph, 9, 9, playerOne, playerTwo)
 	fmt.Println("---------------------------------")
 
 	p2Move = utils.GridPosition{Row: 1, Column: 3}
 	if graph.IsLegalMove(*playerTwo.Position, p2Move, []*utils.GridPosition{playerOne.Position}) {
 		playerTwo.Position = &p2Move
 	}
-	graph.PrintGrid(9, 9, playerOne, playerTwo)
+	PrintGrid(graph, 9, 9, playerOne, playerTwo)
 	fmt.Println("---------------------------------")
 
 	p2Move = utils.GridPosition{Row: 1, Column: 5}
 	if graph.IsLegalMove(*playerTwo.Position, p2Move, []*utils.GridPosition{playerOne.Position}) {
 		playerTwo.Position = &p2Move
 	}
-	graph.PrintGrid(9, 9, playerOne, playerTwo)
+	PrintGrid(graph, 9, 9, playerOne, playerTwo)
 	fmt.Println("---------------------------------")
 
 	p2Move = utils.GridPosition{Row: 0, Column: 4}
 	if graph.IsLegalMove(*playerTwo.Position, p2Move, []*utils.GridPosition{playerOne.Position}) {
 		playerTwo.Position = &p2Move
 	}
-	graph.PrintGrid(9, 9, playerOne, playerTwo)
+	PrintGrid(graph, 9, 9, playerOne, playerTwo)
 	fmt.Println("---------------------------------")
 
 }
@@ -126,7 +147,7 @@ func TestMatch(t *testing.T) {
 	playerOne := players[0]
 	playerTwo := players[1]
 
-	g.PrintGrid(9, 9, playerOne, playerTwo)
+	PrintGrid(g, 9, 9, playerOne, playerTwo)
 
 	plays := []struct {
 		player player.Player
@@ -151,7 +172,7 @@ func TestMatch(t *testing.T) {
 			fmt.Println("err", err)
 		}
 		time.Sleep(1500 * time.Millisecond)
-		g.PrintGrid(9, 9, playerOne, playerTwo)
+		PrintGrid(g, 9, 9, playerOne, playerTwo)
 	}
 }
 
