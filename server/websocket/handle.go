@@ -42,6 +42,13 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 	gameHash := r.PathValue("id")
 	name := r.URL.Query().Get("name")
 
+	if err := ValidateParams(action, ppid, name, gameHash); err != nil {
+		slog.Error("invalid request", "error", err, "game", gameHash, "player", name)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(err.Error()))
+		return
+	}
+
 	ctx := context.WithValue(context.Background(), "game", gameHash)
 	ctx = context.WithValue(ctx, "player_name", fmt.Sprintf("%s [%s]", name, ppid))
 
