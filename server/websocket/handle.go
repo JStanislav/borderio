@@ -128,3 +128,9 @@ func (h Handler) GamesList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
+func (h Handler) HealthCheck(w http.ResponseWriter, r *http.Request) {
+	slog.Info("Received health check request")
+
+	w.WriteHeader(http.StatusNoContent)
+}

@@ -13,7 +13,7 @@ export const connect = (
                 redirectToHome: () => void,
             ) => {
     let wasConnected = false;
-    websocket = new WebSocket(`${wsURI}/${hash}?action=${actionType}&ppid=${ppid}&name=${name}`);
+    websocket = new WebSocket(`${wsURI}/game/${hash}?action=${actionType}&ppid=${ppid}&name=${name}`);
     
     websocket.addEventListener("open", () => {
         wasConnected = true;

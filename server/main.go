@@ -29,9 +29,11 @@ func main() {
 	games := gamemanager.Games(gamesContainer.Games)
 	wsHandler := ws.NewHandler(handlerContext, &games, updateStatsServiceClient)
 
-	mux.HandleFunc("/{id}", wsHandler.Handler)
+	mux.HandleFunc("/game/{id}", wsHandler.Handler)
 	mux.HandleFunc("/ping/{hash}", wsHandler.GamePing)
 	mux.HandleFunc("/game_stats", wsHandler.GamesList)
+
+	mux.HandleFunc("/health", wsHandler.HealthCheck)
 
 	configMiddleware := middleware.NewCORSConfig(config.Cors.AllowedOrigins, config.Cors.AllowedMethods)
 	handler := middleware.CORS(configMiddleware)(mux)
