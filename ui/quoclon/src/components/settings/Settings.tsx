@@ -2,7 +2,6 @@ import { useAuth } from "../../contexts/auth-provider";
 import { saveName } from "../../services/auth-service";
 import { InputField } from "./InputField";
 
-
 export const Settings = () => {
     const { user, setUser } = useAuth();
 

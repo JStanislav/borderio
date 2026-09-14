@@ -9,3 +9,8 @@
     gap: 5px;
     flex-direction: row;
 }
+
+.input-error {
+    color: rgb(186, 17, 17);
+    font-size: 12px;
+}

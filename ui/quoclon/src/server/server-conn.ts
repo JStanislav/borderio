@@ -16,7 +16,6 @@ export const connect = (
     websocket = new WebSocket(`${wsURI}/${hash}?action=${actionType}&ppid=${ppid}&name=${name}`);
     
     websocket.addEventListener("open", () => {
-        console.log("connected");
         wasConnected = true;
     }); 
 
@@ -33,7 +32,7 @@ export const connect = (
     })
 
     websocket.addEventListener("close", (ev: CloseEvent) => {
-        console.log("disconnected, reason: ", ev.reason, "code: ", ev.code);
+        console.warn("disconnected, reason: ", ev.reason, "code: ", ev.code);
     })
 }
 
