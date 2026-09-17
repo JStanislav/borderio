@@ -68,10 +68,11 @@ type PlayerLeftMessage struct {
 }
 
 type GameStateStateMessage struct {
-	CurrentTurnPlayerId int                  `json:"currentTurnPlayerId"`
-	PlayerOne           PlayerMessage        `json:"playerOne"`
-	PlayerTwo           PlayerMessage        `json:"playerTwo"`
-	Walls               []utils.WallPosition `json:"walls"`
+	CurrentTurnPlayerId int `json:"currentTurnPlayerId"`
+	// PlayerOne           PlayerMessage        `json:"playerOne"`
+	// PlayerTwo           PlayerMessage        `json:"playerTwo"`
+	Players []PlayerMessage      `json:"players"`
+	Walls   []utils.WallPosition `json:"walls"`
 }
 
 func GetPlayerLeftMessage(player player.Player) OMessage {
