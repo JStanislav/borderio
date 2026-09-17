@@ -34,8 +34,6 @@ type GameManager struct {
 	join    chan *IO
 	leave   chan *IO
 	quit    chan struct{}
-
-	Spectators map[string]string
 }
 
 func NewGameManager(context context.Context, id string, game *game.GameState, updateStats external.UpdateStats, timeoutAfterGameOver time.Duration) *GameManager {

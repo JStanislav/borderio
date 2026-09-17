@@ -87,16 +87,6 @@ func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
 		gameState.GameState = *gs
 	}
 
-	if action == "spectate" {
-		gm = h.GamesManager.GetGame(gameHash)
-		if gm == nil {
-			slog.Warn("game not found", "game", gameHash, "player", nameWithID)
-			w.WriteHeader(http.StatusNotFound)
-			return
-		}
-
-	}
-
 	p := player.New(ppid, name, utils.GridPosition{}, 8, utils.Line{}, utils.Line{})
 	err := gameState.AddPlayer(p)
 	if err != nil {

@@ -2,9 +2,8 @@
 export interface GameState {
   type: string,
   currentTurnPlayerId: number,
-  // playerOne: Player,
-  // playerTwo: Player,
-  platers: Player[],
+  playerOne: Player,
+  playerTwo: Player,
   walls: Array<{
     cellA: {
       row: number,
