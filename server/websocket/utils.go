@@ -3,7 +3,7 @@ package websocket
 import "fmt"
 
 func ValidateParams(action, ppid, name, gameHash string) error {
-	if action != "create" && action != "join" {
+	if !(action == "create" || action == "join" || action == "spectate") {
 		if action == "" {
 			return fmt.Errorf("missing action")
 		}
