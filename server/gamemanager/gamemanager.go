@@ -387,9 +387,9 @@ func (g *Games) DeleteOldGames() {
 			remove = true
 		}
 
+		// gm is already stopped (gm.Stop()), when timeout is reached. This step is called strictly after that.
 		if remove {
 			slog.Info("[manager] deleting game", "game_id", h)
-			gm.Stop()
 			g.RemoveGame(h)
 		}
 	}
