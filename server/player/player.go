@@ -36,6 +36,7 @@ type Player struct {
 	Ready bool
 
 	PrivatePlayerID string
+	Connected       bool
 }
 
 func New(privatePlayerID string, name string, position utils.GridPosition, walls int, startLine utils.Line, finishLine utils.Line) *Player {

@@ -2,8 +2,7 @@
 export interface GameState {
   type: string,
   currentTurnPlayerId: number,
-  playerOne: Player,
-  playerTwo: Player,
+  players: Player[],
   walls: Array<{
     cellA: {
       row: number,
@@ -16,7 +15,7 @@ export interface GameState {
   }>
 }
 
-interface Player {
+export interface Player {
   id: number,
   name: string,
   position: {
@@ -31,7 +30,7 @@ export const getDefaultGameState = (): GameState => {
     return {
       type: "gameState",
       currentTurnPlayerId: 1,
-      playerOne: {
+      players: [{
         id: -1,
         name: "P1",
         position: {
@@ -40,8 +39,7 @@ export const getDefaultGameState = (): GameState => {
         },
         wallsRemaining: 10,
         ready: false
-      },
-      playerTwo: {
+      },{
         id: -1,
         name: "P2",
         position: {
@@ -50,7 +48,7 @@ export const getDefaultGameState = (): GameState => {
         },
         wallsRemaining: 10,
         ready: false
-      },
+      }],
       walls: []
     }
 }
@@ -62,15 +60,9 @@ export const getDefaultGameState = (): GameState => {
   and not when the players are ready. So this function is not really useful, since it will always return true when the game starts.
 */
 export const allPlayersReady = (gameState: GameState): boolean => {
-  return gameState.playerOne.ready && gameState.playerTwo.ready;
+  return gameState.players.every(player => player.ready);
 }
 
 export const getPlayerById = (gameState: GameState, playerId: number): Player | undefined => {
-  if (gameState.playerOne.id === playerId) {
-    return gameState.playerOne;
-  }
-  if (gameState.playerTwo.id === playerId) {
-    return gameState.playerTwo;
-  }
-  return undefined;
+  return gameState.players.find(player => player.id === playerId);
 }

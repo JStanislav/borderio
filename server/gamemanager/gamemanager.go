@@ -111,6 +111,7 @@ func (gm *GameManager) handleJoin(io *IO) {
 	slog.Info("[manager] player joined", "game_id", gm.ID, "player_count", len(gm.IOs), "player_id", io.ID)
 
 	p := gm.Game.GetPlayerByPPID(io.ID)
+	p.Connected = true
 
 	message := messages.GetJoinedMessage(*p)
 	gm.broadcastExcept(message, []string{io.ID})
@@ -131,7 +132,13 @@ func (gm *GameManager) handleLeave(io *IO) {
 	close(io.send)
 
 	p := gm.Game.GetPlayerByPPID(io.ID)
-	gm.Game.RemovePlayer(p.ID)
+
+	p.Connected = false
+	if !gm.Started {
+		// players are only removed from the game when the game is not started
+		// so the game can remember players positions one the game has started
+		gm.Game.RemovePlayer(p.ID)
+	}
 
 	gm.broadcastJSON(messages.GetPlayerLeftMessage(*p))
 	gm.syncLobbyState()
