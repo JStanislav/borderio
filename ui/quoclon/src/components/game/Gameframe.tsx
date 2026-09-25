@@ -35,6 +35,7 @@ export const GameFrame = ({ gameState }: { gameState: GameState }) => {
     return (
         <div className="game-frame">
             <WallPicker walls={players[0]?.wallsRemaining || 0} position="top"/>
+            {!lobbyContext.players.find(p => p.id === players[0]?.id)?.connected && "dc"}
             <Board players={players}
                     requestPlayerMove={requestPlayerMove}
                     requestWallPlacement={requestWallPlacement}
@@ -43,6 +44,7 @@ export const GameFrame = ({ gameState }: { gameState: GameState }) => {
                     gameOver={lobbyContext.winnerPlayerId !== undefined}
             />
             <WallPicker walls={players[1]?.wallsRemaining || 0} position="bottom"/>
+            {!lobbyContext.players.find(p => p.id === players[1]?.id)?.connected && "dc"}
         </div>
     )
 }

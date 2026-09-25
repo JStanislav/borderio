@@ -38,6 +38,7 @@ type PositionMessage struct {
 
 type PlayerMessage struct {
 	ID             int             `json:"id"`
+	Connected      bool            `json:"connected"`
 	Name           string          `json:"name"`
 	Position       PositionMessage `json:"position"`
 	WallsRemaining int             `json:"wallsRemaining"`
@@ -92,10 +93,11 @@ func GetLobbyMessage(players *[]*player.Player, lobbyId string) OMessage {
 			winnerPlayerId = &id
 		}
 		playersMsg[i] = PlayerMessage{
-			ID:    int(p.ID),
-			Name:  p.Name,
-			Ready: p.Ready,
-			Host:  p.Host,
+			ID:        int(p.ID),
+			Name:      p.Name,
+			Ready:     p.Ready,
+			Host:      p.Host,
+			Connected: p.Connected,
 		}
 	}
 	lobbyMessage := OMessage{
