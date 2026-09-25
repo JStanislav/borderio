@@ -21,6 +21,10 @@ const onMessage = (ev: MessageEvent,
     const data = JSON.parse(ev.data) as IMessage<any>;
     
     if (data.type === "gameState") {
+        const entries = Object.entries(data.payload.players)
+        const map = new Map<number, any>(entries.map(e => [Number(e[0]), e[1]]));
+        data.payload.players = map;
+
         setGameState(data.payload);
     } else if (data.type === "error") {
         toast.error(`Error: ${data.payload}`);
