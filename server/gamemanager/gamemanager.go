@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log/slog"
 	"slices"
-	"sync"
 	"time"
 
 	"github.com/JStanislav/quoridor-clone/external"
@@ -346,7 +345,6 @@ func (gm *GameManager) indexOf(target *IO) int {
 
 type GamesContainer struct {
 	Games map[string]*GameManager
-	Lock  sync.RWMutex
 
 	GC *EndedGamesCollector
 }
