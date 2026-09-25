@@ -1,36 +1,40 @@
 import { WallPicker } from "../board/WallPicker"
 import "./gameframe.css"
-import { type GameState } from "../../game/GameState"
+import { type GameState, type Player } from "../../game/GameState"
 import { requestPlayerMove, requestWallPlacement } from "../../server/server"
 import { translateGridPositionToClient, translateWallsToClient } from "../../server/utils"
 import { Board } from "../board/Board"
-import { useContext } from "react"
+import { useContext, useEffect, useState } from "react"
 import { LobbyContext } from "../../App.tsx"
-
 
 export const GameFrame = ({ gameState }: { gameState: GameState }) => {
     const lobbyContext = useContext(LobbyContext);
+    const [players, setPlayers] = useState<Player[]>([])
 
-    const p1Position = translateGridPositionToClient(gameState.playerOne.position.row, gameState.playerOne.position.col);
-    const p2Position = translateGridPositionToClient(gameState.playerTwo.position.row, gameState.playerTwo.position.col);
-    const players = [
-        {
-            id: gameState.playerOne.id,
-            name: gameState.playerOne.name,
-            position: p1Position
-        },
-        {
-            id: gameState.playerTwo.id,
-            name: gameState.playerTwo.name,
-            position: p2Position
+    useEffect(() => {
+        if ((lobbyContext.players.length !== lobbyContext.playerAmount)) {
+            return
         }
-    ]
+
+        setPlayers(lobbyContext.players.map(player => {
+            const p = gameState.players.get(player.id)
+            if (!p) {
+                throw new Error("unexpected error: player not found")
+            }
+
+            return {
+                ...p,
+                position: translateGridPositionToClient(p.position.row, p.position.col)
+            }
+        }))
+
+    }, [gameState.players])
 
     const activeWalls = translateWallsToClient(gameState.walls || []);
 
     return (
         <div className="game-frame">
-            <WallPicker walls={gameState.playerOne.wallsRemaining} position="top"/>
+            <WallPicker walls={players[0]?.wallsRemaining || 0} position="top"/>
             <Board players={players}
                     requestPlayerMove={requestPlayerMove}
                     requestWallPlacement={requestWallPlacement}
@@ -38,7 +42,7 @@ export const GameFrame = ({ gameState }: { gameState: GameState }) => {
                     currentTurnPlayerId={gameState.currentTurnPlayerId}
                     gameOver={lobbyContext.winnerPlayerId !== undefined}
             />
-            <WallPicker walls={gameState.playerTwo.wallsRemaining} position="bottom"/>
+            <WallPicker walls={players[1]?.wallsRemaining || 0} position="bottom"/>
         </div>
     )
 }

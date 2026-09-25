@@ -1,6 +1,6 @@
 import { createContext, useEffect, useState } from 'react';
 import { GameFrame } from './components/game/Gameframe';
-import { allPlayersReady, getDefaultGameState, getPlayerById, type GameState } from './game/GameState';
+import { allPlayersReady, getDefaultGameState, type GameState } from './game/GameState';
 import { gameTimedOutId, requestClickStartGame, requestToggleReady, startConnection  } from './server/server';
 import toast, { Toaster } from 'react-hot-toast';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
@@ -45,7 +45,7 @@ function App() {
   useEffect(() => {
       // Is there a winner?
       if (lobby.winnerPlayerId !== undefined) {
-          const winnerPlayerName = getPlayerById(gameState, lobby.winnerPlayerId)?.name || "Unknown";
+          const winnerPlayerName = gameState.players.get(lobby.winnerPlayerId)?.name || "Unknown";
           setWinnerPlayerName(winnerPlayerName);
           onGameOver();
       }

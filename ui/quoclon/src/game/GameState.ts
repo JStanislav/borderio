@@ -2,8 +2,7 @@
 export interface GameState {
   type: string,
   currentTurnPlayerId: number,
-  playerOne: Player,
-  playerTwo: Player,
+  players: Map<number, Player>
   walls: Array<{
     cellA: {
       row: number,
@@ -16,7 +15,7 @@ export interface GameState {
   }>
 }
 
-interface Player {
+export interface Player {
   id: number,
   name: string,
   position: {
@@ -31,26 +30,7 @@ export const getDefaultGameState = (): GameState => {
     return {
       type: "gameState",
       currentTurnPlayerId: 1,
-      playerOne: {
-        id: -1,
-        name: "P1",
-        position: {
-          row: 0,
-          col: 0
-        },
-        wallsRemaining: 10,
-        ready: false
-      },
-      playerTwo: {
-        id: -1,
-        name: "P2",
-        position: {
-          row: 8,
-          col: 8
-        },
-        wallsRemaining: 10,
-        ready: false
-      },
+      players: new Map(),
       walls: []
     }
 }
@@ -62,15 +42,18 @@ export const getDefaultGameState = (): GameState => {
   and not when the players are ready. So this function is not really useful, since it will always return true when the game starts.
 */
 export const allPlayersReady = (gameState: GameState): boolean => {
-  return gameState.playerOne.ready && gameState.playerTwo.ready;
-}
+  if (gameState.players.size === 0) {
+    return false
+  }
 
-export const getPlayerById = (gameState: GameState, playerId: number): Player | undefined => {
-  if (gameState.playerOne.id === playerId) {
-    return gameState.playerOne;
-  }
-  if (gameState.playerTwo.id === playerId) {
-    return gameState.playerTwo;
-  }
-  return undefined;
+  let allReady = true
+
+  gameState.players.forEach((value) => {
+    if(!value) return
+    if (!value.ready) {
+      allReady = false
+    }
+  })
+
+  return allReady
 }
