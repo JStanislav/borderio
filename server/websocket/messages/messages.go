@@ -68,10 +68,9 @@ type PlayerLeftMessage struct {
 }
 
 type GameStateStateMessage struct {
-	CurrentTurnPlayerId int                  `json:"currentTurnPlayerId"`
-	PlayerOne           PlayerMessage        `json:"playerOne"`
-	PlayerTwo           PlayerMessage        `json:"playerTwo"`
-	Walls               []utils.WallPosition `json:"walls"`
+	CurrentTurnPlayerId int                   `json:"currentTurnPlayerId"`
+	Players             map[int]PlayerMessage `json:"players"`
+	Walls               []utils.WallPosition  `json:"walls"`
 }
 
 func GetPlayerLeftMessage(player player.Player) OMessage {
@@ -131,28 +130,24 @@ func GetGameStateMessage(gameState *game.GameState) OMessage {
 		walls = gameState.Board.GetWalls()
 	}
 
-	p1 := (*gameState.Players)[0]
-	p2 := (*gameState.Players)[1]
+	players := make(map[int]PlayerMessage, len(*gameState.Players))
+	for i := 0; i < len(*gameState.Players); i++ {
+		p := (*gameState.Players)[i]
+		players[int(p.ID)] = PlayerMessage{
+			ID:             int(p.ID),
+			Name:           p.Name,
+			Position:       PositionMessage{Row: p.Position.Row, Col: p.Position.Column},
+			WallsRemaining: p.WallsRemaining,
+			Ready:          p.Ready,
+		}
+	}
 
 	gameStateMessage := OMessage{
 		Type: "gameState",
 		Payload: GameStateStateMessage{
 			CurrentTurnPlayerId: currentTurn,
-			PlayerOne: PlayerMessage{
-				ID:             int(p1.ID),
-				Name:           p1.Name,
-				Position:       PositionMessage{Row: p1.Position.Row, Col: p1.Position.Column},
-				WallsRemaining: p1.WallsRemaining,
-				Ready:          p1.Ready,
-			},
-			PlayerTwo: PlayerMessage{
-				ID:             int(p2.ID),
-				Name:           p2.Name,
-				Position:       PositionMessage{Row: p2.Position.Row, Col: p2.Position.Column},
-				WallsRemaining: p2.WallsRemaining,
-				Ready:          p2.Ready,
-			},
-			Walls: walls,
+			Players:             players,
+			Walls:               walls,
 		},
 	}
 
