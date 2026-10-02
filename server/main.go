@@ -29,7 +29,7 @@ func main() {
 	games := gamemanager.Games(gamesContainer.Games)
 	wsHandler := ws.NewHandler(handlerContext, &games, updateStatsServiceClient)
 
-	mux.HandleFunc("/game/{id}", wsHandler.Handler)
+	mux.HandleFunc("/play/{game_id}", wsHandler.StartOrJoinGame)
 	mux.HandleFunc("/ping/{hash}", wsHandler.GamePing)
 	mux.HandleFunc("/game_stats", wsHandler.GamesList)
 

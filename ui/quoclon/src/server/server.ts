@@ -1,6 +1,6 @@
 import toast from "react-hot-toast";
 import { type GameState } from "../game/GameState";
-import { connect,send, type actionType } from "./server-conn";
+import { connect, send } from "./server-conn";
 import { translateGridPositionToServer, translateWallGridPositionToServer } from "./utils";
 import type { IMessage, LobbyMessage, PlayerConfigurationMessage, PlayerJoinedMessage, WillTimeoutMessage } from "./messages";
 import type { Player } from "../game/player";
@@ -60,7 +60,6 @@ const onMessage = (ev: MessageEvent,
 
 
 export const startConnection = (hash: string,
-                                action: actionType,
                                 ppid: string,
                                 name: string,
                                 setGameState: (gameState: GameState) => void,
@@ -70,7 +69,7 @@ export const startConnection = (hash: string,
                                 redirectToHome: () => void) => {
 
     // starts socket connection
-   connect(hash, action, ppid, name, (ev: MessageEvent) => onMessage(ev, setGameState, setPlayerConfig, setLobby, setMatchConfiguration), redirectToHome);
+   connect(hash, ppid, name, (ev: MessageEvent) => onMessage(ev, setGameState, setPlayerConfig, setLobby, setMatchConfiguration), redirectToHome);
 }
 
 export const requestPlayerMove = (ppid: string, row: number, col: number) => {

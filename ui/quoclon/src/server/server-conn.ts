@@ -2,18 +2,15 @@ import {config} from "../../config/config"
 const wsURI = `${config.wsProtocol}${config.serverWSUrl}`;
 let websocket: WebSocket
 
-export type actionType = "create" | "join"
-
 export const connect = (
                 hash: string,
-                actionType: actionType,
                 ppid: string,
                 name: string,
                 onMessage: (ev: MessageEvent) => void,
                 redirectToHome: () => void,
             ) => {
     let wasConnected = false;
-    websocket = new WebSocket(`${wsURI}/game/${hash}?action=${actionType}&ppid=${ppid}&name=${name}`);
+    websocket = new WebSocket(`${wsURI}/play/${hash}?ppid=${ppid}&name=${name}`);
     
     websocket.addEventListener("open", () => {
         wasConnected = true;
