@@ -54,7 +54,6 @@ func (h Handler) StartOrJoinGame(w http.ResponseWriter, r *http.Request) {
 	ctx := context.WithValue(context.Background(), "game", gameId)
 
 	addPlayer := false
-	runGame := false
 
 	var match game.TwoPlayerMatch
 	var gm *gamemanager.GameManager
@@ -75,7 +74,9 @@ func (h Handler) StartOrJoinGame(w http.ResponseWriter, r *http.Request) {
 		}
 
 		addPlayer = true
-		runGame = true
+		defer func() {
+			go gm.Run()
+		}()
 
 	} else {
 		slog.Info("Joining game", "game", gameId, "player", nameWithID)
@@ -114,9 +115,6 @@ func (h Handler) StartOrJoinGame(w http.ResponseWriter, r *http.Request) {
 	io := gamemanager.NewIO(ppid, c)
 	gm.AddPlayer(io)
 
-	if runGame {
-		go gm.Run()
-	}
 }
 
 func (h Handler) GamePing(w http.ResponseWriter, r *http.Request) {
