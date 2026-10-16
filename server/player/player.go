@@ -24,7 +24,6 @@ type OnPlayerPlay func(playerID PlayerID, play Play) error
 type Player struct {
 	ID             PlayerID
 	Name           string
-	Host           bool
 	Position       *utils.GridPosition
 	WallsRemaining int
 
@@ -33,10 +32,7 @@ type Player struct {
 	StartLine  utils.Line
 	FinishLine utils.Line
 
-	Ready bool
-
 	PrivatePlayerID string
-	Connected       bool
 }
 
 func New(privatePlayerID string, name string, position utils.GridPosition, walls int, startLine utils.Line, finishLine utils.Line) *Player {
@@ -95,8 +91,4 @@ func (p *Player) IsMovingToFinishLine(play Play) bool {
 	} else {
 		return play.Position.Column == p.FinishLine.Index
 	}
-}
-
-func (p *Player) ToggleReady() {
-	p.Ready = !p.Ready
 }

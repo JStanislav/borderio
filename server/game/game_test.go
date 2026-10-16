@@ -131,11 +131,9 @@ func TestMatch(t *testing.T) {
 	movesChannel := make(chan player.Play)
 
 	gs := NewTwoPlayerMatch()
-	p1 := player.New("ppid1", "quoro", utils.GridPosition{Column: 4, Row: 0}, 9, utils.Line{Type: utils.HorizontalLine, Index: 0}, utils.Line{Type: utils.HorizontalLine, Index: 8})
-	p2 := player.New("ppid2", "wally", utils.GridPosition{Column: 4, Row: 8}, 9, utils.Line{Type: utils.HorizontalLine, Index: 8}, utils.Line{Type: utils.HorizontalLine, Index: 0})
 
-	gs.AddPlayer(p1)
-	gs.AddPlayer(p2)
+	gs.AddPlayer("quoro", "ppid1", 8)
+	gs.AddPlayer("wally", "ppid2", 8)
 
 	gs.StartMatch(movesChannel) // use new two player match
 	go receiveSelected(movesChannel)
@@ -176,33 +174,32 @@ func TestMatch(t *testing.T) {
 	}
 }
 
-func TestGameHosts(t *testing.T) {
-	gs := NewTwoPlayerMatch()
-	p1 := player.New("ppid1", "quoro", utils.GridPosition{Column: 4, Row: 0}, 9, utils.Line{Type: utils.HorizontalLine, Index: 0}, utils.Line{Type: utils.HorizontalLine, Index: 8})
-	p2 := player.New("ppid2", "wally", utils.GridPosition{Column: 4, Row: 8}, 9, utils.Line{Type: utils.HorizontalLine, Index: 8}, utils.Line{Type: utils.HorizontalLine, Index: 0})
+// COMMENTING: Hosts are no more handled by the game, they are handled by the lobby. So this test is no longer relevant.
+// func TestGameHosts(t *testing.T) {
+// 	gs := NewTwoPlayerMatch()
+// 	p1 := player.New("ppid1", "quoro", utils.GridPosition{Column: 4, Row: 0}, 9, utils.Line{Type: utils.HorizontalLine, Index: 0}, utils.Line{Type: utils.HorizontalLine, Index: 8})
+// 	p2 := player.New("ppid2", "wally", utils.GridPosition{Column: 4, Row: 8}, 9, utils.Line{Type: utils.HorizontalLine, Index: 8}, utils.Line{Type: utils.HorizontalLine, Index: 0})
 
-	gs.AddPlayer(p1)
-	gs.AddPlayer(p2)
+// 	gs.AddPlayer("quoro", "ppid1", 8)
+// 	gs.AddPlayer("wally", "ppid2", 8)
 
-	if p1.Host != true {
-		t.Errorf("expected player 1 to be host")
-	}
+// 	if p1.Host != true {
+// 		t.Errorf("expected player 1 to be host")
+// 	}
 
-	gs.RemovePlayer(1)
+// 	gs.RemovePlayer(1)
 
-	if p2.Host != true {
-		t.Errorf("expected player 2 to be host after player 1 leaves")
-	}
+// 	if p2.Host != true {
+// 		t.Errorf("expected player 2 to be host after player 1 leaves")
+// 	}
 
-}
+// }
 
 func TestGetUnusedPlayerID(t *testing.T) {
 	gs := NewTwoPlayerMatch()
-	p1 := player.New("ppid1", "quoro", utils.GridPosition{Column: 4, Row: 0}, 9, utils.Line{Type: utils.HorizontalLine, Index: 0}, utils.Line{Type: utils.HorizontalLine, Index: 8})
-	p2 := player.New("ppid2", "wally", utils.GridPosition{Column: 4, Row: 8}, 9, utils.Line{Type: utils.HorizontalLine, Index: 8}, utils.Line{Type: utils.HorizontalLine, Index: 0})
 
-	gs.AddPlayer(p1)
-	gs.AddPlayer(p2)
+	gs.AddPlayer("quoro", "ppid1", 8)
+	gs.AddPlayer("wally", "ppid2", 8)
 
 	expected := gs.GetUnusedPlayerID()
 
@@ -213,11 +210,8 @@ func TestGetUnusedPlayerID(t *testing.T) {
 
 func TestGetUnusedPlayerIDSeveralTimes(t *testing.T) {
 	gs := NewTwoPlayerMatch()
-	p1 := player.New("ppid1", "quoro", utils.GridPosition{Column: 4, Row: 0}, 9, utils.Line{Type: utils.HorizontalLine, Index: 0}, utils.Line{Type: utils.HorizontalLine, Index: 8})
-	p2 := player.New("ppid2", "wally", utils.GridPosition{Column: 4, Row: 8}, 9, utils.Line{Type: utils.HorizontalLine, Index: 8}, utils.Line{Type: utils.HorizontalLine, Index: 0})
-
-	gs.AddPlayer(p1)
-	gs.AddPlayer(p2)
+	gs.AddPlayer("quoro", "ppid1", 8)
+	gs.AddPlayer("wally", "ppid2", 8)
 	gs.RemovePlayer(1)
 
 	expected := gs.GetUnusedPlayerID()
@@ -227,11 +221,9 @@ func TestGetUnusedPlayerIDSeveralTimes(t *testing.T) {
 	}
 
 	gs2 := NewTwoPlayerMatch()
-	p3 := player.New("ppid3", "quoro", utils.GridPosition{Column: 4, Row: 0}, 9, utils.Line{Type: utils.HorizontalLine, Index: 0}, utils.Line{Type: utils.HorizontalLine, Index: 8})
-	p4 := player.New("ppid4", "wally", utils.GridPosition{Column: 4, Row: 8}, 9, utils.Line{Type: utils.HorizontalLine, Index: 8}, utils.Line{Type: utils.HorizontalLine, Index: 0})
 
-	gs2.AddPlayer(p3)
-	gs2.AddPlayer(p4)
+	gs2.AddPlayer("quoro", "ppid3", 8)
+	gs2.AddPlayer("wally", "ppid4", 8)
 	gs2.RemovePlayer(2)
 
 	expected = gs2.GetUnusedPlayerID()

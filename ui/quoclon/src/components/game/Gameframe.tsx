@@ -1,6 +1,6 @@
 import { WallPicker } from "../board/WallPicker"
 import "./gameframe.css"
-import { type GameState, type Player } from "../../game/GameState"
+import { GetDefaultPlayer, type GameState, type Player } from "../../game/GameState"
 import { requestPlayerMove, requestWallPlacement } from "../../server/server"
 import { translateGridPositionToClient, translateWallsToClient } from "../../server/utils"
 import { Board } from "../board/Board"
@@ -17,9 +17,13 @@ export const GameFrame = ({ gameState }: { gameState: GameState }) => {
         }
 
         setPlayers(lobbyContext.players.map(player => {
-            const p = gameState.players.get(player.id)
+            let p = gameState.players.get(player.id)
             if (!p) {
-                throw new Error("unexpected error: player not found")
+                // This should never happen, but if it does, we will create a default player to avoid crashing the game
+                // It happens because a race condition where the lobby is updated before the game state is updated,
+                // so the player is not yet in the game state when the lobby is updated.
+                console.warn("no player")
+                p = GetDefaultPlayer(player.id, player.name)
             }
 
             return {

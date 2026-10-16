@@ -8,6 +8,8 @@ export interface Lobby {
     
     players: LobbyPlayer[],
     winnerPlayerId?: number
+
+    gameStarted: boolean
 }
 
 export type LobbyPlayer = LobbyPlayerMessage 
@@ -16,5 +18,6 @@ export const DefaultLobby: Lobby = {
     id: "CHNGM",
     playerAmount: 2,
     players: [],
-    winnerPlayerId: undefined
+    winnerPlayerId: undefined,
+    gameStarted: false
 }

@@ -203,22 +203,10 @@ func (g *GameState) GetCurrentTurnPlayer() *player.Player {
 	}
 }
 
-func (g *GameState) AllPlayersReady() bool {
-	for _, p := range *g.Players {
-		if !p.Ready {
-			return false
-		}
-	}
-	return true
-}
-
 func (g *GameState) AddPlayer(p *player.Player) error {
 	if len(*g.Players) < g.PlayerCount {
 		*g.Players = append(*g.Players, p)
 
-		if len(*g.Players) == 1 {
-			p.Host = true
-		}
 		return nil
 	}
 
@@ -228,14 +216,7 @@ func (g *GameState) AddPlayer(p *player.Player) error {
 func (g *GameState) RemovePlayer(pid player.PlayerID) error {
 	for i, player := range *g.Players {
 		if player.ID == pid {
-			var wasHost bool
-			if player.Host {
-				wasHost = true
-			}
 			*g.Players = append((*g.Players)[:i], (*g.Players)[i+1:]...)
-			if wasHost && len(*g.Players) > 0 {
-				(*g.Players)[0].Host = true
-			}
 			return nil
 		}
 	}
@@ -291,4 +272,14 @@ func (g *GameState) GetPlayersExcept(pid player.PlayerID) *[]*player.Player {
 		}
 	}
 	return &players
+}
+
+func (g *GameState) GetWinnerPlayerId() *int {
+	for _, p := range *g.Players {
+		if p.IsWinner() {
+			id := int(p.ID)
+			return &id
+		}
+	}
+	return nil
 }

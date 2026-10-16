@@ -1,6 +1,6 @@
 import { createContext, useEffect, useState } from 'react';
 import { GameFrame } from './components/game/Gameframe';
-import { allPlayersReady, getDefaultGameState, type GameState } from './game/GameState';
+import { getDefaultGameState, type GameState } from './game/GameState';
 import { gameTimedOutId, requestClickStartGame, requestToggleReady, startConnection  } from './server/server';
 import toast, { Toaster } from 'react-hot-toast';
 import { useNavigate, useParams } from 'react-router';
@@ -70,7 +70,7 @@ function App() {
   return (
     <LobbyContext value={lobby}>
       {
-        allPlayersReady(gameState) ?
+        lobby.gameStarted ?
         <div style={{display: "flex", flexDirection: "column", alignItems: "center"}}>
           <GameFrame gameState={gameState}/>
         </div>

@@ -10,6 +10,7 @@ import (
 
 	"github.com/JStanislav/quoridor-clone/external"
 	"github.com/JStanislav/quoridor-clone/game"
+	"github.com/JStanislav/quoridor-clone/gamemanager/lobby"
 	"github.com/JStanislav/quoridor-clone/player"
 	"github.com/JStanislav/quoridor-clone/utils"
 	"github.com/JStanislav/quoridor-clone/websocket/messages"
@@ -34,7 +35,7 @@ type GameManager struct {
 	leave   chan *IO
 	quit    chan struct{}
 
-	Spectators map[string]string
+	Lobbyists map[string]*lobby.Lobbyist
 }
 
 func NewGameManager(context context.Context, id string, game *game.GameState, updateStats external.UpdateStats, timeoutAfterGameOver time.Duration) *GameManager {
@@ -50,6 +51,8 @@ func NewGameManager(context context.Context, id string, game *game.GameState, up
 		join:    make(chan *IO, 8),
 		leave:   make(chan *IO, 8),
 		quit:    make(chan struct{}),
+
+		Lobbyists: make(map[string]*lobby.Lobbyist),
 	}
 }
 
@@ -111,9 +114,15 @@ func (gm *GameManager) handleJoin(io *IO) {
 
 	p := gm.Game.GetPlayerByPPID(io.ID)
 
-	p.Connected = true
+	l := lobby.NewLobbyist(int(p.ID), p.Name)
+	if len(gm.Lobbyists) == 0 {
+		l.Host = true
+	}
+	gm.Lobbyists[io.ID] = l
 
-	message := messages.GetJoinedMessage(*p)
+	l.Connected = true
+
+	message := messages.GetJoinedMessage(*l)
 	gm.broadcastExcept(message, []string{io.ID})
 
 	gm.syncLobbyState()
@@ -131,17 +140,21 @@ func (gm *GameManager) handleLeave(io *IO) {
 	gm.IOs = append(gm.IOs[:idx], gm.IOs[idx+1:]...)
 	close(io.send)
 
-	p := gm.Game.GetPlayerByPPID(io.ID)
+	l := *gm.Lobbyists[io.ID]
+	l.Connected = false
 
-	p.Connected = false
 	if !gm.Started {
 		// players are only removed from the game when the game is not started
 		// so the game can remember players positions one the game has started
+		p := gm.Game.GetPlayerByPPID(io.ID)
 		gm.Game.RemovePlayer(p.ID)
-
 	}
 
-	gm.broadcastJSON(messages.GetPlayerLeftMessage(*p))
+	if l.Spectator || !gm.Started {
+		gm.RemoveLobbyist(io.ID)
+	}
+
+	gm.broadcastJSON(messages.GetPlayerLeftMessage(l))
 	gm.syncLobbyState()
 
 	// TODO: implement when player abandons in the middle of the game
@@ -152,6 +165,17 @@ func (gm *GameManager) handleLeave(io *IO) {
 	// 	}
 	// 	gm.broadcastGameState()
 	// }
+}
+
+func (gm *GameManager) RemoveLobbyist(ppid string) {
+	wasHost := gm.Lobbyists[ppid].Host
+	delete(gm.Lobbyists, ppid)
+	if wasHost && len(gm.Lobbyists) > 0 {
+		for _, l := range gm.Lobbyists {
+			l.Host = true
+			break
+		}
+	}
 }
 
 func (gm *GameManager) handleMessage(msg PlayerMessage) {
@@ -175,7 +199,7 @@ func (gm *GameManager) handleMessage(msg PlayerMessage) {
 			return
 		}
 
-		if !p.Host {
+		if !gm.Lobbyists[msg.IO.ID].Host {
 			slog.Error("[manager] only the host can start the game", "game_id", gm.ID, "player", name)
 			msg.IO.Send(messages.OMessage{
 				Type:    "error",
@@ -184,7 +208,7 @@ func (gm *GameManager) handleMessage(msg PlayerMessage) {
 			return
 		}
 
-		if !gm.Game.AllPlayersReady() {
+		if !gm.AllPlayersReady() {
 			slog.Error("[manager] not all players are ready", "game_id", gm.ID, "player", name)
 			msg.IO.Send(messages.OMessage{
 				Type:    "error",
@@ -197,6 +221,7 @@ func (gm *GameManager) handleMessage(msg PlayerMessage) {
 
 		gm.Started = true
 
+		gm.syncLobbyState()
 		gm.broadcastGameState()
 	case "playerMove":
 		mov := msg.Message.Payload
@@ -251,7 +276,7 @@ func (gm *GameManager) handleMessage(msg PlayerMessage) {
 		gm.broadcastGameState()
 	case "playerReady":
 		slog.Info("[manager] player readiness toggled", "game_id", gm.ID, "player", name)
-		p.ToggleReady()
+		gm.Lobbyists[p.PrivatePlayerID].ToggleReady()
 
 		gm.syncLobbyState()
 		return
@@ -278,11 +303,7 @@ func (gm *GameManager) broadcastExcept(msg messages.OMessage, ppids []string) er
 
 func (gm *GameManager) broadcastGameState() error {
 	gameStateMesage := messages.GetGameStateMessage(gm.Game)
-	err := gm.broadcastJSON(gameStateMesage)
-	if err != nil {
-		return err
-	}
-	return nil
+	return gm.broadcastJSON(gameStateMesage)
 }
 
 func (gm *GameManager) syncMatchConfiguration(io *IO) {
@@ -315,8 +336,18 @@ func (gm *GameManager) IsGameOver() bool {
 	return gm.gameOver
 }
 
+func (gm *GameManager) AllPlayersReady() bool {
+	for _, p := range gm.Lobbyists {
+		if !p.Ready {
+			return false
+		}
+	}
+	return true
+}
+
 func (gm *GameManager) syncLobbyState() {
-	gm.broadcastJSON(messages.GetLobbyMessage(gm.Game.Players, gm.ID))
+	winnerId := gm.Game.GetWinnerPlayerId()
+	gm.broadcastJSON(messages.GetLobbyMessage(gm.Started, gm.Lobbyists, gm.ID, winnerId))
 }
 
 func (gm *GameManager) syncPlayerConfiguration(io *IO) {
