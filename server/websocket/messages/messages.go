@@ -44,6 +44,7 @@ type PlayerMessage struct {
 	WallsRemaining int             `json:"wallsRemaining"`
 	Ready          bool            `json:"ready"`
 	Host           bool            `json:"host"`
+	Spectator      bool            `json:"spectator"`
 }
 
 type PlayerConfigurationMessage struct {

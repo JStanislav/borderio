@@ -19,5 +19,5 @@ export const DefaultLobby: Lobby = {
     playerAmount: 2,
     players: [],
     winnerPlayerId: undefined,
-    gameStarted: false
+    gameStarted: false,
 }

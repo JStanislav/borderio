@@ -6,6 +6,7 @@ import { canDisplayStartButton } from "./lobby.ts"
 import "./lobby.css"
 import { PlayerCard } from "./PlayerCard.tsx"
 import { useAuth } from "../../contexts/auth-provider.tsx"
+import { SpectatorsSection } from "./SpectatorsSection.tsx"
 
 interface Props {
     matchConfiguration: MatchConfiguration
@@ -36,7 +37,11 @@ export const Lobby = (props: Props) => {
         <div className="lobby-container">
             <div className="lobby-content">
                 <div className="lobby-players">
-                    {props.players.map((lobbyPlayer) => <PlayerCard key={`player-${lobbyPlayer.id}-card`} name={lobbyPlayer.name} isReady={lobbyPlayer.ready} isHost={lobbyPlayer.host} />)}
+                    <div>
+                        {props.players.map((lobbyPlayer) => <PlayerCard key={`player-${lobbyPlayer.id}-card`} name={lobbyPlayer.name} isReady={lobbyPlayer.ready} isHost={lobbyPlayer.host} />)}
+                    </div>
+                    <SpectatorsSection spectators={["schelotto", "rojas","murray", "novak", "del potro", "nalbandian", "asdas", "messi", "riquelme"]} />
+                    {/* <SpectatorsSection spectators={lobby.players.filter(p => p.spectator).map(p => p.name)}/> */}
                 </div>
                 <div className="lobby-actions">
                     <button className="action-button" onClick={() => props.actions.toggleReady(user.ppid)}>{player.ready ? "Unready" : "Ready"}</button>

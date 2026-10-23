@@ -27,6 +27,7 @@ export interface LobbyPlayer {
     ready: boolean
     host: boolean
     connected: boolean
+    spectator: boolean
 }
 
 export interface GameOverMessage {
