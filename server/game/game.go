@@ -13,10 +13,10 @@ import (
 )
 
 type GameState struct {
-	PlayerCount int
-	StartTime   *time.Time
-	Players     *[]*player.Player
-	WallLength  int
+	PlayersCapacity int
+	StartTime       *time.Time
+	Players         *[]*player.Player
+	WallLength      int
 
 	// Board related
 	Board          graph.Board
@@ -38,15 +38,15 @@ const (
 func New(wallLength int, players int, columns, rows int, finishLineType FinishLineType) *GameState {
 	board := graph.New(2, graph.ExtraRows)
 	return &GameState{
-		PlayerCount:    players,
-		WallLength:     wallLength,
-		FinishLineType: finishLineType,
-		Columns:        columns,
-		Rows:           rows,
-		Players:        &[]*player.Player{},
-		StartTime:      new(time.Time),
-		Turner:         ring.New(players),
-		Board:          board,
+		PlayersCapacity: players,
+		WallLength:      wallLength,
+		FinishLineType:  finishLineType,
+		Columns:         columns,
+		Rows:            rows,
+		Players:         &[]*player.Player{},
+		StartTime:       new(time.Time),
+		Turner:          ring.New(players),
+		Board:           board,
 	}
 }
 
@@ -204,7 +204,7 @@ func (g *GameState) GetCurrentTurnPlayer() *player.Player {
 }
 
 func (g *GameState) AddPlayer(p *player.Player) error {
-	if len(*g.Players) < g.PlayerCount {
+	if len(*g.Players) < g.PlayersCapacity {
 		*g.Players = append(*g.Players, p)
 
 		return nil

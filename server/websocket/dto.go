@@ -40,7 +40,7 @@ func GetGameDTO(hash string, gm *gamemanager.GameManager) GameDTO {
 	}
 	return GameDTO{
 		ID:          hash,
-		PlayerCount: gm.Game.PlayerCount,
+		PlayerCount: gm.Game.PlayersCapacity,
 		StartTime:   gm.Game.StartTime,
 		IsOver:      gm.IsGameOver(),
 

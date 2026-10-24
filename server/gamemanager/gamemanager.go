@@ -103,24 +103,26 @@ func (gm *GameManager) handleJoin(io *IO) {
 	// 	return
 	// }
 
-	if len(*gm.Game.Players) > gm.Game.PlayerCount {
-		io.Send(messages.GetGameFullMessage())
-		close(io.send)
-		return
-	}
-
 	gm.IOs = append(gm.IOs, io)
 	slog.Info("[manager] player joined", "game_id", gm.ID, "player_count", len(gm.IOs), "player_id", io.ID)
 
+	var l *lobby.Lobbyist
 	p := gm.Game.GetPlayerByPPID(io.ID)
 
-	l := lobby.NewLobbyist(int(p.ID), p.Name)
-	if len(gm.Lobbyists) == 0 {
-		l.Host = true
-	}
-	gm.Lobbyists[io.ID] = l
+	if p == nil {
+		// player is surely a spectator
+		l = lobby.NewLobbyist(-1, io.Name)
+		l.Spectator = true
 
+	} else {
+		l = lobby.NewLobbyist(int(p.ID), p.Name)
+		if len(gm.Lobbyists) == 0 {
+			l.Host = true
+		}
+	}
 	l.Connected = true
+
+	gm.Lobbyists[io.ID] = l
 
 	message := messages.GetJoinedMessage(*l)
 	gm.broadcastExcept(message, []string{io.ID})
@@ -143,7 +145,7 @@ func (gm *GameManager) handleLeave(io *IO) {
 	l := *gm.Lobbyists[io.ID]
 	l.Connected = false
 
-	if !gm.Started {
+	if !gm.Started && !l.Spectator {
 		// players are only removed from the game when the game is not started
 		// so the game can remember players positions one the game has started
 		p := gm.Game.GetPlayerByPPID(io.ID)
@@ -307,7 +309,7 @@ func (gm *GameManager) broadcastGameState() error {
 }
 
 func (gm *GameManager) syncMatchConfiguration(io *IO) {
-	message := messages.GetMatchConfigurationMessage(gm.Game.PlayerCount)
+	message := messages.GetMatchConfigurationMessage(gm.Game.PlayersCapacity)
 	io.Send(message)
 }
 
@@ -338,7 +340,7 @@ func (gm *GameManager) IsGameOver() bool {
 
 func (gm *GameManager) AllPlayersReady() bool {
 	for _, p := range gm.Lobbyists {
-		if !p.Ready {
+		if !p.Ready && !p.Spectator {
 			return false
 		}
 	}
@@ -351,14 +353,19 @@ func (gm *GameManager) syncLobbyState() {
 }
 
 func (gm *GameManager) syncPlayerConfiguration(io *IO) {
-	player := gm.Game.GetPlayerByPPID(io.ID)
+	p := gm.Game.GetPlayerByPPID(io.ID)
+
+	id := -1
+	if p != nil {
+		id = int(p.ID)
+	}
 
 	message := messages.OMessage{
 		Type: "playerConfiguration",
 		Payload: messages.PlayerConfigurationMessage{
-			ID:              int(player.ID),
-			Name:            player.Name,
-			PrivatePlayerId: player.PrivatePlayerID,
+			ID:              id,
+			Name:            io.Name,
+			PrivatePlayerId: io.ID,
 		},
 	}
 

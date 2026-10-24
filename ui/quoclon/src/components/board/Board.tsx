@@ -14,9 +14,10 @@ interface Props {
     activeWalls: { row: number, col: number, orientation: "horizontal" | "vertical" }[],
     currentTurnPlayerId: number
     gameOver: boolean
+    spectator: boolean
 }
 
-export const Board = ({players, requestPlayerMove, requestWallPlacement, activeWalls, gameOver}: Props) => {
+export const Board = ({players, requestPlayerMove, requestWallPlacement, activeWalls, gameOver, spectator}: Props) => {
     const {user} = useAuth()
 
     useEffect(() => {
@@ -47,10 +48,10 @@ export const Board = ({players, requestPlayerMove, requestWallPlacement, activeW
                                 ${isFinishLine(indexRow) ? "finish-line" : ""}
                             `}
 
-                            onClick={e => !gameOver && onClick(e, requestWallPlacement, user.ppid)}
+                            onClick={e => !spectator && !gameOver && onClick(e, requestWallPlacement, user.ppid)}
                             
-                            onDrop={_ => onDrop(user.ppid, indexRow, colIdx, requestPlayerMove)}
-                            onDragOver={isDragOverable(indexRow, colIdx) ? onDragOver : undefined}
+                            onDrop={_ => !spectator && !gameOver && onDrop(user.ppid, indexRow, colIdx, requestPlayerMove)}
+                            onDragOver={e => !spectator && !gameOver && isDragOverable(indexRow, colIdx) ? onDragOver(e) : undefined}
                         >
                             {players.map(player => 
                                 (player.position.row === indexRow && player.position.col === colIdx) ? (

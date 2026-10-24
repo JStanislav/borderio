@@ -1,4 +1,4 @@
-import { useContext } from "react"
+import { useContext, useEffect, useState } from "react"
 import { LobbyContext } from "../../App.tsx"
 import type { LobbyPlayer } from "../../game/lobby/lobby"
 import type { MatchConfiguration } from "../../game/MatchConfiguration"
@@ -22,7 +22,14 @@ interface Actions {
 
 export const Lobby = (props: Props) => {
     const lobby = useContext(LobbyContext);
+    const [players, setPlayers] = useState<LobbyPlayer[]>([]);
+    const [spectators, setSpectators] = useState<LobbyPlayer[]>([]);
     const { user } = useAuth();
+
+    useEffect( () => {
+        setPlayers(props.players.filter(p => !p.spectator));
+        setSpectators(props.players.filter(p => p.spectator));
+    }, [props.players]);
 
     if (!user) {
         return null;
@@ -38,18 +45,23 @@ export const Lobby = (props: Props) => {
             <div className="lobby-content">
                 <div className="lobby-players">
                     <div>
-                        {props.players.map((lobbyPlayer) => <PlayerCard key={`player-${lobbyPlayer.id}-card`} name={lobbyPlayer.name} isReady={lobbyPlayer.ready} isHost={lobbyPlayer.host} />)}
+                        {players.map((lobbyPlayer) => <PlayerCard key={`player-${lobbyPlayer.id}-card`} name={lobbyPlayer.name} isReady={lobbyPlayer.ready} isHost={lobbyPlayer.host} />)}
                     </div>
-                    <SpectatorsSection spectators={["schelotto", "rojas","murray", "novak", "del potro", "nalbandian", "asdas", "messi", "riquelme"]} />
+                    <SpectatorsSection spectators={spectators.map((s) => s.name)} />
                     {/* <SpectatorsSection spectators={lobby.players.filter(p => p.spectator).map(p => p.name)}/> */}
                 </div>
                 <div className="lobby-actions">
-                    <button className="action-button" onClick={() => props.actions.toggleReady(user.ppid)}>{player.ready ? "Unready" : "Ready"}</button>
+                    <button 
+                        className="action-button" 
+                        style={{visibility: player.spectator ? "hidden" : "visible"}} 
+                        onClick={() => props.actions.toggleReady(user.ppid)}>
+                            {player.ready ? "Unready" : "Ready"}
+                    </button>
                     <button className={`action-button ${!canDisplayStartButton(lobby, props.matchConfiguration, player) ? "no-visible" : ""}`} onClick={() => props.actions.onPlayerClickStartGame(user.ppid)}>Start</button>
                 </div>
                 <div className="lobby-info">
                     <div>Game ID: {lobby.id}</div>
-                    <div>Players: {lobby.players.length}/{props.matchConfiguration.playerAmount}</div>
+                    <div>Players: {players.length}/{props.matchConfiguration.playerAmount}</div>
                 </div>
             </div>
         </div>

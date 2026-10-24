@@ -112,7 +112,7 @@ func (h Handler) StartOrJoinGame(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	io := gamemanager.NewIO(ppid, c)
+	io := gamemanager.NewIO(ppid, name, c)
 	gm.AddPlayer(io)
 
 }

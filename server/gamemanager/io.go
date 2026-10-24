@@ -13,15 +13,18 @@ const sendBufferSize = 32
 
 type IO struct {
 	ID   string
+	Name string
 	conn *websocket.Conn
 
 	send chan messages.OMessage
 }
 
-func NewIO(id string, conn *websocket.Conn) *IO {
+func NewIO(id string, name string, conn *websocket.Conn) *IO {
 	return &IO{
 		ID:   id,
+		Name: name,
 		conn: conn,
+
 		send: make(chan messages.OMessage, sendBufferSize),
 	}
 }

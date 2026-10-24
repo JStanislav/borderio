@@ -24,7 +24,6 @@ export const SpectatorsSection = ({spectators}: SpectatorsSectionProps, ) => {
             setSpectatorsToDisplay(spectators);
             setMoreSpectators([]);
         }
-        console.log("SpectatorsSection useEffect called", moreSpectators);
 
         if (spectators.length > MaxSpectatorsToShow) {
 

@@ -95,6 +95,7 @@ func GetLobbyMessage(started bool, players map[string]*lobby.Lobbyist, lobbyId s
 			Ready:     p.Ready,
 			Host:      p.Host,
 			Connected: p.Connected,
+			Spectator: p.Spectator,
 		}
 		playersMsg = append(playersMsg, pMsg)
 	}
