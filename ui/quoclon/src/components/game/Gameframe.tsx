@@ -7,6 +7,7 @@ import { Board } from "../board/Board"
 import { useContext, useEffect, useState } from "react"
 import { LobbyContext } from "../../App.tsx"
 import { useAuth } from "../../contexts/auth-provider.tsx"
+import { GameTitle } from "./GameTitle.tsx"
 
 export const GameFrame = ({ gameState }: { gameState: GameState }) => {
     const lobbyContext = useContext(LobbyContext);
@@ -41,18 +42,21 @@ export const GameFrame = ({ gameState }: { gameState: GameState }) => {
 
     return (
         <div className="game-frame">
-            <WallPicker walls={players[0]?.wallsRemaining || 0} position="top"/>
-            {!lobbyContext.players.find(p => p.id === players[0]?.id)?.connected && "dc"}
-            <Board players={players}
-                    requestPlayerMove={requestPlayerMove}
-                    requestWallPlacement={requestWallPlacement}
-                    activeWalls={activeWalls}
-                    currentTurnPlayerId={gameState.currentTurnPlayerId}
-                    gameOver={lobbyContext.winnerPlayerId !== undefined}
-                    spectator={user ? user.id === -1 : true}
-            />
-            <WallPicker walls={players[1]?.wallsRemaining || 0} position="bottom"/>
-            {!lobbyContext.players.find(p => p.id === players[1]?.id)?.connected && "dc"}
+            <GameTitle players={players.filter(p => p.id !== -1).map(p => p.name)} currentUser={user?.name || ""} />
+            <div className="game-frame-board">
+                <WallPicker walls={players[0]?.wallsRemaining || 0} position="top"/>
+                {!lobbyContext.players.find(p => p.id === players[0]?.id)?.connected && "dc"}
+                <Board players={players}
+                        requestPlayerMove={requestPlayerMove}
+                        requestWallPlacement={requestWallPlacement}
+                        activeWalls={activeWalls}
+                        currentTurnPlayerId={gameState.currentTurnPlayerId}
+                        gameOver={lobbyContext.winnerPlayerId !== undefined}
+                        spectator={user ? user.id === -1 : true}
+                />
+                <WallPicker walls={players[1]?.wallsRemaining || 0} position="bottom"/>
+                {!lobbyContext.players.find(p => p.id === players[1]?.id)?.connected && "dc"}
+            </div>
         </div>
     )
 }

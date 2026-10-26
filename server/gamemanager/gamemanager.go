@@ -113,7 +113,6 @@ func (gm *GameManager) handleJoin(io *IO) {
 		// player is surely a spectator
 		l = lobby.NewLobbyist(-1, io.Name)
 		l.Spectator = true
-
 	} else {
 		l = lobby.NewLobbyist(int(p.ID), p.Name)
 		if len(gm.Lobbyists) == 0 {
@@ -130,6 +129,9 @@ func (gm *GameManager) handleJoin(io *IO) {
 	gm.syncLobbyState()
 	gm.syncPlayerConfiguration(io)
 	gm.syncMatchConfiguration(io)
+	if gm.Started {
+		gm.broadcastGameState()
+	}
 }
 
 func (gm *GameManager) handleLeave(io *IO) {
