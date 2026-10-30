@@ -8,6 +8,7 @@ import { useContext, useEffect, useState } from "react"
 import { LobbyContext } from "../../App.tsx"
 import { useAuth } from "../../contexts/auth-provider.tsx"
 import { GameTitle } from "./GameTitle.tsx"
+import { isGameOver } from "../../game/lobby/lobby"
 
 export const GameFrame = ({ gameState }: { gameState: GameState }) => {
     const lobbyContext = useContext(LobbyContext);
@@ -51,7 +52,7 @@ export const GameFrame = ({ gameState }: { gameState: GameState }) => {
                         requestWallPlacement={requestWallPlacement}
                         activeWalls={activeWalls}
                         currentTurnPlayerId={gameState.currentTurnPlayerId}
-                        gameOver={lobbyContext.winnerPlayerId !== undefined}
+                        gameOver={isGameOver(lobbyContext)}
                         spectator={user ? user.id === -1 : true}
                 />
                 <WallPicker walls={players[1]?.wallsRemaining || 0} position="bottom"/>

@@ -25,6 +25,11 @@ type GameState struct {
 	Rows           int
 
 	Turner *ring.Ring
+
+	// Set when the game is won by other means than reaching the finish line (e.g. the opponent abandoned)
+	Winner *player.Player
+	// Set when the game ends without a winner (e.g. no player came back after disconnecting)
+	Draw bool
 }
 
 type FinishLineType string
@@ -234,14 +239,13 @@ func (g *GameState) GetPlayerByPPID(ppid string) *player.Player {
 
 func (g *GameState) GetGameStats() GameStats {
 	var winnerId int
-	if (*g.Players)[0].IsWinner() {
-		winnerId = int((*g.Players)[0].ID)
-	} else if (*g.Players)[1].IsWinner() {
-		winnerId = int((*g.Players)[1].ID)
+	if id := g.GetWinnerPlayerId(); id != nil {
+		winnerId = *id
 	}
 
 	return GameStats{
 		PlayerWinnerId:      winnerId,
+		Draw:                g.Draw,
 		TotalMoves:          0,
 		TotalWallPlacements: 0,
 		TotalWallsRemaining: 0,
@@ -275,6 +279,13 @@ func (g *GameState) GetPlayersExcept(pid player.PlayerID) *[]*player.Player {
 }
 
 func (g *GameState) GetWinnerPlayerId() *int {
+	if g.Draw {
+		return nil
+	}
+	if g.Winner != nil {
+		id := int(g.Winner.ID)
+		return &id
+	}
 	for _, p := range *g.Players {
 		if p.IsWinner() {
 			id := int(p.ID)
