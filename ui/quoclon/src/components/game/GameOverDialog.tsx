@@ -4,6 +4,7 @@ import { LobbyContext } from "../../App.tsx";
 import "./gameoverdialog.css"
 import { useNavigate } from "react-router";
 import { useAuth } from "../../contexts/auth-provider.tsx";
+import { isGameOver } from "../../game/lobby/lobby";
 
 interface Props {
     winnerPlayerName: string,
@@ -22,10 +23,10 @@ export const GameOverDialog = ({winnerPlayerName}: Props) => {
     }
     
     useEffect(() => {
-        if (lobbyContext.winnerPlayerId !== undefined) {
+        if (isGameOver(lobbyContext)) {
             onOpenModal();
         }
-    }, [lobbyContext.winnerPlayerId])
+    }, [lobbyContext.winnerPlayerId, lobbyContext.draw])
 
     const onOpenModal = () => {
         dialogRef.current?.showModal();
@@ -39,7 +40,7 @@ export const GameOverDialog = ({winnerPlayerName}: Props) => {
     return (
         <div className="dialog-container">
             <dialog ref={dialogRef} className="game-over-dialog" closedby="any">
-                <p>{getGameOverText(winnerPlayerName, lobbyContext.winnerPlayerId === user?.id)}</p>
+                <p>{getGameOverText(winnerPlayerName, lobbyContext.winnerPlayerId === user?.id, lobbyContext.draw)}</p>
                 <div className="game-over-dialog-actions">
                     <button onClick={leaveGame}>Go back to home</button>
                     <button onClick={onCloseModal}>Close</button>

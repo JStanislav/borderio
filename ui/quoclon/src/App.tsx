@@ -5,7 +5,7 @@ import { gameTimedOutId, requestClickStartGame, requestToggleReady, startConnect
 import toast, { Toaster } from 'react-hot-toast';
 import { useNavigate, useParams } from 'react-router';
 import { gracefullyCloseConnection } from './server/server-conn';
-import { DefaultLobby, type Lobby } from './game/lobby/lobby';
+import { DefaultLobby, isGameOver, type Lobby } from './game/lobby/lobby';
 import type { MatchConfiguration } from './game/MatchConfiguration';
 import { Lobby as LobbyComponent } from './components/lobby/Lobby.tsx';
 import { useAuth } from './contexts/auth-provider.tsx';
@@ -40,10 +40,12 @@ function App() {
 
   
   useEffect(() => {
-      // Is there a winner?
-      if (lobby.winnerPlayerId !== undefined) {
-          const winnerPlayerName = gameState.players.get(lobby.winnerPlayerId)?.name || "Unknown";
-          setWinnerPlayerName(winnerPlayerName);
+      // Is there a winner (or a draw)?
+      if (isGameOver(lobby)) {
+          if (lobby.winnerPlayerId !== undefined) {
+            const winnerPlayerName = gameState.players.get(lobby.winnerPlayerId)?.name || "Unknown";
+            setWinnerPlayerName(winnerPlayerName);
+          }
           onGameOver();
       }
       return () => {
@@ -52,7 +54,7 @@ function App() {
           setUser({...user, inGame: false})
         }
       }
-  }, [lobby.winnerPlayerId])
+  }, [lobby.winnerPlayerId, lobby.draw])
 
   const redirectToHome = () => {
     toast.dismiss(gameTimedOutId)

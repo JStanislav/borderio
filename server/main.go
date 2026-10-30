@@ -25,6 +25,7 @@ func main() {
 	updateStatsServiceClient := external.NewUpdateStatsServiceHTTPClient("") // a NATS client can be used too, just for fun.
 
 	handlerContext := context.WithValue(context.Background(), "TimeoutAfterGameOver", time.Duration(config.TimeoutAfterGameOver)*time.Second)
+	handlerContext = context.WithValue(handlerContext, "ReconnectionGracePeriod", time.Duration(config.ReconnectionGracePeriod)*time.Second)
 
 	games := gamemanager.Games(gamesContainer.Games)
 	wsHandler := ws.NewHandler(handlerContext, &games, updateStatsServiceClient)
