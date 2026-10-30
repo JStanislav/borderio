@@ -12,7 +12,9 @@ export interface PlayerConfigurationMessage {
 export interface LobbyMessage {
     id: string,
     players: LobbyPlayer[]
+    gameStarted: boolean
     winnerPlayerId?: number
+    draw?: boolean
 }
 
 export interface PlayerJoinedMessage {
@@ -26,10 +28,17 @@ export interface LobbyPlayer {
     ready: boolean
     host: boolean
     connected: boolean
+    spectator: boolean
 }
 
 export interface GameOverMessage {
     winnerPlayerId: string
+}
+
+export interface PlayerDisconnectedMessage {
+    id: number,
+    name: string,
+    gracePeriod: number // in seconds
 }
 
 export interface WillTimeoutMessage {

@@ -18,6 +18,47 @@
     min-height: 483px;
     background-color: #634141;
     grid-area: players;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.lobby-spectators {
+    background-color: #78c99061;
+}
+
+.lobby-spectators-title {
+    display: flex;
+    justify-content: center;
+    border-bottom: 1px solid #000000;
+    margin-bottom: 10px;
+    line-height: 1.5;
+}
+
+.lobby-spectators-list {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: 8px;
+    grid-auto-flow: column;
+    padding: 10px
+}
+
+
+
+.lobby-spectator-name {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.spectator-dot {
+    display: inline-block;
+    width: 5px;
+    height: 5px;
+    background-color: #000;
+    border-radius: 50%;
+    margin-right: 5px;
 }
 
 .lobby-info {

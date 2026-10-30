@@ -11,8 +11,6 @@ import (
 	"github.com/JStanislav/quoridor-clone/external"
 	"github.com/JStanislav/quoridor-clone/game"
 	"github.com/JStanislav/quoridor-clone/gamemanager"
-	"github.com/JStanislav/quoridor-clone/player"
-	"github.com/JStanislav/quoridor-clone/utils"
 	"github.com/gorilla/websocket"
 )
 
@@ -36,86 +34,93 @@ func NewHandler(ctx context.Context, gamesManager *gamemanager.Games, updateStat
 	}
 }
 
-func (h Handler) Handler(w http.ResponseWriter, r *http.Request) {
-	action := r.URL.Query().Get("action")
+func (h Handler) StartOrJoinGame(w http.ResponseWriter, r *http.Request) {
 	ppid := r.URL.Query().Get("ppid")
-	gameHash := r.PathValue("id")
+	gameId := r.PathValue("game_id")
 	name := r.URL.Query().Get("name")
 
-	if err := ValidateParams(action, ppid, name, gameHash); err != nil {
-		slog.Error("invalid request", "error", err, "game", gameHash, "player", name)
+	nameWithID := fmt.Sprintf("%s [%s]", name, ppid)
+	slog.Info("Received request", "game", gameId, "player", nameWithID)
+
+	if err := ValidateParams(ppid, name, gameId); err != nil {
+		slog.Error("invalid request", "error", err, "game", gameId, "player", name)
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(err.Error()))
 		return
 	}
 
-	ctx := context.WithValue(context.Background(), "game", gameHash)
-	ctx = context.WithValue(ctx, "player_name", fmt.Sprintf("%s [%s]", name, ppid))
+	create := h.GamesManager.GetGame(gameId) == nil
 
-	nameWithID := fmt.Sprintf("%s [%s]", name, ppid)
-	slog.Info("Received request", "action", action, "game", gameHash, "player", nameWithID)
+	ctx := context.WithValue(context.Background(), "game", gameId)
 
+	addPlayer := false
+
+	var match game.TwoPlayerMatch
 	var gm *gamemanager.GameManager
-	var gameState game.TwoPlayerMatch
-	var runGame bool
 
-	if action == "create" {
-		gameState = *game.NewTwoPlayerMatch()
+	if create {
+		slog.Info("Creating game", "game", gameId, "player", nameWithID)
+
+		match = *game.NewTwoPlayerMatch()
 
 		timeoutAfterGameOver := h.Context.Value("TimeoutAfterGameOver").(time.Duration)
 
-		gm = gamemanager.NewGameManager(ctx, gameHash, &gameState.GameState, h.UpdateStatsService.UpdateStats, timeoutAfterGameOver)
+		gm = gamemanager.NewGameManager(ctx, gameId, &match.GameState, h.UpdateStatsService.UpdateStats, timeoutAfterGameOver)
+		if gracePeriod, ok := h.Context.Value("ReconnectionGracePeriod").(time.Duration); ok {
+			gm.ReconnectionGracePeriod = gracePeriod
+		}
 
-		err := h.GamesManager.AddGame(gameHash, gm)
+		err := h.GamesManager.AddGame(gameId, gm)
 		if err != nil {
-			slog.Error("error creating game", "error", err, "game", gameHash, "player", nameWithID)
+			slog.Error("error creating game", "error", err, "game", gameId, "player", nameWithID)
 			return
 		}
 
-		runGame = true
-	}
+		addPlayer = true
+		defer func() {
+			go gm.Run()
+		}()
 
-	if action == "join" {
-		gm = h.GamesManager.GetGame(gameHash)
+	} else {
+		slog.Info("Joining game", "game", gameId, "player", nameWithID)
+
+		gm = h.GamesManager.GetGame(gameId)
 		if gm == nil {
-			slog.Warn("game not found", "game", gameHash, "player", nameWithID)
-			return
-		}
-
-		gs := gm.Game
-
-		gameState.GameState = *gs
-	}
-
-	if action == "spectate" {
-		gm = h.GamesManager.GetGame(gameHash)
-		if gm == nil {
-			slog.Warn("game not found", "game", gameHash, "player", nameWithID)
+			slog.Error("unexpected error: game not found", "game", gameId, "player", nameWithID)
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
 
+		if gm.Game.GetPlayerByPPID(ppid) != nil {
+			// A player already in the game is coming back (e.g. page reload or reconnection during the grace period)
+			slog.Info("Player rejoining game", "game", gameId, "player", nameWithID)
+		} else if len(*gm.Game.Players) < 2 {
+			// Joining the game as a player
+			addPlayer = true
+		}
+
+		gs := gm.Game
+
+		match.GameState = *gs
 	}
 
-	p := player.New(ppid, name, utils.GridPosition{}, 8, utils.Line{}, utils.Line{})
-	err := gameState.AddPlayer(p)
-	if err != nil {
-		slog.Error("error adding player to game state", "error", err, "game", gameHash, "player", nameWithID)
-		return
+	if addPlayer {
+		err := match.AddPlayer(name, ppid, 8)
+		if err != nil {
+			slog.Error("error adding player to game state", "error", err, "game", gameId, "player", nameWithID)
+			return
+		}
 	}
 
 	c, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		slog.Error("error upgrading connection", "error", err, "game", gameHash, "player", nameWithID)
+		slog.Error("error upgrading connection", "error", err, "game", gameId, "player", nameWithID)
 		return
 	}
 
-	io := gamemanager.NewIO(ppid, c)
+	io := gamemanager.NewIO(ppid, name, c)
 	gm.AddPlayer(io)
 
-	if runGame {
-		go gm.Run()
-	}
 }
 
 func (h Handler) GamePing(w http.ResponseWriter, r *http.Request) {

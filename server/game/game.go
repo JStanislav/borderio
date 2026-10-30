@@ -13,10 +13,10 @@ import (
 )
 
 type GameState struct {
-	PlayerCount int
-	StartTime   *time.Time
-	Players     *[]*player.Player
-	WallLength  int
+	PlayersCapacity int
+	StartTime       *time.Time
+	Players         *[]*player.Player
+	WallLength      int
 
 	// Board related
 	Board          graph.Board
@@ -25,6 +25,11 @@ type GameState struct {
 	Rows           int
 
 	Turner *ring.Ring
+
+	// Set when the game is won by other means than reaching the finish line (e.g. the opponent abandoned)
+	Winner *player.Player
+	// Set when the game ends without a winner (e.g. no player came back after disconnecting)
+	Draw bool
 }
 
 type FinishLineType string
@@ -38,15 +43,15 @@ const (
 func New(wallLength int, players int, columns, rows int, finishLineType FinishLineType) *GameState {
 	board := graph.New(2, graph.ExtraRows)
 	return &GameState{
-		PlayerCount:    players,
-		WallLength:     wallLength,
-		FinishLineType: finishLineType,
-		Columns:        columns,
-		Rows:           rows,
-		Players:        &[]*player.Player{},
-		StartTime:      new(time.Time),
-		Turner:         ring.New(players),
-		Board:          board,
+		PlayersCapacity: players,
+		WallLength:      wallLength,
+		FinishLineType:  finishLineType,
+		Columns:         columns,
+		Rows:            rows,
+		Players:         &[]*player.Player{},
+		StartTime:       new(time.Time),
+		Turner:          ring.New(players),
+		Board:           board,
 	}
 }
 
@@ -203,22 +208,10 @@ func (g *GameState) GetCurrentTurnPlayer() *player.Player {
 	}
 }
 
-func (g *GameState) AllPlayersReady() bool {
-	for _, p := range *g.Players {
-		if !p.Ready {
-			return false
-		}
-	}
-	return true
-}
-
 func (g *GameState) AddPlayer(p *player.Player) error {
-	if len(*g.Players) < g.PlayerCount {
+	if len(*g.Players) < g.PlayersCapacity {
 		*g.Players = append(*g.Players, p)
 
-		if len(*g.Players) == 1 {
-			p.Host = true
-		}
 		return nil
 	}
 
@@ -228,14 +221,7 @@ func (g *GameState) AddPlayer(p *player.Player) error {
 func (g *GameState) RemovePlayer(pid player.PlayerID) error {
 	for i, player := range *g.Players {
 		if player.ID == pid {
-			var wasHost bool
-			if player.Host {
-				wasHost = true
-			}
 			*g.Players = append((*g.Players)[:i], (*g.Players)[i+1:]...)
-			if wasHost && len(*g.Players) > 0 {
-				(*g.Players)[0].Host = true
-			}
 			return nil
 		}
 	}
@@ -253,14 +239,13 @@ func (g *GameState) GetPlayerByPPID(ppid string) *player.Player {
 
 func (g *GameState) GetGameStats() GameStats {
 	var winnerId int
-	if (*g.Players)[0].IsWinner() {
-		winnerId = int((*g.Players)[0].ID)
-	} else if (*g.Players)[1].IsWinner() {
-		winnerId = int((*g.Players)[1].ID)
+	if id := g.GetWinnerPlayerId(); id != nil {
+		winnerId = *id
 	}
 
 	return GameStats{
 		PlayerWinnerId:      winnerId,
+		Draw:                g.Draw,
 		TotalMoves:          0,
 		TotalWallPlacements: 0,
 		TotalWallsRemaining: 0,
@@ -291,4 +276,21 @@ func (g *GameState) GetPlayersExcept(pid player.PlayerID) *[]*player.Player {
 		}
 	}
 	return &players
+}
+
+func (g *GameState) GetWinnerPlayerId() *int {
+	if g.Draw {
+		return nil
+	}
+	if g.Winner != nil {
+		id := int(g.Winner.ID)
+		return &id
+	}
+	for _, p := range *g.Players {
+		if p.IsWinner() {
+			id := int(p.ID)
+			return &id
+		}
+	}
+	return nil
 }

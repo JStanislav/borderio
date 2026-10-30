@@ -2,9 +2,10 @@ package messages
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/JStanislav/quoridor-clone/game"
-	"github.com/JStanislav/quoridor-clone/player"
+	"github.com/JStanislav/quoridor-clone/gamemanager/lobby"
 	"github.com/JStanislav/quoridor-clone/utils"
 )
 
@@ -44,6 +45,7 @@ type PlayerMessage struct {
 	WallsRemaining int             `json:"wallsRemaining"`
 	Ready          bool            `json:"ready"`
 	Host           bool            `json:"host"`
+	Spectator      bool            `json:"spectator"`
 }
 
 type PlayerConfigurationMessage struct {
@@ -53,8 +55,10 @@ type PlayerConfigurationMessage struct {
 }
 
 type LobbyMessage struct {
+	GameStarted    bool            `json:"gameStarted"`
 	Players        []PlayerMessage `json:"players"`
 	WinnerPlayerId *int            `json:"winnerPlayerId,omitempty"`
+	Draw           bool            `json:"draw,omitempty"`
 	Id             string          `json:"id"`
 }
 
@@ -74,7 +78,7 @@ type GameStateStateMessage struct {
 	Walls               []utils.WallPosition  `json:"walls"`
 }
 
-func GetPlayerLeftMessage(player player.Player) OMessage {
+func GetPlayerLeftMessage(player lobby.Lobbyist) OMessage {
 	return OMessage{
 		Type: "playerLeft",
 		Payload: PlayerLeftMessage{
@@ -84,35 +88,71 @@ func GetPlayerLeftMessage(player player.Player) OMessage {
 	}
 }
 
-func GetLobbyMessage(players *[]*player.Player, lobbyId string) OMessage {
-	playersMsg := make([]PlayerMessage, len(*players))
-	var winnerPlayerId *int
-	for i, p := range *players {
-		if p.IsWinner() {
-			id := int(p.ID)
-			winnerPlayerId = &id
-		}
-		playersMsg[i] = PlayerMessage{
+func GetLobbyMessage(started bool, players map[string]*lobby.Lobbyist, lobbyId string, winnerPlayerId *int, draw bool) OMessage {
+	playersMsg := make([]PlayerMessage, 0, len(players))
+	for _, p := range players {
+		pMsg := PlayerMessage{
 			ID:        int(p.ID),
 			Name:      p.Name,
 			Ready:     p.Ready,
 			Host:      p.Host,
 			Connected: p.Connected,
+			Spectator: p.Spectator,
 		}
+		playersMsg = append(playersMsg, pMsg)
 	}
 	lobbyMessage := OMessage{
 		Type: "lobby",
 		Payload: LobbyMessage{
 			Players:        playersMsg,
 			WinnerPlayerId: winnerPlayerId,
+			Draw:           draw,
 			Id:             lobbyId,
+			GameStarted:    started,
 		},
 	}
 
 	return lobbyMessage
 }
 
-func GetJoinedMessage(player player.Player) OMessage {
+type PlayerDisconnectedMessage struct {
+	Name        string `json:"name"`
+	ID          int    `json:"id"`
+	GracePeriod int    `json:"gracePeriod"` // in seconds
+}
+
+func GetPlayerDisconnectedMessage(player lobby.Lobbyist, gracePeriod time.Duration) OMessage {
+	return OMessage{
+		Type: "playerDisconnected",
+		Payload: PlayerDisconnectedMessage{
+			Name:        player.Name,
+			ID:          player.ID,
+			GracePeriod: int(gracePeriod.Seconds()),
+		},
+	}
+}
+
+func GetPlayerReconnectedMessage(player lobby.Lobbyist) OMessage {
+	return OMessage{
+		Type: "playerReconnected",
+		Payload: PlayerLeftMessage{
+			Name: player.Name,
+			ID:   player.ID,
+		},
+	}
+}
+
+func GetPlayerAbandonedMessage(player lobby.Lobbyist) OMessage {
+	return OMessage{
+		Type: "playerAbandoned",
+		Payload: PlayerLeftMessage{
+			Name: player.Name,
+			ID:   player.ID,
+		},
+	}
+}
+
+func GetJoinedMessage(player lobby.Lobbyist) OMessage {
 	return OMessage{
 		Type: "joined",
 		Payload: LobbyJoin{
@@ -140,7 +180,6 @@ func GetGameStateMessage(gameState *game.GameState) OMessage {
 			Name:           p.Name,
 			Position:       PositionMessage{Row: p.Position.Row, Col: p.Position.Column},
 			WallsRemaining: p.WallsRemaining,
-			Ready:          p.Ready,
 		}
 	}
 

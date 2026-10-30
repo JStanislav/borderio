@@ -2,15 +2,7 @@ package websocket
 
 import "fmt"
 
-func ValidateParams(action, ppid, name, gameHash string) error {
-	if !(action == "create" || action == "join" || action == "spectate") {
-		if action == "" {
-			return fmt.Errorf("missing action")
-		}
-
-		return fmt.Errorf("invalid action: %s", action)
-	}
-
+func ValidateParams(ppid, name, gameHash string) error {
 	if ppid == "" {
 		return fmt.Errorf("missing ppid")
 	}

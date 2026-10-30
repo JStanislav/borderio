@@ -1,4 +1,3 @@
-
 export interface GameState {
   type: string,
   currentTurnPlayerId: number,
@@ -26,6 +25,19 @@ export interface Player {
   ready: boolean
 }
 
+export const GetDefaultPlayer = (id: number, name: string): Player => {
+  return {
+    id: id,
+    name: name,
+    position: {
+      row: 0,
+      col: 0
+    },
+    wallsRemaining: 0,
+    ready: false
+  }
+}
+
 export const getDefaultGameState = (): GameState => {
     return {
       type: "gameState",
@@ -33,27 +45,4 @@ export const getDefaultGameState = (): GameState => {
       players: new Map(),
       walls: []
     }
-}
-
-/* 
-  TODO: fix this semantics.
-  The function is used to know whether a game started and not to know if all players are ready. The name is misleading.
-  But also the gameState.playerOne.ready and gameState.playerTwo.ready are wrong, since their are set to true when the game starts, 
-  and not when the players are ready. So this function is not really useful, since it will always return true when the game starts.
-*/
-export const allPlayersReady = (gameState: GameState): boolean => {
-  if (gameState.players.size === 0) {
-    return false
-  }
-
-  let allReady = true
-
-  gameState.players.forEach((value) => {
-    if(!value) return
-    if (!value.ready) {
-      allReady = false
-    }
-  })
-
-  return allReady
 }

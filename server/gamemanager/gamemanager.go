@@ -6,11 +6,12 @@ import (
 	"fmt"
 	"log/slog"
 	"slices"
-	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/JStanislav/quoridor-clone/external"
 	"github.com/JStanislav/quoridor-clone/game"
+	"github.com/JStanislav/quoridor-clone/gamemanager/lobby"
 	"github.com/JStanislav/quoridor-clone/player"
 	"github.com/JStanislav/quoridor-clone/utils"
 	"github.com/JStanislav/quoridor-clone/websocket/messages"
@@ -28,14 +29,23 @@ type GameManager struct {
 
 	TimeoutAfterGameOver time.Duration
 
+	// Time a player has to come back to a started game before the opponent is declared the winner
+	ReconnectionGracePeriod time.Duration
+
 	IOs []*IO
 
-	inbound chan PlayerMessage
-	join    chan *IO
-	leave   chan *IO
-	quit    chan struct{}
+	// Players disconnected in the middle of a game, by ppid, with the timer that ends their grace period
+	disconnected map[string]*time.Timer
+	// Mirrors whether disconnected has entries, so it can be read safely outside the Run goroutine (e.g. by the GC)
+	awaitingReconnection atomic.Bool
 
-	Spectators map[string]string
+	inbound      chan PlayerMessage
+	join         chan *IO
+	leave        chan *IO
+	graceExpired chan string
+	quit         chan struct{}
+
+	Lobbyists map[string]*lobby.Lobbyist
 }
 
 func NewGameManager(context context.Context, id string, game *game.GameState, updateStats external.UpdateStats, timeoutAfterGameOver time.Duration) *GameManager {
@@ -47,10 +57,17 @@ func NewGameManager(context context.Context, id string, game *game.GameState, up
 		GameTimedOut:         false,
 		TimeoutAfterGameOver: timeoutAfterGameOver,
 
-		inbound: make(chan PlayerMessage),
-		join:    make(chan *IO, 8),
-		leave:   make(chan *IO, 8),
-		quit:    make(chan struct{}),
+		ReconnectionGracePeriod: time.Minute,
+
+		disconnected: make(map[string]*time.Timer),
+
+		inbound:      make(chan PlayerMessage),
+		join:         make(chan *IO, 8),
+		leave:        make(chan *IO, 8),
+		graceExpired: make(chan string, 8),
+		quit:         make(chan struct{}),
+
+		Lobbyists: make(map[string]*lobby.Lobbyist),
 	}
 }
 
@@ -84,6 +101,9 @@ func (gm *GameManager) Run() {
 
 		case msg := <-gm.inbound:
 			gm.handleMessage(msg)
+
+		case ppid := <-gm.graceExpired:
+			gm.handleGraceExpired(ppid)
 		}
 	}
 }
@@ -101,25 +121,48 @@ func (gm *GameManager) handleJoin(io *IO) {
 	// 	return
 	// }
 
-	if len(*gm.Game.Players) > gm.Game.PlayerCount {
-		io.Send(messages.GetGameFullMessage())
-		close(io.send)
-		return
+	// The player opened a new connection before the server noticed the previous one dropped (e.g. page reload)
+	if idx := gm.indexOfPPID(io.ID); idx != -1 {
+		slog.Info("[manager] player opened a new connection, replacing the previous one", "game_id", gm.ID, "player_id", io.ID)
+		close(gm.IOs[idx].send)
+		gm.IOs = append(gm.IOs[:idx], gm.IOs[idx+1:]...)
 	}
 
 	gm.IOs = append(gm.IOs, io)
 	slog.Info("[manager] player joined", "game_id", gm.ID, "player_count", len(gm.IOs), "player_id", io.ID)
 
+	// Lobbyists are kept for players once the game started, so a known lobbyist is coming back
+	if l, ok := gm.Lobbyists[io.ID]; ok {
+		gm.handleReconnection(io, l)
+		return
+	}
+
+	var l *lobby.Lobbyist
 	p := gm.Game.GetPlayerByPPID(io.ID)
 
-	p.Connected = true
+	if p == nil {
+		// player is surely a spectator
+		l = lobby.NewLobbyist(-1, io.Name)
+		l.Spectator = true
+	} else {
+		l = lobby.NewLobbyist(int(p.ID), p.Name)
+		if len(gm.Lobbyists) == 0 {
+			l.Host = true
+		}
+	}
+	l.Connected = true
 
-	message := messages.GetJoinedMessage(*p)
+	gm.Lobbyists[io.ID] = l
+
+	message := messages.GetJoinedMessage(*l)
 	gm.broadcastExcept(message, []string{io.ID})
 
 	gm.syncLobbyState()
 	gm.syncPlayerConfiguration(io)
 	gm.syncMatchConfiguration(io)
+	if gm.Started {
+		gm.broadcastGameState()
+	}
 }
 
 func (gm *GameManager) handleLeave(io *IO) {
@@ -132,38 +175,157 @@ func (gm *GameManager) handleLeave(io *IO) {
 	gm.IOs = append(gm.IOs[:idx], gm.IOs[idx+1:]...)
 	close(io.send)
 
-	p := gm.Game.GetPlayerByPPID(io.ID)
+	l, ok := gm.Lobbyists[io.ID]
+	if !ok {
+		return
+	}
+	l.Connected = false
 
-	p.Connected = false
-	if !gm.Started {
+	if !gm.Started && !l.Spectator {
 		// players are only removed from the game when the game is not started
 		// so the game can remember players positions one the game has started
+		p := gm.Game.GetPlayerByPPID(io.ID)
 		gm.Game.RemovePlayer(p.ID)
-
 	}
 
-	gm.broadcastJSON(messages.GetPlayerLeftMessage(*p))
-	gm.syncLobbyState()
+	if l.Spectator || !gm.Started {
+		gm.RemoveLobbyist(io.ID)
+	}
 
-	// TODO: implement when player abandons in the middle of the game
-	// if gm.Game.StartTime != nil && !gm.gameOver {
-	// 	if len(gm.IOs) < gm.Game.PlayerCount {
-	// 		gm.endGame(fmt.Sprintf("player %s abandoned", p.Name))
-	// 		return
-	// 	}
-	// 	gm.broadcastGameState()
-	// }
+	// A player leaving in the middle of the game has some time to come back
+	if gm.Started && !l.Spectator && !gm.IsGameOver() {
+		gm.startGracePeriod(io.ID, *l)
+		gm.syncLobbyState()
+		return
+	}
+
+	gm.broadcastJSON(messages.GetPlayerLeftMessage(*l))
+	gm.syncLobbyState()
+}
+
+// Gives a player that left in the middle of a game some time to come back before ending the game
+func (gm *GameManager) startGracePeriod(ppid string, l lobby.Lobbyist) {
+	if _, ok := gm.disconnected[ppid]; ok {
+		return
+	}
+
+	slog.Info("[manager] player disconnected, waiting for reconnection", "game_id", gm.ID, "player_id", ppid, "grace_period", gm.ReconnectionGracePeriod)
+
+	gm.disconnected[ppid] = time.AfterFunc(gm.ReconnectionGracePeriod, func() {
+		select {
+		case gm.graceExpired <- ppid:
+		case <-gm.quit:
+		}
+	})
+	gm.syncAwaitingReconnection()
+
+	gm.broadcastJSON(messages.GetPlayerDisconnectedMessage(l, gm.ReconnectionGracePeriod))
+}
+
+func (gm *GameManager) handleReconnection(io *IO, l *lobby.Lobbyist) {
+	if timer, ok := gm.disconnected[io.ID]; ok {
+		timer.Stop()
+		delete(gm.disconnected, io.ID)
+		gm.syncAwaitingReconnection()
+	}
+
+	wasConnected := l.Connected
+	l.Connected = true
+
+	slog.Info("[manager] player reconnected", "game_id", gm.ID, "player_id", io.ID)
+
+	if !wasConnected {
+		gm.broadcastExcept(messages.GetPlayerReconnectedMessage(*l), []string{io.ID})
+	}
+
+	gm.syncLobbyState()
+	gm.syncPlayerConfiguration(io)
+	gm.syncMatchConfiguration(io)
+	if gm.Started {
+		io.Send(messages.GetGameStateMessage(gm.Game))
+	}
+}
+
+// Ends the game once a disconnected player didn't come back in time:
+// the opponent wins, or it's a draw if no player is connected
+func (gm *GameManager) handleGraceExpired(ppid string) {
+	if _, ok := gm.disconnected[ppid]; !ok {
+		// the player reconnected in the meantime
+		return
+	}
+	delete(gm.disconnected, ppid)
+	gm.syncAwaitingReconnection()
+
+	if gm.IsGameOver() {
+		return
+	}
+
+	p := gm.Game.GetPlayerByPPID(ppid)
+	l, ok := gm.Lobbyists[ppid]
+	if p == nil || !ok {
+		return
+	}
+
+	if !gm.anyPlayerConnected() {
+		slog.Info("[manager] player did not come back and no player is connected, the game ends in a draw", "game_id", gm.ID, "player_id", ppid)
+
+		gm.Game.Draw = true
+		gm.endGame("no player came back, draw")
+		return
+	}
+
+	opponents := *gm.Game.GetPlayersExcept(p.ID)
+	if len(opponents) == 0 {
+		return
+	}
+	winner := opponents[0]
+
+	slog.Info("[manager] player did not come back, opponent wins", "game_id", gm.ID, "player_id", ppid, "winner", winner.PrivatePlayerID)
+
+	gm.Game.Winner = winner
+	gm.broadcastJSON(messages.GetPlayerAbandonedMessage(*l))
+	gm.endGame(fmt.Sprintf("player %s abandoned, player %s wins", p.Name, winner.Name))
+}
+
+// Whether any player (spectators are not taken into account) is connected to the game
+func (gm *GameManager) anyPlayerConnected() bool {
+	for _, l := range gm.Lobbyists {
+		if !l.Spectator && l.Connected {
+			return true
+		}
+	}
+	return false
+}
+
+// Whether any player is within their grace period to come back to the game
+func (gm *GameManager) IsAwaitingReconnection() bool {
+	return gm.awaitingReconnection.Load()
+}
+
+func (gm *GameManager) syncAwaitingReconnection() {
+	gm.awaitingReconnection.Store(len(gm.disconnected) > 0)
+}
+
+func (gm *GameManager) RemoveLobbyist(ppid string) {
+	wasHost := gm.Lobbyists[ppid].Host
+	delete(gm.Lobbyists, ppid)
+	if wasHost && len(gm.Lobbyists) > 0 {
+		for _, l := range gm.Lobbyists {
+			l.Host = true
+			break
+		}
+	}
 }
 
 func (gm *GameManager) handleMessage(msg PlayerMessage) {
 	var p *player.Player
 	p = gm.Game.GetPlayerByPPID(msg.Message.PrivatePlayerId)
-	name := fmt.Sprintf("%s [%s]", p.Name, p.PrivatePlayerID)
-
 	if p == nil {
-		slog.Error("[manager] player not found", "game_id", gm.ID, "player", name)
+		slog.Error("[manager] player not found", "game_id", gm.ID, "player_id", msg.Message.PrivatePlayerId)
 		return
 	}
+
+	name := fmt.Sprintf("%s [%s]", p.Name, p.PrivatePlayerID)
 
 	switch msg.Message.Type {
 	case "startGame":
@@ -176,7 +338,7 @@ func (gm *GameManager) handleMessage(msg PlayerMessage) {
 			return
 		}
 
-		if !p.Host {
+		if !gm.Lobbyists[msg.IO.ID].Host {
 			slog.Error("[manager] only the host can start the game", "game_id", gm.ID, "player", name)
 			msg.IO.Send(messages.OMessage{
 				Type:    "error",
@@ -185,7 +347,7 @@ func (gm *GameManager) handleMessage(msg PlayerMessage) {
 			return
 		}
 
-		if !gm.Game.AllPlayersReady() {
+		if !gm.AllPlayersReady() {
 			slog.Error("[manager] not all players are ready", "game_id", gm.ID, "player", name)
 			msg.IO.Send(messages.OMessage{
 				Type:    "error",
@@ -198,6 +360,7 @@ func (gm *GameManager) handleMessage(msg PlayerMessage) {
 
 		gm.Started = true
 
+		gm.syncLobbyState()
 		gm.broadcastGameState()
 	case "playerMove":
 		mov := msg.Message.Payload
@@ -252,7 +415,7 @@ func (gm *GameManager) handleMessage(msg PlayerMessage) {
 		gm.broadcastGameState()
 	case "playerReady":
 		slog.Info("[manager] player readiness toggled", "game_id", gm.ID, "player", name)
-		p.ToggleReady()
+		gm.Lobbyists[p.PrivatePlayerID].ToggleReady()
 
 		gm.syncLobbyState()
 		return
@@ -279,20 +442,22 @@ func (gm *GameManager) broadcastExcept(msg messages.OMessage, ppids []string) er
 
 func (gm *GameManager) broadcastGameState() error {
 	gameStateMesage := messages.GetGameStateMessage(gm.Game)
-	err := gm.broadcastJSON(gameStateMesage)
-	if err != nil {
-		return err
-	}
-	return nil
+	return gm.broadcastJSON(gameStateMesage)
 }
 
 func (gm *GameManager) syncMatchConfiguration(io *IO) {
-	message := messages.GetMatchConfigurationMessage(gm.Game.PlayerCount)
+	message := messages.GetMatchConfigurationMessage(gm.Game.PlayersCapacity)
 	io.Send(message)
 }
 
 func (gm *GameManager) endGame(reason string) {
 	gm.gameOver = true
+
+	for ppid, timer := range gm.disconnected {
+		timer.Stop()
+		delete(gm.disconnected, ppid)
+	}
+	gm.syncAwaitingReconnection()
 	gm.syncLobbyState()
 
 	err := gm.UpdateStats(gm.Game.GetGameStats())
@@ -316,19 +481,34 @@ func (gm *GameManager) IsGameOver() bool {
 	return gm.gameOver
 }
 
+func (gm *GameManager) AllPlayersReady() bool {
+	for _, p := range gm.Lobbyists {
+		if !p.Ready && !p.Spectator {
+			return false
+		}
+	}
+	return true
+}
+
 func (gm *GameManager) syncLobbyState() {
-	gm.broadcastJSON(messages.GetLobbyMessage(gm.Game.Players, gm.ID))
+	winnerId := gm.Game.GetWinnerPlayerId()
+	gm.broadcastJSON(messages.GetLobbyMessage(gm.Started, gm.Lobbyists, gm.ID, winnerId, gm.Game.Draw))
 }
 
 func (gm *GameManager) syncPlayerConfiguration(io *IO) {
-	player := gm.Game.GetPlayerByPPID(io.ID)
+	p := gm.Game.GetPlayerByPPID(io.ID)
+
+	id := -1
+	if p != nil {
+		id = int(p.ID)
+	}
 
 	message := messages.OMessage{
 		Type: "playerConfiguration",
 		Payload: messages.PlayerConfigurationMessage{
-			ID:              int(player.ID),
-			Name:            player.Name,
-			PrivatePlayerId: player.PrivatePlayerID,
+			ID:              id,
+			Name:            io.Name,
+			PrivatePlayerId: io.ID,
 		},
 	}
 
@@ -337,7 +517,16 @@ func (gm *GameManager) syncPlayerConfiguration(io *IO) {
 
 func (gm *GameManager) indexOf(target *IO) int {
 	for i, p := range gm.IOs {
-		if p.ID == target.ID {
+		if p == target {
+			return i
+		}
+	}
+	return -1
+}
+
+func (gm *GameManager) indexOfPPID(ppid string) int {
+	for i, io := range gm.IOs {
+		if io.ID == ppid {
 			return i
 		}
 	}
@@ -346,7 +535,6 @@ func (gm *GameManager) indexOf(target *IO) int {
 
 type GamesContainer struct {
 	Games map[string]*GameManager
-	Lock  sync.RWMutex
 
 	GC *EndedGamesCollector
 }
@@ -391,7 +579,7 @@ func (g *Games) DeleteOldGames() {
 			remove = true
 		}
 
-		if gm.Game.StartTime != nil && len(gm.IOs) == 0 {
+		if gm.Game.StartTime != nil && len(gm.IOs) == 0 && !gm.IsAwaitingReconnection() {
 			slog.Info("[manager] game didn't start and no players in lobby", "game_id", h)
 			remove = true
 		}

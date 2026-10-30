@@ -1,8 +1,8 @@
 import toast from "react-hot-toast";
 import { type GameState } from "../game/GameState";
-import { connect,send, type actionType } from "./server-conn";
+import { connect, send } from "./server-conn";
 import { translateGridPositionToServer, translateWallGridPositionToServer } from "./utils";
-import type { IMessage, LobbyMessage, PlayerConfigurationMessage, PlayerJoinedMessage, WillTimeoutMessage } from "./messages";
+import type { IMessage, LobbyMessage, PlayerConfigurationMessage, PlayerDisconnectedMessage, PlayerJoinedMessage, WillTimeoutMessage } from "./messages";
 import type { Player } from "../game/player";
 import { config } from "../../config/config";
 import type { Lobby } from "../game/lobby/lobby";
@@ -11,6 +11,8 @@ import type { MatchConfiguration } from "../game/MatchConfiguration";
 const serverURL = `${config.httpProtocol}${config.serverUrl}`
 
 export const gameTimedOutId = "gameTimedOut"
+
+const playerDisconnectedToastId = (playerId: number) => `playerDisconnected-${playerId}`
 
 const onMessage = (ev: MessageEvent,
                     setGameState: (gameState: GameState) => void,
@@ -39,7 +41,7 @@ const onMessage = (ev: MessageEvent,
     }
     if (data.type === "lobby") {
         const config = data.payload as LobbyMessage;
-        setLobby({ players: config.players, winnerPlayerId: config.winnerPlayerId, playerAmount: 2, id: config.id });
+        setLobby({ players: config.players, winnerPlayerId: config.winnerPlayerId, draw: config.draw === true, playerAmount: 2, id: config.id, gameStarted: config.gameStarted });
     }
     if (data.type === "joined") { 
         const joined = data.payload as PlayerJoinedMessage;
@@ -48,6 +50,21 @@ const onMessage = (ev: MessageEvent,
     if (data.type === "playerLeft") {
         const left = data.payload as PlayerJoinedMessage;
         toast.success(`${left.name} has left game!`);
+    }
+    if (data.type === "playerDisconnected") {
+        const disconnected = data.payload as PlayerDisconnectedMessage;
+        toast(`${disconnected.name} has disconnected. Waiting ${disconnected.gracePeriod} seconds for them to come back...`,
+            {icon: "⏳", duration: disconnected.gracePeriod * 1000, id: playerDisconnectedToastId(disconnected.id)});
+    }
+    if (data.type === "playerReconnected") {
+        const reconnected = data.payload as PlayerJoinedMessage;
+        toast.dismiss(playerDisconnectedToastId(reconnected.id));
+        toast.success(`${reconnected.name} is back!`);
+    }
+    if (data.type === "playerAbandoned") {
+        const abandoned = data.payload as PlayerJoinedMessage;
+        toast.dismiss(playerDisconnectedToastId(abandoned.id));
+        toast(`${abandoned.name} didn't come back and abandoned the game.`, {icon: "🏳️"});
     }
     if (data.type === "willTimeOut") {
         const willTimeOut = data.payload as WillTimeoutMessage
@@ -60,7 +77,6 @@ const onMessage = (ev: MessageEvent,
 
 
 export const startConnection = (hash: string,
-                                action: actionType,
                                 ppid: string,
                                 name: string,
                                 setGameState: (gameState: GameState) => void,
@@ -70,7 +86,7 @@ export const startConnection = (hash: string,
                                 redirectToHome: () => void) => {
 
     // starts socket connection
-   connect(hash, action, ppid, name, (ev: MessageEvent) => onMessage(ev, setGameState, setPlayerConfig, setLobby, setMatchConfiguration), redirectToHome);
+   connect(hash, ppid, name, (ev: MessageEvent) => onMessage(ev, setGameState, setPlayerConfig, setLobby, setMatchConfiguration), redirectToHome);
 }
 
 export const requestPlayerMove = (ppid: string, row: number, col: number) => {
