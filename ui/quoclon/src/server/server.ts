@@ -41,7 +41,7 @@ const onMessage = (ev: MessageEvent,
     }
     if (data.type === "lobby") {
         const config = data.payload as LobbyMessage;
-        setLobby({ players: config.players, winnerPlayerId: config.winnerPlayerId, draw: config.draw, playerAmount: 2, id: config.id, gameStarted: config.gameStarted });
+        setLobby({ players: config.players, winnerPlayerId: config.winnerPlayerId, draw: config.draw === true, playerAmount: 2, id: config.id, gameStarted: config.gameStarted });
     }
     if (data.type === "joined") { 
         const joined = data.payload as PlayerJoinedMessage;

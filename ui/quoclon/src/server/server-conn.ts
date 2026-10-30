@@ -25,7 +25,9 @@ export const connect = (
     });
 
     socket.addEventListener("error", (event) => {
-        if (!wasConnected && reconnectAttempt === 0 && (socket.readyState === 3)) {
+        // A socket closed on purpose while connecting also fires this event (e.g. React StrictMode
+        // remounting the effect), so only the current socket can redirect
+        if (websocket === socket && !wasConnected && reconnectAttempt === 0 && (socket.readyState === 3)) {
             // the websocket couldn't connect in the first place
             redirectToHome()
         }
