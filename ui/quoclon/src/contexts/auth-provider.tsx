@@ -22,7 +22,7 @@ export const AuthProvider = ({ children, user: initialUser }: AuthProviderProps)
     useEffect(() => {
         async function fetchUser() {
             await new Promise(resolve => setTimeout(resolve, 1000));
-            const ppid = generatePPID();
+            const ppid = getPPID();
             const name = getPlayerName();
             setUser({name: name, id: -1, ppid: ppid});
         }
@@ -32,6 +32,22 @@ export const AuthProvider = ({ children, user: initialUser }: AuthProviderProps)
         }
 
     }, [initialUser]);
+
+    // The ppid is kept for the browser tab session, so reloading the page or coming back
+    // to a game allows the server to recognize the player and reconnect them to it
+    const getPPID = () => {
+        try {
+            let ppid = sessionStorage.getItem("ppid");
+            if (ppid) {
+                return ppid;
+            }
+            ppid = generatePPID();
+            sessionStorage.setItem("ppid", ppid);
+            return ppid;
+        } catch {
+            return generatePPID();
+        }
+    }
 
     const getPlayerName = () => {
         let name = localStorage.getItem("playerName");

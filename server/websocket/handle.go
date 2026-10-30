@@ -66,6 +66,9 @@ func (h Handler) StartOrJoinGame(w http.ResponseWriter, r *http.Request) {
 		timeoutAfterGameOver := h.Context.Value("TimeoutAfterGameOver").(time.Duration)
 
 		gm = gamemanager.NewGameManager(ctx, gameId, &match.GameState, h.UpdateStatsService.UpdateStats, timeoutAfterGameOver)
+		if gracePeriod, ok := h.Context.Value("ReconnectionGracePeriod").(time.Duration); ok {
+			gm.ReconnectionGracePeriod = gracePeriod
+		}
 
 		err := h.GamesManager.AddGame(gameId, gm)
 		if err != nil {
@@ -88,7 +91,10 @@ func (h Handler) StartOrJoinGame(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if len(*gm.Game.Players) < 2 {
+		if gm.Game.GetPlayerByPPID(ppid) != nil {
+			// A player already in the game is coming back (e.g. page reload or reconnection during the grace period)
+			slog.Info("Player rejoining game", "game", gameId, "player", nameWithID)
+		} else if len(*gm.Game.Players) < 2 {
 			// Joining the game as a player
 			addPlayer = true
 		}

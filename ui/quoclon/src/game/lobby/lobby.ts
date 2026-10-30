@@ -8,6 +8,7 @@ export interface Lobby {
     
     players: LobbyPlayer[],
     winnerPlayerId?: number
+    draw?: boolean
 
     gameStarted: boolean
 }
@@ -19,5 +20,10 @@ export const DefaultLobby: Lobby = {
     playerAmount: 2,
     players: [],
     winnerPlayerId: undefined,
+    draw: false,
     gameStarted: false,
+}
+
+export const isGameOver = (lobby: Lobby): boolean => {
+    return lobby.winnerPlayerId !== undefined || lobby.draw === true
 }

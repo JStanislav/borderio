@@ -2,6 +2,7 @@ package messages
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/JStanislav/quoridor-clone/game"
 	"github.com/JStanislav/quoridor-clone/gamemanager/lobby"
@@ -57,6 +58,7 @@ type LobbyMessage struct {
 	GameStarted    bool            `json:"gameStarted"`
 	Players        []PlayerMessage `json:"players"`
 	WinnerPlayerId *int            `json:"winnerPlayerId,omitempty"`
+	Draw           bool            `json:"draw,omitempty"`
 	Id             string          `json:"id"`
 }
 
@@ -86,7 +88,7 @@ func GetPlayerLeftMessage(player lobby.Lobbyist) OMessage {
 	}
 }
 
-func GetLobbyMessage(started bool, players map[string]*lobby.Lobbyist, lobbyId string, winnerPlayerId *int) OMessage {
+func GetLobbyMessage(started bool, players map[string]*lobby.Lobbyist, lobbyId string, winnerPlayerId *int, draw bool) OMessage {
 	playersMsg := make([]PlayerMessage, 0, len(players))
 	for _, p := range players {
 		pMsg := PlayerMessage{
@@ -104,12 +106,50 @@ func GetLobbyMessage(started bool, players map[string]*lobby.Lobbyist, lobbyId s
 		Payload: LobbyMessage{
 			Players:        playersMsg,
 			WinnerPlayerId: winnerPlayerId,
+			Draw:           draw,
 			Id:             lobbyId,
 			GameStarted:    started,
 		},
 	}
 
 	return lobbyMessage
+}
+
+type PlayerDisconnectedMessage struct {
+	Name        string `json:"name"`
+	ID          int    `json:"id"`
+	GracePeriod int    `json:"gracePeriod"` // in seconds
+}
+
+func GetPlayerDisconnectedMessage(player lobby.Lobbyist, gracePeriod time.Duration) OMessage {
+	return OMessage{
+		Type: "playerDisconnected",
+		Payload: PlayerDisconnectedMessage{
+			Name:        player.Name,
+			ID:          player.ID,
+			GracePeriod: int(gracePeriod.Seconds()),
+		},
+	}
+}
+
+func GetPlayerReconnectedMessage(player lobby.Lobbyist) OMessage {
+	return OMessage{
+		Type: "playerReconnected",
+		Payload: PlayerLeftMessage{
+			Name: player.Name,
+			ID:   player.ID,
+		},
+	}
+}
+
+func GetPlayerAbandonedMessage(player lobby.Lobbyist) OMessage {
+	return OMessage{
+		Type: "playerAbandoned",
+		Payload: PlayerLeftMessage{
+			Name: player.Name,
+			ID:   player.ID,
+		},
+	}
 }
 
 func GetJoinedMessage(player lobby.Lobbyist) OMessage {
