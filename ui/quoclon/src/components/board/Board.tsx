@@ -1,10 +1,11 @@
-import { board, classes } from "./board.type"
+import { board, classes, resetBoard } from "./board.type"
 import "./board.css"
 import playerTwo from  "../../assets/players/player_one.png"
 import playerOne from "../../assets/players/player_two.png"
 import type { Players } from "../game/player.type"
 import { isDragOverable, isFinishLine, onClick, onDragOver, onDragStart, onDrop, setActiveWalls } from "./board.utils"
 import { useAuth } from "../../contexts/auth-provider"
+import { useEffect } from "react"
 
 interface Props {
     players: Players,
@@ -13,10 +14,18 @@ interface Props {
     activeWalls: { row: number, col: number, orientation: "horizontal" | "vertical" }[],
     currentTurnPlayerId: number
     gameOver: boolean
+    spectator: boolean
 }
 
-export const Board = ({players, requestPlayerMove, requestWallPlacement, activeWalls, gameOver}: Props) => {
+export const Board = ({players, requestPlayerMove, requestWallPlacement, activeWalls, gameOver, spectator}: Props) => {
     const {user} = useAuth()
+
+    useEffect(() => {
+        setActiveWalls(board, activeWalls);
+        return () => {
+            resetBoard(board);
+        }
+    }, []);
 
     setActiveWalls(board, activeWalls);
 
@@ -39,10 +48,10 @@ export const Board = ({players, requestPlayerMove, requestWallPlacement, activeW
                                 ${isFinishLine(indexRow) ? "finish-line" : ""}
                             `}
 
-                            onClick={e => !gameOver && onClick(e, requestWallPlacement, user.ppid)}
+                            onClick={e => !spectator && !gameOver && onClick(e, requestWallPlacement, user.ppid)}
                             
-                            onDrop={_ => onDrop(user.ppid, indexRow, colIdx, requestPlayerMove)}
-                            onDragOver={isDragOverable(indexRow, colIdx) ? onDragOver : undefined}
+                            onDrop={_ => !spectator && !gameOver && onDrop(user.ppid, indexRow, colIdx, requestPlayerMove)}
+                            onDragOver={e => !spectator && !gameOver && isDragOverable(indexRow, colIdx) ? onDragOver(e) : undefined}
                         >
                             {players.map(player => 
                                 (player.position.row === indexRow && player.position.col === colIdx) ? (

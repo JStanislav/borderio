@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -17,7 +17,7 @@ import (
 func main() {
 	config := config.LoadConfig()
 
-	fmt.Printf("Server is running on port: %s\n", config.Port)
+	slog.Info("Server is running", "port", config.Port)
 
 	mux := http.NewServeMux()
 
@@ -25,16 +25,22 @@ func main() {
 	updateStatsServiceClient := external.NewUpdateStatsServiceHTTPClient("") // a NATS client can be used too, just for fun.
 
 	handlerContext := context.WithValue(context.Background(), "TimeoutAfterGameOver", time.Duration(config.TimeoutAfterGameOver)*time.Second)
+	handlerContext = context.WithValue(handlerContext, "ReconnectionGracePeriod", time.Duration(config.ReconnectionGracePeriod)*time.Second)
 
 	games := gamemanager.Games(gamesContainer.Games)
 	wsHandler := ws.NewHandler(handlerContext, &games, updateStatsServiceClient)
 
-	mux.HandleFunc("/{id}", wsHandler.Handler)
+	mux.HandleFunc("/play/{game_id}", wsHandler.StartOrJoinGame)
 	mux.HandleFunc("/ping/{hash}", wsHandler.GamePing)
 	mux.HandleFunc("/game_stats", wsHandler.GamesList)
+
+	mux.HandleFunc("/health", wsHandler.HealthCheck)
 
 	configMiddleware := middleware.NewCORSConfig(config.Cors.AllowedOrigins, config.Cors.AllowedMethods)
 	handler := middleware.CORS(configMiddleware)(mux)
 
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", config.Port), handler))
+	err := http.ListenAndServe(fmt.Sprintf(":%s", config.Port), handler)
+	if err != nil {
+		slog.Error("closing server", "error", err)
+	}
 }

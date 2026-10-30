@@ -8,6 +8,7 @@ import (
 
 type GameStats struct {
 	PlayerWinnerId      int
+	Draw                bool
 	TotalMoves          int
 	TotalWallPlacements int
 	TotalWallsRemaining int

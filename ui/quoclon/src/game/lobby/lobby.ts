@@ -8,6 +8,9 @@ export interface Lobby {
     
     players: LobbyPlayer[],
     winnerPlayerId?: number
+    draw?: boolean
+
+    gameStarted: boolean
 }
 
 export type LobbyPlayer = LobbyPlayerMessage 
@@ -16,5 +19,11 @@ export const DefaultLobby: Lobby = {
     id: "CHNGM",
     playerAmount: 2,
     players: [],
-    winnerPlayerId: undefined
+    winnerPlayerId: undefined,
+    draw: false,
+    gameStarted: false,
+}
+
+export const isGameOver = (lobby: Lobby): boolean => {
+    return lobby.winnerPlayerId !== undefined || lobby.draw === true
 }

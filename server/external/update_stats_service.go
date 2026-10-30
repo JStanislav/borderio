@@ -1,7 +1,7 @@
 package external
 
 import (
-	"fmt"
+	"log/slog"
 
 	"github.com/JStanislav/quoridor-clone/game"
 	"github.com/go-resty/resty/v2"
@@ -26,6 +26,6 @@ func NewUpdateStatsServiceHTTPClient(serviceURL string) *UpdateStatsServiceHTTPC
 }
 
 func (c *UpdateStatsServiceHTTPClient) UpdateStats(gameStats game.GameStats) error {
-	fmt.Println("Function yet not implemented.")
+	slog.Warn("Function yet not implemented.")
 	return nil
 }

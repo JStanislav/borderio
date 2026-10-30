@@ -74,6 +74,14 @@ export const setWall = (board: Array<Row>, row: number, col: number, wallLength:
     }
 }
 
+export const resetBoard = (board: Array<Row>) => {
+    for (let row = 0; row < board.length; row++) {
+        for (let col = 0; col < board[row].cells.length; col++) {
+            board[row].cells[col].fillType = false
+        }
+    }
+}
+
 // dummy test
 // setWall(board, 4, 3, 2);
 // setWall(board, 4, 7, 2);
