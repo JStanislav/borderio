@@ -4,6 +4,7 @@ import (
 	"container/ring"
 	"errors"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/JStanislav/quoridor-clone/graph"
@@ -12,10 +13,10 @@ import (
 )
 
 type GameState struct {
-	PlayerCount int
-	StartTime   *time.Time
-	Players     *[]*player.Player
-	WallLength  int
+	PlayersCapacity int
+	StartTime       *time.Time
+	Players         *[]*player.Player
+	WallLength      int
 
 	// Board related
 	Board          graph.Board
@@ -24,6 +25,11 @@ type GameState struct {
 	Rows           int
 
 	Turner *ring.Ring
+
+	// Set when the game is won by other means than reaching the finish line (e.g. the opponent abandoned)
+	Winner *player.Player
+	// Set when the game ends without a winner (e.g. no player came back after disconnecting)
+	Draw bool
 }
 
 type FinishLineType string
@@ -37,15 +43,15 @@ const (
 func New(wallLength int, players int, columns, rows int, finishLineType FinishLineType) *GameState {
 	board := graph.New(2, graph.ExtraRows)
 	return &GameState{
-		PlayerCount:    players,
-		WallLength:     wallLength,
-		FinishLineType: finishLineType,
-		Columns:        columns,
-		Rows:           rows,
-		Players:        &[]*player.Player{},
-		StartTime:      new(time.Time),
-		Turner:         ring.New(players),
-		Board:          board,
+		PlayersCapacity: players,
+		WallLength:      wallLength,
+		FinishLineType:  finishLineType,
+		Columns:         columns,
+		Rows:            rows,
+		Players:         &[]*player.Player{},
+		StartTime:       new(time.Time),
+		Turner:          ring.New(players),
+		Board:           board,
 	}
 }
 
@@ -54,7 +60,7 @@ func (g *GameState) StartMatchWithMovementsChannel() chan player.Play {
 
 	go func() {
 		for mov := range movements {
-			fmt.Printf("Received movement: %+v\n", mov)
+			slog.Debug("Received movement", "mov", mov)
 		}
 	}()
 
@@ -82,7 +88,6 @@ func (g *GameState) StartMatch(movements chan player.Play) {
 		p.OnPlayerPlay = func(playerID player.PlayerID, play player.Play) error {
 
 			if p.ID != g.GetCurrentTurnPlayer().ID {
-				fmt.Printf("Player %d attempted to play out of their turn\n", p.ID)
 				return errors.New("not your turn")
 			}
 
@@ -95,13 +100,12 @@ func (g *GameState) StartMatch(movements chan player.Play) {
 			switch play.PlayType {
 			case player.PlayerMove:
 
-				fmt.Printf("Moving P%d [R%d-C%d]->[R%d-C%d]\n", p.ID, p.Position.Row, p.Position.Column, play.Position.Row, play.Position.Column)
+				slog.Debug(fmt.Sprintf("Moving P%d [R%d-C%d]->[R%d-C%d]\n", p.ID, p.Position.Row, p.Position.Column, play.Position.Row, play.Position.Column))
 
 				if g.Board.IsLegalMove(*p.Position, *play.Position, playersButNotCurrentPositions) {
 					p.Position = play.Position
 					g.Turner = g.Turner.Next()
 					movements <- play
-					fmt.Println("Moved")
 
 					return nil
 				} else {
@@ -114,7 +118,7 @@ func (g *GameState) StartMatch(movements chan player.Play) {
 				}
 				wallPosition := utils.WallPosition{CellA: play.WallPlaced.CellA, CellB: play.WallPlaced.CellB}
 
-				fmt.Printf("Placing wall p%d [R%d-C%d]||[R%d-C%d]\n", p.ID, play.WallPlaced.CellA.Row, play.WallPlaced.CellA.Column, play.WallPlaced.CellB.Row, play.WallPlaced.CellB.Column)
+				slog.Debug(fmt.Sprintf("Placing wall p%d [R%d-C%d]||[R%d-C%d]\n", p.ID, play.WallPlaced.CellA.Row, play.WallPlaced.CellA.Column, play.WallPlaced.CellB.Row, play.WallPlaced.CellB.Column))
 
 				err := g.Board.AddWall(graph.Undefined, wallPosition)
 				if err != nil {
@@ -129,7 +133,6 @@ func (g *GameState) StartMatch(movements chan player.Play) {
 				g.Turner = g.Turner.Next()
 				movements <- play
 				p.WallsRemaining -= 1
-				fmt.Println("Placed wall")
 
 				return nil
 			}
@@ -205,22 +208,10 @@ func (g *GameState) GetCurrentTurnPlayer() *player.Player {
 	}
 }
 
-func (g *GameState) AllPlayersReady() bool {
-	for _, p := range *g.Players {
-		if !p.Ready {
-			return false
-		}
-	}
-	return true
-}
-
 func (g *GameState) AddPlayer(p *player.Player) error {
-	if len(*g.Players) < g.PlayerCount {
+	if len(*g.Players) < g.PlayersCapacity {
 		*g.Players = append(*g.Players, p)
 
-		if len(*g.Players) == 1 {
-			p.Host = true
-		}
 		return nil
 	}
 
@@ -230,14 +221,7 @@ func (g *GameState) AddPlayer(p *player.Player) error {
 func (g *GameState) RemovePlayer(pid player.PlayerID) error {
 	for i, player := range *g.Players {
 		if player.ID == pid {
-			var wasHost bool
-			if player.Host {
-				wasHost = true
-			}
 			*g.Players = append((*g.Players)[:i], (*g.Players)[i+1:]...)
-			if wasHost && len(*g.Players) > 0 {
-				(*g.Players)[0].Host = true
-			}
 			return nil
 		}
 	}
@@ -255,14 +239,13 @@ func (g *GameState) GetPlayerByPPID(ppid string) *player.Player {
 
 func (g *GameState) GetGameStats() GameStats {
 	var winnerId int
-	if (*g.Players)[0].IsWinner() {
-		winnerId = int((*g.Players)[0].ID)
-	} else if (*g.Players)[1].IsWinner() {
-		winnerId = int((*g.Players)[1].ID)
+	if id := g.GetWinnerPlayerId(); id != nil {
+		winnerId = *id
 	}
 
 	return GameStats{
 		PlayerWinnerId:      winnerId,
+		Draw:                g.Draw,
 		TotalMoves:          0,
 		TotalWallPlacements: 0,
 		TotalWallsRemaining: 0,
@@ -293,4 +276,21 @@ func (g *GameState) GetPlayersExcept(pid player.PlayerID) *[]*player.Player {
 		}
 	}
 	return &players
+}
+
+func (g *GameState) GetWinnerPlayerId() *int {
+	if g.Draw {
+		return nil
+	}
+	if g.Winner != nil {
+		id := int(g.Winner.ID)
+		return &id
+	}
+	for _, p := range *g.Players {
+		if p.IsWinner() {
+			id := int(p.ID)
+			return &id
+		}
+	}
+	return nil
 }

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/JStanislav/quoridor-clone/player"
 	"github.com/JStanislav/quoridor-clone/utils"
 	"github.com/dominikbraun/graph"
 )
@@ -83,23 +82,15 @@ func (g *Graph) GenerateBoard(columns, rows int) error {
 				Column: j,
 				Row:    i,
 			}
-			if err := g.Graph.AddEdge(CellHash(cell), CellHash(Cell{Row: i + 1, Column: j})); err != nil {
-				fmt.Println(err)
-			}
-			if err := g.Graph.AddEdge(CellHash(cell), CellHash(Cell{Row: i, Column: j + 1})); err != nil {
-				fmt.Println(err)
-			}
+			g.Graph.AddEdge(CellHash(cell), CellHash(Cell{Row: i + 1, Column: j}))
+			g.Graph.AddEdge(CellHash(cell), CellHash(Cell{Row: i, Column: j + 1}))
 
 			// Literally the border cases
 			if i == rows-2 {
-				if err := g.Graph.AddEdge(CellHash(Cell{Row: i + 1, Column: j}), CellHash(Cell{Row: i + 1, Column: j + 1})); err != nil {
-					fmt.Println(err)
-				}
+				g.Graph.AddEdge(CellHash(Cell{Row: i + 1, Column: j}), CellHash(Cell{Row: i + 1, Column: j + 1}))
 			}
 			if j == columns-2 {
-				if err := g.Graph.AddEdge(CellHash(Cell{Row: i, Column: j + 1}), CellHash(Cell{Row: i + 1, Column: j + 1})); err != nil {
-					fmt.Println(err)
-				}
+				g.Graph.AddEdge(CellHash(Cell{Row: i, Column: j + 1}), CellHash(Cell{Row: i + 1, Column: j + 1}))
 			}
 
 		}
@@ -159,14 +150,13 @@ func (g *Graph) AddWall(wallType WallType, start utils.WallPosition) error {
 				cellB := utils.GridPosition{Column: start.CellA.Column + j + 1, Row: start.CellA.Row - i}
 				completeWallExists := slices.Contains(g.Walls, utils.WallPosition{CellA: cellA, CellB: cellB}) || slices.Contains(g.Walls, utils.WallPosition{CellA: cellB, CellB: cellA})
 				if completeWallExists {
-					fmt.Printf("Wall already exists between %+v and %+v\n", cellA, cellB)
 					return errors.New("wall is cut through another wall")
 				}
 			}
 		}
 		for i := 0; i < g.wallLength; i++ {
 			if err := _g.RemoveEdge(CellHash(Cell{Column: start.CellA.Column + i, Row: start.CellA.Row}), CellHash(Cell{Column: start.CellB.Column + i, Row: start.CellB.Row})); err != nil {
-				fmt.Printf("Error removing edge between %+v and %+v: %s\n", start.CellA, start.CellB, err)
+				err = fmt.Errorf("Error removing edge between %+v and %+v: %s\n", start.CellA, start.CellB, err)
 				return err
 			}
 		}
@@ -181,7 +171,6 @@ func (g *Graph) AddWall(wallType WallType, start utils.WallPosition) error {
 				cellB := utils.GridPosition{Column: start.CellA.Column - i, Row: start.CellA.Row + j + 1}
 				completeWallExists := slices.Contains(g.Walls, utils.WallPosition{CellA: cellA, CellB: cellB}) || slices.Contains(g.Walls, utils.WallPosition{CellA: cellB, CellB: cellA})
 				if completeWallExists {
-					fmt.Printf("Wall already exists between %+v and %+v\n", cellA, cellB)
 					return errors.New("wall is cut through another wall")
 				}
 			}
@@ -189,9 +178,9 @@ func (g *Graph) AddWall(wallType WallType, start utils.WallPosition) error {
 		for i := 0; i < g.wallLength; i++ {
 			cellHashA := CellHash(Cell{Column: start.CellA.Column, Row: start.CellA.Row + i})
 			cellHashB := CellHash(Cell{Column: start.CellB.Column, Row: start.CellB.Row + i})
-			fmt.Printf("Removing edge between %+v and %+v\n", cellHashA, cellHashB)
+
 			if err := _g.RemoveEdge(cellHashA, cellHashB); err != nil {
-				fmt.Printf("Error removing edge between %+v and %+v: %s\n", start.CellA, start.CellB, err)
+				err = fmt.Errorf("Error removing edge between %+v and %+v: %s\n", start.CellA, start.CellB, err)
 				return err
 			}
 		}
@@ -228,9 +217,9 @@ func (g *Graph) RemoveWall(wallType WallType, start utils.WallPosition) error {
 		for i := 0; i < g.wallLength; i++ {
 			cellAHash := CellHash(Cell{Column: start.CellA.Column + i, Row: start.CellA.Row})
 			cellBHash := CellHash(Cell{Column: start.CellB.Column + i, Row: start.CellB.Row})
-			fmt.Printf("Adding edge between %+v and %+v\n", cellAHash, cellBHash)
+
 			if err := _g.AddEdge(cellAHash, cellBHash); err != nil {
-				fmt.Printf("Error adding edge between %+v and %+v: %s\n", start.CellA, start.CellB, err)
+				err = fmt.Errorf("Error adding edge between %+v and %+v: %s\n", start.CellA, start.CellB, err)
 				return err
 			}
 		}
@@ -242,16 +231,15 @@ func (g *Graph) RemoveWall(wallType WallType, start utils.WallPosition) error {
 		for i := 0; i < g.wallLength; i++ {
 			cellAHash := CellHash(Cell{Column: start.CellA.Column, Row: start.CellA.Row + i})
 			cellBHash := CellHash(Cell{Column: start.CellB.Column, Row: start.CellB.Row + i})
-			fmt.Printf("Adding edge between %+v and %+v\n", cellAHash, cellBHash)
+
 			if err := _g.AddEdge(cellAHash, cellBHash); err != nil {
-				fmt.Printf("Error adding edge between %+v and %+v: %s\n", start.CellA, start.CellB, err)
+				err = fmt.Errorf("Error adding edge between %+v and %+v: %s\n", start.CellA, start.CellB, err)
 				return err
 			}
 		}
 	}
 
 	g.Graph = _g
-	fmt.Printf("Edge added successfully\n")
 
 	return nil
 }
@@ -270,7 +258,7 @@ func (g *Graph) ExistsPath(source, target utils.GridPosition) bool {
 	})
 
 	if err != nil {
-		fmt.Printf("Error during DFS: %s\n", err)
+		return false
 	}
 	return exists
 }
@@ -298,27 +286,6 @@ func (g *Graph) GetWalls() []utils.WallPosition {
 func (g *Graph) IsAdjacent(source, target utils.GridPosition) bool {
 	_, err := g.Graph.Edge(CellHash(Cell{Column: source.Column, Row: source.Row}), CellHash(Cell{Column: target.Column, Row: target.Row}))
 	return !errors.Is(err, graph.ErrEdgeNotFound)
-}
-
-func (g *Graph) PrintGrid(columns, rows int, playerOne, playerTwo *player.Player) {
-	for i := range rows {
-		for j := range columns {
-			vertex, err := g.Graph.Vertex(CellHash(Cell{Row: i, Column: j}))
-
-			if err != nil {
-				fmt.Printf("Vertex not found: %+v\n", err)
-			}
-			line := fmt.Sprintf("|%+v|", vertex.Id)
-			if playerOne.Position.Row == i && playerOne.Position.Column == j {
-				fmt.Printf("\x1b[37;40;%dm%-0s\x1b[37;9;m", 96, line)
-			} else if playerTwo.Position.Row == i && playerTwo.Position.Column == j {
-				fmt.Printf("\x1b[37;40;%dm%-0s\x1b[37;9;m", 91, line)
-			} else {
-				fmt.Printf("\x1b[37;40;%dm%-0s\x1b[37;9;m", 97, line)
-			}
-		}
-		fmt.Println()
-	}
 }
 
 func infereWallType(start utils.WallPosition) WallType {

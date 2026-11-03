@@ -1,6 +1,17 @@
 .game-frame {
     display: flex;
     border: 2px solid black;
-    padding: 70px;
+    padding: 10px;
+    gap: 12px;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.game-frame-board {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
     gap: 12px;
 }

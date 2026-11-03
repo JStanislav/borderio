@@ -23,29 +23,6 @@ Players can search for a match from the browser. When two players are queued, th
 
 ---
 
-## Project Structure
-
-```
-borderio/
-├── server/
-│   ├── main.go
-│   ├── game/         # Game rules, state definitions, and logic
-│   ├── graph/        # Board representation using graph data structures
-│   ├── player/       # Player definitions and utilities
-│   ├── utils/        # Position helpers and shared utilities
-│   └── websocket/
-│       └── messages/ # DTOs and message structure definitions
-└── client/
-    ├── src/
-    │   ├── components/
-    │   ├── game/     # Game definitions and client-side utilities
-    │   ├── server/   # Server communication and WebSocket logic
-    │   └── App.tsx
-    └── index.html
-```
-
----
-
 ## Requirements
 
 - [Go](https://go.dev/dl/) ≥ 1.24

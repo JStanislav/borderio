@@ -15,7 +15,7 @@ export const Home = () => {
     async function PingGame() {
         const exist = await GameExist(joinCode);
         if (exist) {
-            navigate(`/game/${joinCode}?action=join`);
+            navigate(`/game/${joinCode}`);
         } else {
             setJoinCode("");
             toast.error("Game does not exist");
@@ -29,7 +29,7 @@ export const Home = () => {
                 {!gameCode ? 
                     <button onClick={() => setGameCode(generateGameCode())}>Generate code</button>
                 :
-                    <Link to={`/game/${gameCode}?action=create`}>
+                    <Link to={`/game/${gameCode}`}>
                         <button disabled={!gameCode}>Join</button>
                     </Link>
                 }

@@ -10,7 +10,6 @@ type PlayerDTO struct {
 	ID   int    `json:"id"`
 	Name string `json:"name"`
 
-	Host           bool
 	WallsRemaining int
 }
 
@@ -36,13 +35,12 @@ func GetGameDTO(hash string, gm *gamemanager.GameManager) GameDTO {
 		players = append(players, PlayerDTO{
 			ID:             int(p.ID),
 			Name:           p.Name,
-			Host:           p.Host,
 			WallsRemaining: p.WallsRemaining,
 		})
 	}
 	return GameDTO{
 		ID:          hash,
-		PlayerCount: gm.Game.PlayerCount,
+		PlayerCount: gm.Game.PlayersCapacity,
 		StartTime:   gm.Game.StartTime,
 		IsOver:      gm.IsGameOver(),
 

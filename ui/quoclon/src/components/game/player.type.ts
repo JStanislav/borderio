@@ -9,7 +9,10 @@ export type Player = {
     }
 }
 
-export function getGameOverText(winnerPlayerName: string, winner: boolean): string {
+export function getGameOverText(winnerPlayerName: string, winner: boolean, draw: boolean = false): string {
+    if (draw) {
+        return `The game ended in a draw`
+    }
     if (winner) {
         return `Congratulations! You won!`
     } else {

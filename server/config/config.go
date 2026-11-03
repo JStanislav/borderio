@@ -3,8 +3,9 @@ package config
 import "github.com/kelseyhightower/envconfig"
 
 type Config struct {
-	Port                 string `default:"8080"`
-	TimeoutAfterGameOver int    `default:"60" split_words:"true"` // in seconds
+	Port                    string `default:"8080"`
+	TimeoutAfterGameOver    int    `default:"60" split_words:"true"` // in seconds
+	ReconnectionGracePeriod int    `default:"60" split_words:"true"` // in seconds
 
 	Cors Cors
 }

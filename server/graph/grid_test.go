@@ -10,6 +10,27 @@ import (
 	"github.com/JStanislav/quoridor-clone/utils"
 )
 
+func (g *Graph) PrintGrid(columns, rows int, playerOne, playerTwo *player.Player) {
+	for i := range rows {
+		for j := range columns {
+			vertex, err := g.Graph.Vertex(CellHash(Cell{Row: i, Column: j}))
+
+			if err != nil {
+				fmt.Printf("Vertex not found: %+v\n", err)
+			}
+			line := fmt.Sprintf("|%+v|", vertex.Id)
+			if playerOne.Position.Row == i && playerOne.Position.Column == j {
+				fmt.Printf("\x1b[37;40;%dm%-0s\x1b[37;9;m", 96, line)
+			} else if playerTwo.Position.Row == i && playerTwo.Position.Column == j {
+				fmt.Printf("\x1b[37;40;%dm%-0s\x1b[37;9;m", 91, line)
+			} else {
+				fmt.Printf("\x1b[37;40;%dm%-0s\x1b[37;9;m", 97, line)
+			}
+		}
+		fmt.Println()
+	}
+}
+
 func TestGenerateGrid(t *testing.T) {
 	graph := New(1, Square)
 	err := graph.GenerateBoard(4, 4)

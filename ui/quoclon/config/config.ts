@@ -15,8 +15,7 @@ const LoadOrDefaultValue = (key: string, defaultValue: string): string => {
         ? envProcess[key]
         : defaultValue;
     
-        console.log(`Config: ${key} = ${value}`);
-        return value 
+    return value 
 };
 
 const env = LoadOrDefaultValue("VITE_NODE_ENV", "development");
